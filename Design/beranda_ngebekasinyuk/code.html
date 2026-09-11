@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;min-height:100vh;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "secondary-container": "#60f9bd", "on-tertiary-fixed": "#321200", "inverse-primary": "#b1c5ff", "inverse-surface": "#2d3037", "on-surface": "#191c22", "surface": "#f9f9ff", "on-tertiary-fixed-variant": "#753400", "on-secondary-fixed-variant": "#005138", "surface-tint": "#0057ce", "on-background": "#191c22", "surface-container-low": "#f2f3fc", "primary-fixed": "#dae2ff", "surface-bright": "#f9f9ff", "surface-container-highest": "#e1e2ea", "on-secondary-fixed": "#002114", "tertiary-container": "#bb5800", "surface-dim": "#d8dae2", "primary": "#0055c9", "outline-variant": "#c2c6d8", "on-tertiary-container": "#fffbff", "tertiary-fixed": "#ffdbc8", "on-secondary": "#ffffff", "on-tertiary": "#ffffff", "on-primary-fixed-variant": "#00419e", "tertiary-fixed-dim": "#ffb68b", "on-error": "#ffffff", "primary-fixed-dim": "#b1c5ff", "on-primary": "#ffffff", "surface-container": "#ecedf6", "secondary": "#006c4b", "outline": "#727787", "surface-container-high": "#e6e8f0", "surface-variant": "#e1e2ea", "on-surface-variant": "#424655", "secondary-fixed-dim": "#3fdfa5", "on-primary-container": "#fefcff", "on-secondary-container": "#00714f", "error": "#ba1a1a", "secondary-fixed": "#63fcc0", "inverse-on-surface": "#eff0f9", "error-container": "#ffdad6", "on-primary-fixed": "#001946", "primary-container": "#006bfb", "tertiary": "#954500", "surface-container-lowest": "#ffffff", "on-error-container": "#93000a", "background": "#f9f9ff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xl": "1.5rem", "space-2xs": "0.125rem", "gutter-mobile": "0.75rem", "space-sm": "0.5rem", "space-4xl": "4rem", "container-padding-desktop": "1.5rem", "space-xs": "0.25rem", "space-base": "1rem", "container-padding-mobile": "1rem", "space-3xl": "3rem", "space-lg": "1.25rem", "gutter-desktop": "1.25rem", "space-md": "0.75rem", "space-2xl": "2rem" }, "fontFamily": { "headline-sm": ["Inter"], "headline-md": ["Inter"], "body-lg": ["Inter"], "display-lg-mobile": ["Inter"], "body-md": ["Inter"], "headline-lg-mobile": ["Inter"], "label-md": ["Inter"], "display-lg": ["Inter"], "price-md": ["Inter"], "price-lg": ["Inter"], "body-sm": ["Inter"], "price-sm": ["Inter"], "headline-lg": ["Inter"], "label-sm": ["Inter"], "label-lg": ["Inter"] }, "fontSize": { "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }], "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }], "display-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }], "headline-lg-mobile": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }], "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "price-md": ["16px", { "lineHeight": "22px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "price-lg": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.005em", "fontWeight": "400" }], "price-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }], "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.005em", "fontWeight": "600" }] } } } }</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-28 px-container-padding-mobile flex flex-col justify-between py-space-xs"><div class="flex items-center justify-between gap-space-xs"><div class="flex items-center gap-space-xs"><img alt="NgeBekasinYuk Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0u_gLXkh7IHbFfqyLy3Btm2Zq2I67On4DZIgfIIl8HmTS0i0L4mWcj7b1JVQT94yR3XukSjulSU2JfKciGSEiG4TBXu4q4RLfsk02_9R6wxFdt0t1u_cPMaHHLqR-u2H8TWJEpuGe-qKgMMMJyZW36OadTmMW9Vl-m5xfECGqxnKQoVfI2nP82NVac4yOTBDRnsDHnBcAMUSpfeiq_endocE85DJHM82itZ2tzzOH5gm-SoA-_Nsa"/><div class="flex flex-col"><div class="flex items-center gap-space-2xs"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-none">NgeBekasinYuk</span><span class="flex items-center gap-0.5 bg-secondary-container/30 px-1.5 py-0.5 rounded-full"><span class="material-symbols-outlined text-secondary text-[12px]">verified_user</span><span class="font-label-sm text-label-sm text-on-secondary-fixed-variant">Rekber</span></span></div><span class="font-label-sm text-label-sm text-on-surface-variant">Beranda</span></div></div><div class="flex items-center gap-space-2xs"><button aria-label="Notifikasi" class="w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-container relative text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-error ring-2 ring-surface-container-lowest"></span></button><button aria-label="Pesan" class="w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-container relative text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-[22px]">chat</span><span class="absolute top-2 right-2 min-w-[16px] h-4 px-1 rounded-full bg-primary text-on-primary font-label-sm text-label-sm flex items-center justify-center leading-none">3</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-space-2xs"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div><div class="w-full flex items-center gap-space-xs pb-space-2xs"><div class="flex-1 h-11 bg-surface-container-low rounded-xl px-space-md flex items-center gap-space-xs shadow-[0_1px_2px_rgba(0,0,0,0.02)]"><span class="material-symbols-outlined text-outline text-[20px]">search</span><input class="w-full bg-transparent font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none" placeholder="Cari iPhone, ThinkPad, GPU bekas..." spellcheck="false" type="text"/><button aria-label="Pencarian Kamera" class="w-8 h-8 flex items-center justify-center text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]">photo_camera</span></button></div></div></div></header><main class="flex flex-col relative w-full pt-28 pb-28 bg-surface"><div class="flex flex-col w-full gap-space-lg pb-space-4xl">
+<!-- 1. Hero Promotional & Escrow Safety Banner -->
+<section class="px-container-padding-mobile">
+<div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-container via-primary to-surface-tint p-space-lg text-on-primary shadow-lg">
+<div class="relative z-10 flex flex-col gap-space-md">
+<!-- Badge Tag -->
+<div class="inline-flex items-center gap-1.5 self-start rounded-full bg-secondary-container/30 backdrop-blur-md px-3 py-1 shadow-sm">
+<span class="material-symbols-outlined text-[15px] text-secondary-fixed">verified_user</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-surface-container-lowest">Garansi Rekber Resmi</span>
+</div>
+<!-- Headline & Subtitle -->
+<div class="flex flex-col gap-1">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tight text-surface-container-lowest">
+            Jual Beli Gadget Bekas Tanpa Waswas 🔒
+          </h2>
+<p class="font-body-sm text-body-sm text-primary-fixed leading-relaxed">
+            Dana ditahan aman di escrow, baru diteruskan ke seller setelah kamu inspeksi dan pastikan barang berfungsi normal.
+          </p>
+</div>
+<!-- Trust Highlights -->
+<div class="flex flex-wrap items-center gap-2 pt-1">
+<div class="flex items-center gap-1.5 rounded-lg bg-surface-container-lowest/15 backdrop-blur-sm px-2.5 py-1 text-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary-fixed">shield</span>
+<span class="font-label-sm text-label-sm font-medium">100% Escrow Aman</span>
+</div>
+<div class="flex items-center gap-1.5 rounded-lg bg-surface-container-lowest/15 backdrop-blur-sm px-2.5 py-1 text-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary-fixed">badge</span>
+<span class="font-label-sm text-label-sm font-medium">KTP Seller Terverifikasi</span>
+</div>
+</div>
+<!-- Interactive Quick Guarantee Pills -->
+<div class="grid grid-cols-3 gap-2 pt-2">
+<div class="flex flex-col items-center justify-center rounded-xl bg-surface-container-lowest/20 p-2 text-center backdrop-blur-md transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[20px] text-secondary-container">timer</span>
+<span class="font-label-sm text-label-sm font-semibold text-surface-container-lowest mt-1">Inspeksi 2x24 Jam</span>
+</div>
+<div class="flex flex-col items-center justify-center rounded-xl bg-surface-container-lowest/20 p-2 text-center backdrop-blur-md transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[20px] text-secondary-container">price_change</span>
+<span class="font-label-sm text-label-sm font-semibold text-surface-container-lowest mt-1">Bisa Nego Santai</span>
+</div>
+<div class="flex flex-col items-center justify-center rounded-xl bg-surface-container-lowest/20 p-2 text-center backdrop-blur-md transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[20px] text-secondary-container">gpp_good</span>
+<span class="font-label-sm text-label-sm font-semibold text-surface-container-lowest mt-1">Anti Tipu-Tipu</span>
+</div>
+</div>
+</div>
+<!-- Subtle Decorative Tech Circles -->
+<div class="pointer-events-none absolute -right-8 -bottom-8 h-44 w-44 rounded-full bg-surface-container-lowest/10 blur-2xl"></div>
+<div class="pointer-events-none absolute top-0 right-12 h-28 w-28 rounded-full bg-secondary-fixed/20 blur-xl"></div>
+</div>
+</section>
+<!-- 2. Category Quick-Chips (Horizontal swipeable) -->
+<section class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between px-container-padding-mobile">
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Kategori Populer</h3>
+<span class="font-label-md text-label-md font-semibold text-primary">Lihat Semua</span>
+</div>
+<div class="flex gap-space-sm overflow-x-auto px-container-padding-mobile py-space-xs scrollbar-none snap-x">
+<!-- Cat 1 -->
+<button class="snap-start flex flex-col items-center gap-1.5 min-w-[74px] p-2 rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition active:scale-95 text-center">
+<div class="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">smartphone</span>
+</div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Smartphone</span>
+<span class="font-label-sm text-[9px] text-outline truncate w-14">iPhone, Pixel</span>
+</button>
+<!-- Cat 2 -->
+<button class="snap-start flex flex-col items-center gap-1.5 min-w-[74px] p-2 rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition active:scale-95 text-center">
+<div class="w-12 h-12 rounded-xl bg-secondary-container/50 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[24px]">laptop_mac</span>
+</div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Laptop</span>
+<span class="font-label-sm text-[9px] text-outline truncate w-14">MacBook, ROG</span>
+</button>
+<!-- Cat 3 -->
+<button class="snap-start flex flex-col items-center gap-1.5 min-w-[74px] p-2 rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition active:scale-95 text-center">
+<div class="w-12 h-12 rounded-xl bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[24px]">headphones</span>
+</div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Audio</span>
+<span class="font-label-sm text-[9px] text-outline truncate w-14">Sony, AirPods</span>
+</button>
+<!-- Cat 4 -->
+<button class="snap-start flex flex-col items-center gap-1.5 min-w-[74px] p-2 rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition active:scale-95 text-center">
+<div class="w-12 h-12 rounded-xl bg-primary-fixed-dim/40 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[24px]">memory</span>
+</div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">PC Gaming</span>
+<span class="font-label-sm text-[9px] text-outline truncate w-14">RTX, Ryzen</span>
+</button>
+<!-- Cat 5 -->
+<button class="snap-start flex flex-col items-center gap-1.5 min-w-[74px] p-2 rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition active:scale-95 text-center">
+<div class="w-12 h-12 rounded-xl bg-error-container/60 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[24px]">sports_esports</span>
+</div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Konsol</span>
+<span class="font-label-sm text-[9px] text-outline truncate w-14">PS5, Switch</span>
+</button>
+<!-- Cat 6 -->
+<button class="snap-start flex flex-col items-center gap-1.5 min-w-[74px] p-2 rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition active:scale-95 text-center">
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[24px]">photo_camera</span>
+</div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Kamera</span>
+<span class="font-label-sm text-[9px] text-outline truncate w-14">Fujifilm, Alpha</span>
+</button>
+<!-- Cat 7 -->
+<button class="snap-start flex flex-col items-center gap-1.5 min-w-[74px] p-2 rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition active:scale-95 text-center">
+<div class="w-12 h-12 rounded-xl bg-secondary-fixed/40 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[24px]">keyboard</span>
+</div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Aksesoris</span>
+<span class="font-label-sm text-[9px] text-outline truncate w-14">GaN, Keychron</span>
+</button>
+</div>
+</section>
+<!-- 3. Curated Section A: 'Paling Banyak Dinego' (Horizontal scroll cards) -->
+<section class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between px-container-padding-mobile">
+<div class="flex items-center gap-2">
+<div class="w-2 h-5 rounded-full bg-tertiary-container"></div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Paling Banyak Dinego</h3>
+</div>
+<span class="font-label-md text-label-md font-semibold text-tertiary">Eksplor Penawaran</span>
+</div>
+<div class="flex gap-space-md overflow-x-auto px-container-padding-mobile py-space-xs scrollbar-none snap-x">
+<!-- Nego Card 1 -->
+<div class="snap-start min-w-[260px] max-w-[260px] flex flex-col rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition overflow-hidden">
+<div class="relative w-full aspect-video bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Apple iPhone 13 Pro Sierra Blue pristine condition resting on dark oak studio table soft modern tech lighting cinematic crisp reflections high angle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-gWe99LzGnxTQdFSIA-zhynswki8_TgVepWWogk0dPr-cudyQwj_NeYD-28WilZwCMljHSMh_ypaxQ65sE14s01j4VVB4uYTPZzmyNu6lNxnWarYrNtyt6pPLHg4MLmL7CRMfCxzN4XNfHyu243hI6vjXKIFuZXuYgt7U-oQTSr-NpJUyB48xtXdcf8HwVjHTwtrb3cWx2FLen3dfPplDmzV8P4EjxorMDCD4vnY_nZpn5qnIVfIR"/>
+<div class="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-secondary-container/95 px-2 py-0.5 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-on-secondary-fixed-variant">verified</span>
+<span class="font-label-sm text-label-sm font-semibold text-on-secondary-fixed-variant">Seperti Baru</span>
+</div>
+<button class="absolute top-2 right-2 w-8 h-8 rounded-full bg-surface-container-lowest/80 backdrop-blur-sm flex items-center justify-center text-outline hover:text-error transition shadow-sm">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+</div>
+<div class="flex flex-col p-space-md gap-2">
+<div class="inline-flex items-center gap-1 rounded-md bg-tertiary-fixed px-2 py-0.5 self-start">
+<span class="material-symbols-outlined text-[14px] text-tertiary">local_fire_department</span>
+<span class="font-label-sm text-label-sm font-bold text-on-tertiary-fixed">14 Penawaran Nego</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">iPhone 13 Pro 128GB</h4>
+<span class="font-label-sm text-label-sm text-outline-variant text-on-surface-variant">Sierra Blue • Mulus 98% • BH 89%</span>
+<div class="flex items-baseline justify-between pt-1">
+<span class="font-price-lg text-price-lg font-bold text-on-surface tabular-nums">Rp 10.850.000</span>
+</div>
+<div class="flex items-center justify-between pt-2 text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">location_on</span>
+<span class="font-label-sm text-label-sm text-outline">Jakarta Barat</span>
+</div>
+<button class="rounded-lg bg-primary-fixed px-2.5 py-1 font-label-sm text-label-sm font-semibold text-primary hover:bg-primary hover:text-on-primary transition">
+              Tawar
+            </button>
+</div>
+</div>
+</div>
+<!-- Nego Card 2 -->
+<div class="snap-start min-w-[260px] max-w-[260px] flex flex-col rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition overflow-hidden">
+<div class="relative w-full aspect-video bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Sony WH-1000XM5 wireless noise cancelling headphones in matte black complete packaging and case displayed on minimalist concrete background professional electronics showcase" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSiOYh2K-oNBH9jm3j-3kMn2k5rCcVzhtSpWnf9GOdF5uKXA9XhB-DtdEJ9v_zw07iIfGsQdkdstLVdctze4BceHGoPVsSw-CdfoGK_1-ZOMq8X7u4LwblHmKCgqRxCI8k_ihO8MNL-HuOcYQMPlNdDWDa81lb7i7XXZc-wBWKVNxt2MgECqdTjuV5-92BhcjMzPtWQXiMyrNO-QbiPWr2UWpILWnBvevS5z-ZA5aXa1UUMnQ6xF8-"/>
+<div class="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-surface-container-high/95 px-2 py-0.5 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-on-surface-variant">check_circle</span>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface-variant">Pemakaian Wajar</span>
+</div>
+<button class="absolute top-2 right-2 w-8 h-8 rounded-full bg-surface-container-lowest/80 backdrop-blur-sm flex items-center justify-center text-outline hover:text-error transition shadow-sm">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+</div>
+<div class="flex flex-col p-space-md gap-2">
+<div class="inline-flex items-center gap-1 rounded-md bg-tertiary-fixed px-2 py-0.5 self-start">
+<span class="material-symbols-outlined text-[14px] text-tertiary">local_fire_department</span>
+<span class="font-label-sm text-label-sm font-bold text-on-tertiary-fixed">8 Penawaran Nego</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Sony WH-1000XM5 Black</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Fullset Mulus • ANC Normal • Box Ori</span>
+<div class="flex items-baseline justify-between pt-1">
+<span class="font-price-lg text-price-lg font-bold text-on-surface tabular-nums">Rp 3.650.000</span>
+</div>
+<div class="flex items-center justify-between pt-2 text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">location_on</span>
+<span class="font-label-sm text-label-sm text-outline">Jakarta Selatan</span>
+</div>
+<button class="rounded-lg bg-primary-fixed px-2.5 py-1 font-label-sm text-label-sm font-semibold text-primary hover:bg-primary hover:text-on-primary transition">
+              Tawar
+            </button>
+</div>
+</div>
+</div>
+<!-- Nego Card 3 -->
+<div class="snap-start min-w-[260px] max-w-[260px] flex flex-col rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition overflow-hidden">
+<div class="relative w-full aspect-video bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Apple MacBook Air M1 2020 Space Grey open showing vivid screen on clean wooden desk alongside minimal coffee cup studio product photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNejcaBb5OJmN7BODLYZAOBLhGeg_dogEoRVvVFDcGBHJxdIpIp8EYuBafPSGXYQ5RkrWPO0TG_PaNPJoRE08ClKLbx9Nsi5bn3Uo1YeToVbuFQRPnuBPNK1icAmylaZHHW7x3e3ifvsY-fIOViBUId5aEN8ACahWZVt2AAKjLrczic_8-CPEKAjEyC9RuAXf_QSmLW8xmbFfgKvAfZci_Pps6A2YbakpGX0FOQlmJmnOqrLE91pdq"/>
+<div class="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-secondary-container/95 px-2 py-0.5 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-on-secondary-fixed-variant">verified</span>
+<span class="font-label-sm text-label-sm font-semibold text-on-secondary-fixed-variant">Seperti Baru</span>
+</div>
+<button class="absolute top-2 right-2 w-8 h-8 rounded-full bg-surface-container-lowest/80 backdrop-blur-sm flex items-center justify-center text-outline hover:text-error transition shadow-sm">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+</div>
+<div class="flex flex-col p-space-md gap-2">
+<div class="inline-flex items-center gap-1 rounded-md bg-tertiary-fixed px-2 py-0.5 self-start">
+<span class="material-symbols-outlined text-[14px] text-tertiary">local_fire_department</span>
+<span class="font-label-sm text-label-sm font-bold text-on-tertiary-fixed">21 Penawaran Nego</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">MacBook Air M1 8/256GB</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Space Grey • CC 42 • Mulus 99%</span>
+<div class="flex items-baseline justify-between pt-1">
+<span class="font-price-lg text-price-lg font-bold text-on-surface tabular-nums">Rp 8.450.000</span>
+</div>
+<div class="flex items-center justify-between pt-2 text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">location_on</span>
+<span class="font-label-sm text-label-sm text-outline">Bandung</span>
+</div>
+<button class="rounded-lg bg-primary-fixed px-2.5 py-1 font-label-sm text-label-sm font-semibold text-primary hover:bg-primary hover:text-on-primary transition">
+              Tawar
+            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Curated Section B: 'Gadget Dekat Kamu' (With city switcher chips) -->
+<section class="flex flex-col gap-space-sm px-container-padding-mobile">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2 h-5 rounded-full bg-primary"></div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Gadget Dekat Kamu</h3>
+</div>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[18px]">my_location</span>
+<span class="font-label-sm text-label-sm font-semibold">GPS Aktif</span>
+</div>
+</div>
+<!-- City Filter Pills -->
+<div class="flex gap-2 overflow-x-auto py-1 scrollbar-none">
+<button class="city-pill active rounded-full bg-primary px-3.5 py-1 font-label-sm text-label-sm font-semibold text-on-primary shadow-sm">
+        Semua
+      </button>
+<button class="city-pill rounded-full bg-surface-container px-3.5 py-1 font-label-sm text-label-sm font-medium text-on-surface-variant hover:bg-surface-container-high transition">
+        Jakarta
+      </button>
+<button class="city-pill rounded-full bg-surface-container px-3.5 py-1 font-label-sm text-label-sm font-medium text-on-surface-variant hover:bg-surface-container-high transition">
+        Surabaya
+      </button>
+<button class="city-pill rounded-full bg-surface-container px-3.5 py-1 font-label-sm text-label-sm font-medium text-on-surface-variant hover:bg-surface-container-high transition">
+        Bandung
+      </button>
+<button class="city-pill rounded-full bg-surface-container px-3.5 py-1 font-label-sm text-label-sm font-medium text-on-surface-variant hover:bg-surface-container-high transition">
+        Tangerang
+      </button>
+</div>
+<!-- Nearby Listing Strip Cards -->
+<div class="flex flex-col gap-space-sm">
+<!-- Strip 1 -->
+<div class="flex items-center gap-space-md p-3 rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition">
+<div class="w-24 h-24 rounded-xl overflow-hidden bg-surface-container shrink-0">
+<img class="w-full h-full object-cover" data-alt="Apple iPad Air 5 Starlight color with Magic Keyboard standing neatly on modern glass desk vibrant high-tech tablet product visual" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAt06iJu1RMzmjsEdg1zlJLeIthTgpXM6PFajUTko0RvY0hHUPtCfAqpYfJYG-n5622374BIendrjy1mpAYYsIEjOUD-dN-WuUbIzUAyiY28w_3PJEznls7-M4_0ju4zr3_UvHe3fJSQTWIIt9APsvgcFlzWsmX49CbKqWQ10zSbrQiwIQ8_vvo2G6ns91WqyRj4QHwxSBKB0EbNf9Tvygj5OcNS6Oq9DrHaCmLZXCtvaxUgxGysF-8"/>
+</div>
+<div class="flex flex-col justify-between flex-1 min-w-0">
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">verified</span>
+<span class="font-label-sm text-label-sm font-semibold text-secondary">Terverifikasi</span>
+<span class="text-outline text-[10px]">•</span>
+<span class="font-label-sm text-label-sm text-outline">2.4 km</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface truncate">iPad Air 5 M1 64GB WiFi</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Starlight • Garansi iBox On</span>
+</div>
+<div class="flex items-center justify-between pt-1">
+<span class="font-price-md text-price-md font-bold text-on-surface tabular-nums">Rp 7.900.000</span>
+<button class="flex items-center gap-1 rounded-xl bg-primary px-3 py-1.5 text-on-primary font-label-sm text-label-sm font-semibold shadow-sm hover:bg-primary-container transition active:scale-95">
+<span class="material-symbols-outlined text-[15px]">chat</span>
+              Chat
+            </button>
+</div>
+</div>
+</div>
+<!-- Strip 2 -->
+<div class="flex items-center gap-space-md p-3 rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition">
+<div class="w-24 h-24 rounded-xl overflow-hidden bg-surface-container shrink-0">
+<img class="w-full h-full object-cover" data-alt="Zotac Gaming GeForce RTX 3070 Twin Edge 8GB GPU graphics card shown on electrostatic anti-static tech pad studio RGB lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvEdEg1ySjOiyS18D7vuNROvnMdEx0Klu06G3Sj25J-lHL7md6IqeUurpo6-UJMtRgc-BPu6A006a2B3CKXI8sQycA0xSLnkDgPel1IytQsnsyru2OflnUAXe1P0gh1QF8BJIVo4m6QGSLqKLDqC7LQzJFJOYg6e7G6e6mPrfNP3RBxNSCp0TknMf51ZdzWbkPCYy1EBaAhF0pGyvQXSzwP0iwYU_4rdI4FPyTL_yZEuo7Fenz3ytT"/>
+</div>
+<div class="flex flex-col justify-between flex-1 min-w-0">
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">verified</span>
+<span class="font-label-sm text-label-sm font-semibold text-secondary">Terverifikasi</span>
+<span class="text-outline text-[10px]">•</span>
+<span class="font-label-sm text-label-sm text-outline">4.1 km</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface truncate">ZOTAC RTX 3070 Twin Edge 8GB</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Pemakaian Gaming • Suhu Sejuk</span>
+</div>
+<div class="flex items-center justify-between pt-1">
+<span class="font-price-md text-price-md font-bold text-on-surface tabular-nums">Rp 4.200.000</span>
+<button class="flex items-center gap-1 rounded-xl bg-primary px-3 py-1.5 text-on-primary font-label-sm text-label-sm font-semibold shadow-sm hover:bg-primary-container transition active:scale-95">
+<span class="material-symbols-outlined text-[15px]">chat</span>
+              Chat
+            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. Curated Section C: 'Dari Penjual Terverifikasi ✅' (2-column responsive grid) -->
+<section class="flex flex-col gap-space-xs px-container-padding-mobile">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2 h-5 rounded-full bg-secondary"></div>
+<div class="flex items-center gap-1">
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Dari Penjual Terverifikasi</h3>
+<span class="material-symbols-outlined text-[18px] text-secondary">verified</span>
+</div>
+</div>
+<span class="font-label-md text-label-md font-semibold text-primary">Filter Lengkap</span>
+</div>
+<div class="grid grid-cols-2 gap-space-md pt-1">
+<!-- Card 1 -->
+<div class="flex flex-col rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition overflow-hidden">
+<div class="relative w-full aspect-square bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Sony PlayStation 5 PS5 Disc Edition console pristine with white DualSense controller resting upright sleek modern gaming room setup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQRP_RrlaPX7uSPwYl6208QUnQq_Hi-TdZVmwPddPnhOKFpL_zBfWBDU6V9DCo5BodexS57FRnULUEp0Qm54aIs8Xp4LTkEGpFkgO8pWueCTJ5T62dN-BEQXujSnBWsZi1B15-W63lWdjMaMbucOUJx_1S87eUHYIzUCpre9kJzaOpxm5kmjbXFOjaVvbV3-9QAddm1-Q5ZlYbHSSwLWyOO22rOUiXXhCvhYn_PlWvgTlANAhZVptg"/>
+<div class="absolute top-2 left-2 rounded-md bg-secondary-container/95 px-2 py-0.5 shadow-sm">
+<span class="font-label-sm text-[10px] font-bold text-on-secondary-fixed-variant">Seperti Baru</span>
+</div>
+<div class="absolute top-2 right-2 rounded-md bg-tertiary-container px-1.5 py-0.5 shadow-sm">
+<span class="font-label-sm text-[10px] font-bold text-on-tertiary-container">Bisa Nego</span>
+</div>
+</div>
+<div class="flex flex-col p-3 gap-1.5 flex-1 justify-between">
+<div class="flex flex-col gap-1">
+<h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-2 leading-snug">
+              PlayStation 5 Disc Edition CFI-1218A Mulus
+            </h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant line-clamp-1">Fullset Box • 1 Stik Ori • Segel</span>
+<div class="pt-0.5">
+<span class="font-price-md text-price-md font-bold text-on-surface tabular-nums">Rp 6.350.000</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5 pt-2">
+<div class="flex items-center justify-between text-outline">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">location_on</span>
+<span class="font-label-sm text-[11px] truncate max-w-[80px]">Jakarta Selatan</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-secondary">verified</span>
+</div>
+<div class="flex items-center gap-1 rounded-md bg-secondary-container/20 px-1.5 py-0.5">
+<span class="material-symbols-outlined text-[12px] text-secondary">gpp_maybe</span>
+<span class="font-label-sm text-[10px] font-semibold text-on-secondary-fixed-variant">🔒 Terlindungi Escrow</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="flex flex-col rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition overflow-hidden">
+<div class="relative w-full aspect-square bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Fujifilm X-T30 II mirrorless camera silver and black finish with 18-55mm lens displayed on photographer workspace studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_xzoNgfhNeiIUpwJgRvKAO24TmNnPQvkhTmKNYzvL37jnKJtWEC8Y6TXwzuoaDp0bgQLuxOd0TDoPHJOj6fNw_nUv8AfuwTckF-dxMwguGvKL0UcMXnq5aBDYQhQvS7JDIeIAC25YwG9-rEVeKump9eUwmce6gzznRRvO81j_l0OCBJvIyZghtsOsa9bzBACoVgsOPrqxsC-B0XE7IKsTDSq5AQwyXXI_aiPVxpPLz8sTM1z9ldu_"/>
+<div class="absolute top-2 left-2 rounded-md bg-surface-container-high/95 px-2 py-0.5 shadow-sm">
+<span class="font-label-sm text-[10px] font-bold text-on-surface-variant">Pemakaian Wajar</span>
+</div>
+<div class="absolute top-2 right-2 rounded-md bg-tertiary-container px-1.5 py-0.5 shadow-sm">
+<span class="font-label-sm text-[10px] font-bold text-on-tertiary-container">Bisa Nego</span>
+</div>
+</div>
+<div class="flex flex-col p-3 gap-1.5 flex-1 justify-between">
+<div class="flex flex-col gap-1">
+<h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-2 leading-snug">
+              Fujifilm X-T30 II Kit 18-55mm OIS Mint
+            </h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant line-clamp-1">Shutter Count 2.100 • Sensor Bersih</span>
+<div class="pt-0.5">
+<span class="font-price-md text-price-md font-bold text-on-surface tabular-nums">Rp 12.200.000</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5 pt-2">
+<div class="flex items-center justify-between text-outline">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">location_on</span>
+<span class="font-label-sm text-[11px] truncate max-w-[80px]">Surabaya Timur</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-secondary">verified</span>
+</div>
+<div class="flex items-center gap-1 rounded-md bg-secondary-container/20 px-1.5 py-0.5">
+<span class="material-symbols-outlined text-[12px] text-secondary">gpp_maybe</span>
+<span class="font-label-sm text-[10px] font-semibold text-on-secondary-fixed-variant">🔒 Terlindungi Escrow</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="flex flex-col rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition overflow-hidden">
+<div class="relative w-full aspect-square bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Apple Watch Ultra titanium case with orange ocean band resting on outdoor tech gear backpack high key clean visual" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGJAHvcNS8NfmqGX0pl8O0HrPT9vhpInJ00wQs64i4-83Uu2z08ksaQifBCjE2tps3J0kfhuuFZ3K0AsHpvgv6N7l8u4aKBGfKgl1h-LjXEzX25ljKnbigd6-6eKpVutSYI0bNi2ytWcWG4osswpp78hu62zO9BmaJNMDb0wzkjYFG2Hm5_Glqa0m1cQMrxEngAocEUY31HsDqQf7NGO2nJhbp9ZP2ybc6L6FvBeyhmXeZVOFvsqwC"/>
+<div class="absolute top-2 left-2 rounded-md bg-secondary-container/95 px-2 py-0.5 shadow-sm">
+<span class="font-label-sm text-[10px] font-bold text-on-secondary-fixed-variant">Seperti Baru</span>
+</div>
+<div class="absolute top-2 right-2 rounded-md bg-tertiary-container px-1.5 py-0.5 shadow-sm">
+<span class="font-label-sm text-[10px] font-bold text-on-tertiary-container">Bisa Nego</span>
+</div>
+</div>
+<div class="flex flex-col p-3 gap-1.5 flex-1 justify-between">
+<div class="flex flex-col gap-1">
+<h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-2 leading-snug">
+              Apple Watch Ultra 49mm Titanium Cel
+            </h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant line-clamp-1">Battery Health 99% • Fullset Box</span>
+<div class="pt-0.5">
+<span class="font-price-md text-price-md font-bold text-on-surface tabular-nums">Rp 9.150.000</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5 pt-2">
+<div class="flex items-center justify-between text-outline">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">location_on</span>
+<span class="font-label-sm text-[11px] truncate max-w-[80px]">Jakarta Barat</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-secondary">verified</span>
+</div>
+<div class="flex items-center gap-1 rounded-md bg-secondary-container/20 px-1.5 py-0.5">
+<span class="material-symbols-outlined text-[12px] text-secondary">gpp_maybe</span>
+<span class="font-label-sm text-[10px] font-semibold text-on-secondary-fixed-variant">🔒 Terlindungi Escrow</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="flex flex-col rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-md transition overflow-hidden">
+<div class="relative w-full aspect-square bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Steam Deck OLED 512GB handheld console running video game displayed with carrying case on sleek modern nightstand background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPNj3qenbg-RX-rl2OOG4CT8yhz99UKzdkIaxnB-cRj_Z_Y1NOcSc4Rgft4ttCORP1GnussDZQ9gbZldHw8nxJsQEY_V-hXFaN9xGvnn0JUzYZ08U6yIDODQSSCMn7fdriD7b2r0TDUwDPR535nwNWPU4uyJI0udPyQb5ZRc6paBjsKPaLtgfTbac-5g2Vo48PPyMNEcAamtYqxooGhOjgs6A6KEmtsK8PMNuYY2GmVJZa_mslSczH"/>
+<div class="absolute top-2 left-2 rounded-md bg-secondary-container/95 px-2 py-0.5 shadow-sm">
+<span class="font-label-sm text-[10px] font-bold text-on-secondary-fixed-variant">Seperti Baru</span>
+</div>
+<div class="absolute top-2 right-2 rounded-md bg-tertiary-container px-1.5 py-0.5 shadow-sm">
+<span class="font-label-sm text-[10px] font-bold text-on-tertiary-container">Bisa Nego</span>
+</div>
+</div>
+<div class="flex flex-col p-3 gap-1.5 flex-1 justify-between">
+<div class="flex flex-col gap-1">
+<h4 class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-2 leading-snug">
+              Steam Deck OLED 512GB NVMe Mulus
+            </h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant line-clamp-1">Layar Bersih No Dead Pixel • Fullset</span>
+<div class="pt-0.5">
+<span class="font-price-md text-price-md font-bold text-on-surface tabular-nums">Rp 8.200.000</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5 pt-2">
+<div class="flex items-center justify-between text-outline">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">location_on</span>
+<span class="font-label-sm text-[11px] truncate max-w-[80px]">Bandung Kota</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-secondary">verified</span>
+</div>
+<div class="flex items-center gap-1 rounded-md bg-secondary-container/20 px-1.5 py-0.5">
+<span class="material-symbols-outlined text-[12px] text-secondary">gpp_maybe</span>
+<span class="font-label-sm text-[10px] font-semibold text-on-secondary-fixed-variant">🔒 Terlindungi Escrow</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 6. Trust Banner / Escrow Education footer card -->
+<section class="px-container-padding-mobile">
+<div class="flex flex-col rounded-2xl bg-surface-container-low p-space-lg shadow-sm gap-space-md">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-xl bg-secondary-container/40 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">policy</span>
+</div>
+<div class="flex flex-col">
+<h4 class="font-headline-sm text-headline-sm font-bold text-on-surface">Cara Kerja Escrow Rekber</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Transaksi 3 langkah tanpa rasa cemas</span>
+</div>
+</div>
+<!-- 3-Step Flow -->
+<div class="grid grid-cols-3 gap-2 relative">
+<!-- Step 1 -->
+<div class="flex flex-col items-center text-center gap-1.5">
+<div class="w-9 h-9 rounded-full bg-primary text-on-primary font-label-md text-label-md font-bold flex items-center justify-center shadow-md">
+            1
+          </div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Bayar ke Escrow</span>
+<span class="font-label-sm text-[10px] text-outline leading-tight">Uang aman ditampung di sistem NgeBekasin</span>
+</div>
+<!-- Step 2 -->
+<div class="flex flex-col items-center text-center gap-1.5">
+<div class="w-9 h-9 rounded-full bg-secondary text-on-secondary font-label-md text-label-md font-bold flex items-center justify-center shadow-md">
+            2
+          </div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Cek Barang</span>
+<span class="font-label-sm text-[10px] text-outline leading-tight">Waktu uji fisik & fungsi gadget 2x24 jam</span>
+</div>
+<!-- Step 3 -->
+<div class="flex flex-col items-center text-center gap-1.5">
+<div class="w-9 h-9 rounded-full bg-tertiary-container text-on-tertiary-container font-label-md text-label-md font-bold flex items-center justify-center shadow-md">
+            3
+          </div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Puas? Dana Cair</span>
+<span class="font-label-sm text-[10px] text-outline leading-tight">Konfirmasi selesai, seller terima uangnya</span>
+</div>
+</div>
+<button class="w-full py-2.5 rounded-xl bg-surface-container-lowest text-primary font-label-md text-label-md font-semibold shadow-sm hover:bg-primary-fixed transition flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+        Pelajari Kebijakan Perlindungan Konsumen
+      </button>
+</div>
+</section>
+</div>
+<script>
+  // Simple micro-interaction for City switcher pills
+  document.querySelectorAll('.city-pill').forEach(pill => {
+    pill.addEventListener('click', function() {
+      document.querySelectorAll('.city-pill').forEach(p => {
+        p.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm');
+        p.classList.add('bg-surface-container', 'text-on-surface-variant');
+      });
+      this.classList.remove('bg-surface-container', 'text-on-surface-variant');
+      this.classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+    });
+  });
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.05)]" data-active-classes="text-primary font-semibold"><div class="relative flex justify-around items-center h-16 px-container-padding-mobile max-w-lg mx-auto"><a aria-current="page" class="flex flex-col items-center justify-center w-14 h-12 transition-colors text-primary font-semibold" data-path="beranda" href="#"><span class="material-symbols-outlined text-[22px]">home</span><span class="font-label-sm text-label-sm mt-0.5">Beranda</span></a><a class="flex flex-col items-center justify-center w-14 h-12 text-on-surface-variant hover:text-on-surface transition-colors" data-path="kategori" href="#"><span class="material-symbols-outlined text-[22px]">grid_view</span><span class="font-label-sm text-label-sm mt-0.5">Kategori</span></a><div class="relative -top-5 flex flex-col items-center"><a class="w-14 h-14 rounded-full bg-tertiary-container text-on-tertiary-container shadow-[0_8px_20px_rgba(187,88,0,0.35)] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform" data-path="jual-produk" href="#"><span class="material-symbols-outlined text-[28px]">add</span></a><span class="font-label-sm text-label-sm text-on-surface-variant mt-1 font-semibold">Jual</span></div><a class="flex flex-col items-center justify-center w-14 h-12 text-on-surface-variant hover:text-on-surface relative transition-colors" data-path="chat" href="#"><span class="material-symbols-outlined text-[22px]">chat_bubble</span><span class="font-label-sm text-label-sm mt-0.5">Chat</span><span class="absolute top-1 right-3 w-2 h-2 rounded-full bg-primary"></span></a><a class="flex flex-col items-center justify-center w-14 h-12 text-on-surface-variant hover:text-on-surface transition-colors" data-path="akun" href="#"><span class="material-symbols-outlined text-[22px]">person</span><span class="font-label-sm text-label-sm mt-0.5">Akun</span></a></div></nav></body></html>

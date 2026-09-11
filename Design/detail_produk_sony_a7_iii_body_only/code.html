@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;min-height:100vh;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "secondary-container": "#60f9bd", "on-tertiary-fixed": "#321200", "inverse-primary": "#b1c5ff", "inverse-surface": "#2d3037", "on-surface": "#191c22", "surface": "#f9f9ff", "on-tertiary-fixed-variant": "#753400", "on-secondary-fixed-variant": "#005138", "surface-tint": "#0057ce", "on-background": "#191c22", "surface-container-low": "#f2f3fc", "primary-fixed": "#dae2ff", "surface-bright": "#f9f9ff", "surface-container-highest": "#e1e2ea", "on-secondary-fixed": "#002114", "tertiary-container": "#bb5800", "surface-dim": "#d8dae2", "primary": "#0055c9", "outline-variant": "#c2c6d8", "on-tertiary-container": "#fffbff", "tertiary-fixed": "#ffdbc8", "on-secondary": "#ffffff", "on-tertiary": "#ffffff", "on-primary-fixed-variant": "#00419e", "tertiary-fixed-dim": "#ffb68b", "on-error": "#ffffff", "primary-fixed-dim": "#b1c5ff", "on-primary": "#ffffff", "surface-container": "#ecedf6", "secondary": "#006c4b", "outline": "#727787", "surface-container-high": "#e6e8f0", "surface-variant": "#e1e2ea", "on-surface-variant": "#424655", "secondary-fixed-dim": "#3fdfa5", "on-primary-container": "#fefcff", "on-secondary-container": "#00714f", "error": "#ba1a1a", "secondary-fixed": "#63fcc0", "inverse-on-surface": "#eff0f9", "error-container": "#ffdad6", "on-primary-fixed": "#001946", "primary-container": "#006bfb", "tertiary": "#954500", "surface-container-lowest": "#ffffff", "on-error-container": "#93000a", "background": "#f9f9ff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xl": "1.5rem", "space-2xs": "0.125rem", "gutter-mobile": "0.75rem", "space-sm": "0.5rem", "space-4xl": "4rem", "container-padding-desktop": "1.5rem", "space-xs": "0.25rem", "space-base": "1rem", "container-padding-mobile": "1rem", "space-3xl": "3rem", "space-lg": "1.25rem", "gutter-desktop": "1.25rem", "space-md": "0.75rem", "space-2xl": "2rem" }, "fontFamily": { "headline-sm": ["Inter"], "headline-md": ["Inter"], "body-lg": ["Inter"], "display-lg-mobile": ["Inter"], "body-md": ["Inter"], "headline-lg-mobile": ["Inter"], "label-md": ["Inter"], "display-lg": ["Inter"], "price-md": ["Inter"], "price-lg": ["Inter"], "body-sm": ["Inter"], "price-sm": ["Inter"], "headline-lg": ["Inter"], "label-sm": ["Inter"], "label-lg": ["Inter"] }, "fontSize": { "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }], "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }], "display-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }], "headline-lg-mobile": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }], "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "price-md": ["16px", { "lineHeight": "22px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "price-lg": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.005em", "fontWeight": "400" }], "price-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "-0.01em", "fontWeight": "700" }], "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }], "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.005em", "fontWeight": "600" }] } } } }</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-28 px-container-padding-mobile flex flex-col justify-between py-space-xs"><div class="flex items-center justify-between gap-space-xs"><div class="flex items-center gap-space-xs"><img alt="NgeBekasinYuk Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0u_gLXkh7IHbFfqyLy3Btm2Zq2I67On4DZIgfIIl8HmTS0i0L4mWcj7b1JVQT94yR3XukSjulSU2JfKciGSEiG4TBXu4q4RLfsk02_9R6wxFdt0t1u_cPMaHHLqR-u2H8TWJEpuGe-qKgMMMJyZW36OadTmMW9Vl-m5xfECGqxnKQoVfI2nP82NVac4yOTBDRnsDHnBcAMUSpfeiq_endocE85DJHM82itZ2tzzOH5gm-SoA-_Nsa"/><div class="flex flex-col"><div class="flex items-center gap-space-2xs"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-none">NgeBekasinYuk</span><span class="flex items-center gap-0.5 bg-secondary-container/30 px-1.5 py-0.5 rounded-full"><span class="material-symbols-outlined text-secondary text-[12px]">verified_user</span><span class="font-label-sm text-label-sm text-on-secondary-fixed-variant">Rekber</span></span></div><span class="font-label-sm text-label-sm text-on-surface-variant">Beranda</span></div></div><div class="flex items-center gap-space-2xs"><button aria-label="Notifikasi" class="w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-container relative text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-error ring-2 ring-surface-container-lowest"></span></button><button aria-label="Pesan" class="w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-container relative text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-[22px]">chat</span><span class="absolute top-2 right-2 min-w-[16px] h-4 px-1 rounded-full bg-primary text-on-primary font-label-sm text-label-sm flex items-center justify-center leading-none">3</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-space-2xs"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div><div class="w-full flex items-center gap-space-xs pb-space-2xs"><div class="flex-1 h-11 bg-surface-container-low rounded-xl px-space-md flex items-center gap-space-xs shadow-[0_1px_2px_rgba(0,0,0,0.02)]"><span class="material-symbols-outlined text-outline text-[20px]">search</span><input class="w-full bg-transparent font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none" placeholder="Cari iPhone, ThinkPad, GPU bekas..." spellcheck="false" type="text"/><button aria-label="Pencarian Kamera" class="w-8 h-8 flex items-center justify-center text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]">photo_camera</span></button></div></div></div></header><main class="flex flex-col relative w-full pt-28 pb-28 bg-surface"><div class="flex flex-col w-full pb-32">
+<!-- Floating Sticky Action Bar at Top for PDP Context -->
+<div class="w-full flex items-center justify-between px-container-padding-mobile py-space-sm bg-surface-container-lowest shadow-sm z-30">
+<button aria-label="Kembali" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[22px]">arrow_back</span>
+</button>
+<div class="flex items-center gap-space-xs">
+<button aria-label="Bagikan" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[20px]">share</span>
+</button>
+<button aria-label="Simpan ke Wishlist" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:text-error transition-colors" id="btn-wishlist">
+<span class="material-symbols-outlined text-[20px]" id="icon-wishlist">favorite</span>
+</button>
+<button aria-label="Keranjang" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface relative">
+<span class="material-symbols-outlined text-[20px]">shopping_cart</span>
+<span class="absolute 1 top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-on-primary font-label-sm text-label-sm flex items-center justify-center leading-none">1</span>
+</button>
+</div>
+</div>
+<!-- Media Gallery Carousel Area -->
+<div class="relative w-full bg-surface-container-low overflow-hidden">
+<div class="relative w-full aspect-square bg-surface-container-high flex items-center justify-center overflow-hidden">
+<!-- Main Product Image -->
+<img alt="Sony A7 III Body Only" class="w-full h-full object-cover transition-opacity duration-300" data-alt="Crisp professional product studio photograph of a clean Sony A7 III mirrorless full-frame camera body standing upright against a soft neutral studio background, pristine magnesium alloy finish with zero scratches, gleaming clean glass sensor revealed with lens mount cover off, soft overhead diffusion box lighting, commercial e-commerce tech photography style in high resolution" id="main-product-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1iSBaZMeu5ZiJ8UWYgovG2kY70yXk7tZBBDImmk-7utKnAdjOmygK7mNQmDEPDCeb-GEBQ5Mx1VPg3hjrMhXdUim3_Cn3k0AzJQHqHaaJPkqlst83TaNfX6eVVHUFmgmehCw5bnyyH_4nJudbVKg6dCCvLpXgMd94SFytNtzHMl3ibfs8w5b_Rsrqig8miOWOMHYSDECjf72AnLQQ-dU5XKeCH2ZJCVyLxQKcyM_hyTFJt9OEuaS_"/>
+<!-- Top Overlay Badges -->
+<div class="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
+<div class="flex items-center gap-1 bg-surface-container-lowest/95 backdrop-blur-md px-2.5 py-1 rounded-full shadow-sm">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">Kondisi: 98% Mulus</span>
+</div>
+</div>
+<div class="absolute top-3 right-3 z-10">
+<div class="flex items-center gap-1 bg-primary text-on-primary px-2.5 py-1 rounded-full shadow-md backdrop-blur-md">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+<span class="font-label-sm text-label-sm font-semibold">Garansi s/d Nov 2026</span>
+</div>
+</div>
+<!-- Slide Counter Indicator -->
+<div class="absolute bottom-3 right-3 z-10 bg-inverse-surface/80 backdrop-blur-md text-inverse-on-surface px-2.5 py-0.5 rounded-full font-label-sm text-label-sm flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px]">photo_camera</span>
+<span id="current-slide-num">1</span>/5
+      </div>
+</div>
+<!-- Thumbnails Strip -->
+<div class="p-container-padding-mobile flex items-center gap-space-xs overflow-x-auto no-scrollbar">
+<button class="thumb-btn flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden p-0.5 bg-primary shadow-sm transition-all" data-index="0" onclick="switchPhoto(0)">
+<img alt="Front view" class="w-full h-full object-cover rounded" data-alt="Close up front view of Sony A7 III camera body without lens showing Alpha brand logo, handgrip texture, shutter button, and gold E-mount metal ring against soft studio light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHYbFsdYyy8pC5d6q2ZZOFnKN-lZ53vTdTMUCOLKM1m3uqm8xEuiOlEfqO2wL6KU-R4IhF9WVp1N2bLI29Fw141r2MBegvnnAXDNJOTaOCJXnp524Q-q5Lt5CF-G5ygUqhey-K8pvHepd2c90tr_TwF7kA5M1BOtKX3xhsMEM3JFh5bhTtWzv9d5IeoFyLHxmm0rcoGcYsmH3I5dEAUcDZ15Yis04OR6t-Xj91H_EoxQkGaeKh78zF"/>
+</button>
+<button class="thumb-btn flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden p-0.5 bg-surface-container-high transition-all" data-index="1" onclick="switchPhoto(1)">
+<img alt="Sensor closeup" class="w-full h-full object-cover rounded" data-alt="Macro detail shot of full frame Sony 24 megapixel Exmor R CMOS sensor completely pristine with no dust spots, reflection of subtle blue optical coating under soft LED lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKEtPNborgK0zPiwjSx3lKRVyKvmR3avmcv1dVC7XU1kEqjVjwsbXa2eKBn4UIWTqNB9KztCw2Jk8kLJRQEtYR6mxMH7PVlkHaKXqR3fI_SBQuSJjd5G9FajJIlUCrH4X8RI3_aw99x24CMfnWYrBmkr6Nq9i5Bs-TVdpXKGwftp03yShSnQv54iLbLPlmNQtx_H4s48XsDa0U1RzSBsTdj-gv9w9Q2E5hAtrEi85-qfec5Z0qWjaV"/>
+</button>
+<button class="thumb-btn flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden p-0.5 bg-surface-container-high transition-all" data-index="2" onclick="switchPhoto(2)">
+<img alt="Back LCD Screen" class="w-full h-full object-cover rounded" data-alt="Back panel view of Sony A7 III displaying clean scratch-free tilting LCD screen showing live status menu, clean buttons, joystick and rubber eyecup intact" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBA9eU2ewnWRCf9Qto6GOxaOS5X8o-02N4RqCpowftk7HpYZ_uYsPQNcN97v4sr4MJfr95_S4fVUvl9q-rBghLePBKSczep7xPDx_JKdKpoeM7Lyf0yAn7Iooah63Jn2if8IUDjfHczoXbNpUY3h9xrpGA-i0uqFo6J4t0cqGiWZD3PIqT1xQNYNOh0rH_DgLS1dZ-x-VFnpFMUNWV9yKfNyLePCfnQZXHna6dkqEWvPuzEw_ah9Vgr"/>
+</button>
+<button class="thumb-btn flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden p-0.5 bg-surface-container-high transition-all" data-index="3" onclick="switchPhoto(3)">
+<img alt="Shutter count check" class="w-full h-full object-cover rounded" data-alt="Computer screen screenshot showing camera shutter count diagnostic tool displaying Sony ILCE-7M3 actuation number 4120 with verified green safety status badge" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJWMeK1Ph2zTUSxHLsMHXOVwJ0dsiVqZnZintraxtqMMDrQrOuJQWK0HXe8_UnQx-tirVqsoqqS6xCARvWDvARUnQYoP5GFtS5DEYRLfsnEXoF90oyqu5AYHduuYqD16r92550myGVgV1Ta8M_xaZZLjcaItLOCv9MuMWQ3JqCA2N9ytpgy0-xHGZqFcKmvGZOpJI7-DnrTVKjVonur27t8zjHo30R13YY7I48e-2eXbJN9mw56it4"/>
+</button>
+<button class="thumb-btn flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden p-0.5 bg-surface-container-high transition-all" data-index="4" onclick="switchPhoto(4)">
+<img alt="Box fullset" class="w-full h-full object-cover rounded" data-alt="High angle layout shot of Sony A7 III camera placed next to its original orange retail box, genuine Sony NP-FZ100 battery, USB-C wall adapter, branded strap, and official warranty card" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhvM3DxYqJXa0NQAozFqVxVPSNPy7kTq9CUtMVHdNvHEw0xKdi1XssnuJZg4CUB-FnyCx4vr2k1sPXd6lvdPGm-ctwvT8QwCZeWiu7WHsi2EJvjUtN5ZsEpe4nMG5cN2BZimdKmVbxiKibuc_lAABzsykz0eH0LbLnUfY3Jz4XXGnfwS8Q9zpKKZMdg4PvBjtyWNNnpVrkUe3Qccym_vPoffDI0X0I0O_hWYd7piKSf3T-WPgrP0M_"/>
+</button>
+</div>
+</div>
+<!-- Main Content Body -->
+<div class="px-container-padding-mobile flex flex-col gap-space-lg mt-space-md">
+<!-- Pricing, Urgency and Title Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between flex-wrap gap-space-xs">
+<div class="flex items-baseline gap-1.5">
+<span class="font-headline-sm text-headline-sm text-primary font-bold">Rp</span>
+<span class="font-price-lg text-price-lg text-on-surface font-extrabold tracking-tight">12.800.000</span>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="flex items-center gap-1 bg-secondary-container/30 px-2.5 py-1 rounded-full text-secondary font-label-md text-label-md font-semibold hover:bg-secondary-container/50 active:scale-95 transition-all">
+<span>Bisa Nego</span>
+<span class="material-symbols-outlined text-[14px]">handshake</span>
+</button>
+<div class="flex items-center gap-1 bg-tertiary-fixed/40 px-2.5 py-1 rounded-full text-on-tertiary-fixed font-label-md text-label-md font-medium">
+<span class="material-symbols-outlined text-[13px] text-tertiary">bolt</span>
+<span>18 Pengamat</span>
+</div>
+</div>
+</div>
+<h1 class="font-headline-md text-headline-md text-on-surface font-bold leading-snug">
+        Sony A7 III Body Only - SC 4xxx Mulus Dus Lengkap
+      </h1>
+<div class="flex flex-wrap items-center gap-x-space-md gap-y-1 text-on-surface-variant font-label-md text-label-md pt-0.5">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline">schedule</span>
+<span>Diposting 2 jam lalu</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline">visibility</span>
+<span>249 tayangan</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+<span class="text-secondary font-semibold">Tersedia via Rekber</span>
+</div>
+</div>
+</div>
+<!-- Escrow Protection Trust Box (Core Brand Salience) -->
+<div class="bg-surface-container-low rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex items-start gap-space-sm">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary flex-shrink-0 shadow-md">
+<span class="material-symbols-outlined text-[22px]">gavel</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">100% Proteksi Escrow Rekber</h2>
+<span class="bg-secondary-container text-on-secondary-container text-[10px] font-bold px-1.5 py-0.5 rounded">Resmi</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Uang Anda tersimpan aman di rekening penampung bersama NgeBekasinYuk sampai barang Anda terima, cek fisik, dan dites 2x24 jam.
+          </p>
+</div>
+</div>
+<!-- 3-Step Visual Flow -->
+<div class="grid grid-cols-3 gap-2 bg-surface-container-lowest p-space-sm rounded-lg shadow-sm">
+<div class="flex flex-col items-center text-center p-1">
+<div class="w-7 h-7 rounded-full bg-primary-fixed text-on-primary-fixed-variant flex items-center justify-center font-label-md font-bold mb-1">1</div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Bayar Rekber</span>
+<span class="font-label-sm text-[10px] text-outline leading-tight mt-0.5">Dana diproteksi sistem</span>
+</div>
+<div class="flex flex-col items-center text-center p-1 relative">
+<div class="w-7 h-7 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md font-bold mb-1">2</div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Uji 48 Jam</span>
+<span class="font-label-sm text-[10px] text-outline leading-tight mt-0.5">Cek sensor & fungsi</span>
+</div>
+<div class="flex flex-col items-center text-center p-1">
+<div class="w-7 h-7 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center font-label-md font-bold mb-1">3</div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Puas? Selesai</span>
+<span class="font-label-sm text-[10px] text-outline leading-tight mt-0.5">Dana cair ke seller</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-primary font-label-sm text-label-sm font-semibold pt-1 cursor-pointer">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">info</span>
+          Pelajari Ketentuan Rekber & Pengembalian Dana
+        </span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</div>
+</div>
+<!-- Quick Diagnostics & Hardware Specs Table -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[20px]">tune</span>
+          Spesifikasi & Hasil Diagnostik
+        </h2>
+<span class="font-label-sm text-label-sm text-secondary bg-secondary-container/30 px-2 py-0.5 rounded-full font-semibold">Lulus Verifikasi</span>
+</div>
+<div class="flex flex-col divide-y-0 gap-2">
+<div class="flex justify-between py-2 px-3 bg-surface-container-low rounded-lg">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Model Kamera</span>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold text-right">Sony Alpha A7 III (ILCE-7M3)</span>
+</div>
+<div class="flex justify-between py-2 px-3 bg-surface-container-low rounded-lg items-center">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Shutter Count (SC)</span>
+<div class="flex items-center gap-1.5">
+<span class="font-price-sm text-price-sm text-primary font-bold">4.120 kali</span>
+<span class="bg-secondary-container/40 text-secondary font-label-sm text-[10px] px-1.5 py-0.5 rounded font-bold">< 3% Lifespan</span>
+</div>
+</div>
+<div class="flex justify-between py-2 px-3 bg-surface-container-low rounded-lg">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Lama Pemakaian</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">8 Bulan (Hobi foto santai)</span>
+</div>
+<div class="flex justify-between py-2 px-3 bg-surface-container-low rounded-lg items-center">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Kondisi Sensor</span>
+<span class="font-body-sm text-body-sm text-secondary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+            Bersih, Bebas Jamur & Debu
+          </span>
+</div>
+<div class="flex justify-between py-2 px-3 bg-surface-container-low rounded-lg items-center">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Stabilizer (IBIS 5-Axis)</span>
+<span class="font-body-sm text-body-sm text-secondary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+            Berfungsi 100% Normal
+          </span>
+</div>
+<div class="flex justify-between py-2 px-3 bg-surface-container-low rounded-lg">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Minus Fisik</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Nol dent / Lecet minor wajar</span>
+</div>
+<div class="flex justify-between py-2 px-3 bg-surface-container-low rounded-lg items-center">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Garansi Resmi</span>
+<span class="font-body-sm text-body-sm text-primary font-semibold">Sony ID s/d 14 Nov 2026</span>
+</div>
+</div>
+<!-- Kelengkapan Tag Pills -->
+<div class="pt-space-xs flex flex-col gap-1.5">
+<span class="font-label-md text-label-md text-on-surface-variant font-medium">Kelengkapan Paket (Fullset):</span>
+<div class="flex flex-wrap gap-1.5">
+<span class="px-2.5 py-1 bg-surface-container text-on-surface font-label-sm text-label-sm rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">check</span> Box Original
+          </span>
+<span class="px-2.5 py-1 bg-surface-container text-on-surface font-label-sm text-label-sm rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">check</span> Baterai Ori Sony NP-FZ100
+          </span>
+<span class="px-2.5 py-1 bg-surface-container text-on-surface font-label-sm text-label-sm rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">check</span> Kabel Type-C & Adaptor Ori
+          </span>
+<span class="px-2.5 py-1 bg-surface-container text-on-surface font-label-sm text-label-sm rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">check</span> Strap Leher Sony A7
+          </span>
+<span class="px-2.5 py-1 bg-surface-container text-on-surface font-label-sm text-label-sm rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">check</span> Nota Pembelian Toko Resmi
+          </span>
+</div>
+</div>
+</div>
+<!-- Seller Description Section -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Catatan Penjual</h2>
+<div class="font-body-md text-body-md text-on-surface-variant leading-relaxed flex flex-col gap-2">
+<p>
+          Dijual santai Sony Alpha 7 Mark III (ILCE-7M3) pemakaian pribadi hanya untuk foto portrait weekend keluarga. Tidak pernah dipakai untuk shooting video panjang atau job wedding berat, sensor terjamin dingin dan prima!
+        </p>
+<p>
+          Selalu disimpan di <strong>Dry Box Andbon RH 40%</strong>. Layar belakang sudah terpasang tempered glass dari hari pertama beli. Karet grip masih doff kesat, lubang tripod mulus, tombol shutter empuk responsif.
+        </p>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex items-start gap-2 mt-1">
+<span class="material-symbols-outlined text-primary text-[18px] mt-0.5">security</span>
+<p class="font-body-sm text-body-sm text-on-surface">
+<strong>Wajib Unboxing Video:</strong> Mohon rekam video 360° saat paket tiba dari kurir hingga tes fungsional shutter pertama untuk keperluan validasi escrow.
+          </p>
+</div>
+</div>
+</div>
+<!-- Seller Profile & Trust Score Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-12 h-12 rounded-full bg-surface-container overflow-hidden shadow-sm flex-shrink-0">
+<img alt="Rian Tech Second" class="w-full h-full object-cover" data-alt="Portrait of a friendly trustworthy Indonesian camera enthusiast seller wearing glasses and dark polo shirt, smiling at camera against warm cozy home background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvYJyZRcKqj11178kfYp3oTypokgQ4-BzeFnvFNen5lgoqzJZSZgDCjwnbQLybIu6PbSs-txuJw8WN52TKQwNP7eE9UKnEqwH1nWCvpR70sFFx7XpDmzGyCRGlSArWnquit7J-PLiQ6iCpf9-Qt4FLBp__Ci_sD9KSQEWcU_dAmgveU1uMLlHB9a9oTK0BQDohtsAOE28PaWahwfMp7R3wnr5nsGfOU3aVERs9VxHj-yx0G7Sp-DYX"/>
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-secondary rounded-full flex items-center justify-center text-on-secondary">
+<span class="material-symbols-outlined text-[10px]">check</span>
+</div>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1">
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">Rian Tech Second</span>
+<span class="material-symbols-outlined text-secondary text-[16px]" title="Terverifikasi KTP">verified</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Surabaya, Jawa Timur • Aktif 10 mnt lalu</span>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container text-on-surface font-label-md text-label-md font-semibold hover:bg-surface-container-high transition-colors" id="btn-follow" onclick="toggleFollow()">
+          + Ikuti
+        </button>
+</div>
+<!-- Seller Trust Badges Metric -->
+<div class="grid grid-cols-3 gap-2 bg-surface-container-low p-space-sm rounded-lg text-center">
+<div class="flex flex-col items-center">
+<div class="flex items-center gap-0.5 text-tertiary font-price-sm text-price-sm">
+<span class="material-symbols-outlined text-[15px] fill-1 text-tertiary">star</span>
+<span>4.9</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">48 Ulasan</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="font-price-sm text-price-sm text-secondary font-bold">100%</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">0 Dispute</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="font-price-sm text-price-sm text-on-surface font-bold">< 15 Menit</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">Balas Chat</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[16px]">id_card</span>
+<span>Identitas & Rekening Terverifikasi Rekber</span>
+</div>
+<button class="font-label-md text-label-md text-primary font-semibold hover:underline">
+          Lihat Profil
+        </button>
+</div>
+</div>
+<!-- Shipping, Location & Delivery Info -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[20px]">local_shipping</span>
+        Pengiriman & Biaya Ongkir
+      </h2>
+<div class="flex items-start gap-2 bg-surface-container-low p-space-sm rounded-lg">
+<span class="material-symbols-outlined text-outline text-[20px] mt-0.5">location_on</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Dikirim dari: Kec. Sukolilo, Kota Surabaya</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Estimasi pengiriman reguler mulai <strong class="text-on-surface font-semibold">Rp 18.000</strong></span>
+</div>
+</div>
+<div class="flex flex-col gap-2 pt-1">
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[18px]">verified</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">J&T / SiCepat / JNE Express</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">1-2 hari kerja • Termasuk Asuransi Penuh</span>
+</div>
+</div>
+<span class="font-price-sm text-price-sm font-bold text-on-surface">Rp 22.000</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">two_wheeler</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Instant / Same Day (Surabaya & Sidoarjo)</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Tiba dalam 2-4 jam</span>
+</div>
+</div>
+<span class="font-price-sm text-price-sm font-bold text-on-surface">Rp 35.000</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm mt-1">
+<span class="material-symbols-outlined text-tertiary text-[16px]">inventory_2</span>
+<span>Packing standar: Bubble wrap 5 lapis + Box tebal + Stiker Fragile anti-banting.</span>
+</div>
+</div>
+<!-- Buyer Protection FAQ Accordion -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm mb-4">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[20px]">help_center</span>
+        Tanya Jawab Aman Rekber
+      </h2>
+<div class="flex flex-col gap-2">
+<!-- FAQ Item 1 -->
+<div class="rounded-lg bg-surface-container-low overflow-hidden">
+<button class="w-full p-3 flex items-center justify-between text-left" onclick="toggleFaq('faq-1')">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Bagaimana jika sensor ada jamur yang tidak disebut penjual?</span>
+<span class="material-symbols-outlined text-[20px] text-outline transition-transform" id="faq-1-icon">expand_more</span>
+</button>
+<div class="hidden px-3 pb-3 pt-0 font-body-sm text-body-sm text-on-surface-variant" id="faq-1-content">
+            Kamu punya jendela proteksi selama <strong>48 jam (2 hari)</strong> sejak barang diterima. Jika ada ketidaksesuaian spek, klik tombol "Ajukan Komplain/Dispute" di aplikasi. Dana tertahan aman dan kamu bisa mengembalikan kamera tanpa dipotong biaya.
+          </div>
+</div>
+<!-- FAQ Item 2 -->
+<div class="rounded-lg bg-surface-container-low overflow-hidden">
+<button class="w-full p-3 flex items-center justify-between text-left" onclick="toggleFaq('faq-2')">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Kapan uang ditransfer ke penjual?</span>
+<span class="material-symbols-outlined text-[20px] text-outline transition-transform" id="faq-2-icon">expand_more</span>
+</button>
+<div class="hidden px-3 pb-3 pt-0 font-body-sm text-body-sm text-on-surface-variant" id="faq-2-content">
+            Penjual hanya akan menerima pencairan uang setelah kamu menekan tombol "Terima & Konfirmasi Puas", atau otomatis setelah masa periksa 2x24 jam habis tanpa dispute.
+          </div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Bottom High-Impact PDP Action Bar -->
+<div class="fixed bottom-16 left-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-lg shadow-[0_-4px_16px_rgba(0,0,0,0.06)] px-container-padding-mobile py-2.5">
+<div class="flex items-center gap-space-xs max-w-lg mx-auto">
+<!-- Chat Button -->
+<button aria-label="Chat Penjual" class="flex flex-col items-center justify-center w-12 h-11 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors flex-shrink-0">
+<span class="material-symbols-outlined text-[20px] text-primary">chat</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Chat</span>
+</button>
+<!-- Nego Button -->
+<button class="flex items-center justify-center gap-1 px-3.5 h-11 rounded-lg bg-secondary-container/30 text-secondary hover:bg-secondary-container/50 font-label-md text-label-md font-semibold active:scale-95 transition-all flex-shrink-0" id="btn-nego" onclick="openNegoModal()">
+<span class="material-symbols-outlined text-[18px]">handshake</span>
+<span>Tawar</span>
+</button>
+<!-- Buy with Escrow Primary CTA Button -->
+<button class="flex-1 h-11 rounded-lg bg-primary text-on-primary font-headline-sm text-headline-sm font-semibold flex items-center justify-center gap-1.5 shadow-[0_4px_16px_rgba(0,85,201,0.35)] active:scale-98 hover:brightness-105 transition-all" id="btn-buy" onclick="handleBuyEscrow()">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+<span>Beli via Escrow</span>
+</button>
+</div>
+</div>
+<!-- Nego Modal Sheet (Hidden by Default) -->
+<div class="fixed inset-0 z-50 bg-inverse-surface/60 backdrop-blur-sm hidden items-end justify-center" id="nego-modal">
+<div class="w-full max-w-lg bg-surface-container-lowest rounded-t-2xl p-space-lg flex flex-col gap-space-md shadow-2xl">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary-container/40 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[18px]">handshake</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Ajukan Tawaran Nego</h3>
+</div>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-outline" onclick="closeNegoModal()">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Harga awal produk: <strong class="text-on-surface font-price-sm">Rp 12.800.000</strong>. Ajukan harga wajar agar penjual menyetujui tawaranmu via rekber.
+      </p>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface font-medium">Harga Tawaran Anda</label>
+<div class="h-12 bg-surface-container-low rounded-lg px-3 flex items-center gap-2">
+<span class="font-price-md text-price-md text-primary font-bold">Rp</span>
+<input class="w-full bg-transparent font-price-md text-price-md font-bold text-on-surface focus:outline-none" id="nego-input" placeholder="Masukkan harga..." type="number" value="12200000"/>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 py-1.5 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface hover:bg-surface-container-high" onclick="setNegoPreset(12000000)">Rp 12.000.000</button>
+<button class="flex-1 py-1.5 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface hover:bg-surface-container-high" onclick="setNegoPreset(12400000)">Rp 12.400.000</button>
+<button class="flex-1 py-1.5 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface hover:bg-surface-container-high" onclick="setNegoPreset(12600000)">Rp 12.600.000</button>
+</div>
+<button class="w-full h-11 rounded-lg bg-secondary text-on-secondary font-headline-sm text-headline-sm font-semibold flex items-center justify-center gap-1 shadow-md" onclick="submitNego()">
+<span>Kirim Tawaran ke Rian</span>
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+</div>
+<!-- Toast Feedback Popup -->
+<div class="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-inverse-surface text-inverse-on-surface px-4 py-2 rounded-full font-label-md text-label-md shadow-xl hidden items-center gap-2 transition-opacity" id="toast-notif">
+<span class="material-symbols-outlined text-[16px] text-secondary-container">check_circle</span>
+<span id="toast-text">Tawaran harga terkirim!</span>
+</div>
+</div>
+<script>
+  // Photo Carousel Management
+  const photoDescriptions = [
+    "Crisp professional product studio photograph of a clean Sony A7 III mirrorless full-frame camera body standing upright against a soft neutral studio background, pristine magnesium alloy finish with zero scratches, gleaming clean glass sensor revealed with lens mount cover off, soft overhead diffusion box lighting, commercial e-commerce tech photography style in high resolution",
+    "Macro detail shot of full frame Sony 24 megapixel Exmor R CMOS sensor completely pristine with no dust spots, reflection of subtle blue optical coating under soft LED lighting",
+    "Back panel view of Sony A7 III displaying clean scratch-free tilting LCD screen showing live status menu, clean buttons, joystick and rubber eyecup intact",
+    "Computer screen screenshot showing camera shutter count diagnostic tool displaying Sony ILCE-7M3 actuation number 4120 with verified green safety status badge",
+    "High angle layout shot of Sony A7 III camera placed next to its original orange retail box, genuine Sony NP-FZ100 battery, USB-C wall adapter, branded strap, and official warranty card"
+  ];
+
+  function switchPhoto(index) {
+    const mainImg = document.getElementById('main-product-img');
+    const counter = document.getElementById('current-slide-num');
+    const thumbBtns = document.querySelectorAll('.thumb-btn');
+
+    if (!mainImg || !counter) return;
+
+    // Update active border style on thumbnails
+    thumbBtns.forEach((btn, i) => {
+      if (i === index) {
+        btn.classList.remove('bg-surface-container-high');
+        btn.classList.add('bg-primary', 'shadow-sm');
+      } else {
+        btn.classList.remove('bg-primary', 'shadow-sm');
+        btn.classList.add('bg-surface-container-high');
+      }
+    });
+
+    // Update counter
+    counter.textContent = (index + 1);
+
+    // Subtle fade micro-interaction
+    mainImg.style.opacity = '0.4';
+    mainImg.setAttribute('data-alt', photoDescriptions[index] || photoDescriptions[0]);
+    setTimeout(() => {
+      mainImg.style.opacity = '1';
+    }, 150);
+  }
+
+  // Wishlist Toggle
+  const wishlistBtn = document.getElementById('btn-wishlist');
+  const wishlistIcon = document.getElementById('icon-wishlist');
+  let isWishlisted = false;
+
+  if (wishlistBtn && wishlistIcon) {
+    wishlistBtn.addEventListener('click', () => {
+      isWishlisted = !isWishlisted;
+      if (isWishlisted) {
+        wishlistIcon.style.fontVariationSettings = "'FILL' 1";
+        wishlistIcon.classList.add('text-error');
+        showToast('Ditambahkan ke Wishlist ❤️');
+      } else {
+        wishlistIcon.style.fontVariationSettings = "'FILL' 0";
+        wishlistIcon.classList.remove('text-error');
+        showToast('Dihapus dari Wishlist');
+      }
+    });
+  }
+
+  // Follow Toggle
+  let isFollowing = false;
+  function toggleFollow() {
+    const btn = document.getElementById('btn-follow');
+    if (!btn) return;
+    isFollowing = !isFollowing;
+    if (isFollowing) {
+      btn.textContent = 'Mengikuti';
+      btn.classList.remove('bg-surface-container', 'text-on-surface');
+      btn.classList.add('bg-secondary-container/40', 'text-secondary');
+      showToast('Berhasil mengikuti Rian Tech Second');
+    } else {
+      btn.textContent = '+ Ikuti';
+      btn.classList.remove('bg-secondary-container/40', 'text-secondary');
+      btn.classList.add('bg-surface-container', 'text-on-surface');
+    }
+  }
+
+  // FAQ Accordion
+  function toggleFaq(id) {
+    const content = document.getElementById(id + '-content');
+    const icon = document.getElementById(id + '-icon');
+    if (!content || !icon) return;
+
+    if (content.classList.contains('hidden')) {
+      content.classList.remove('hidden');
+      icon.style.transform = 'rotate(180deg)';
+    } else {
+      content.classList.add('hidden');
+      icon.style.transform = 'rotate(0deg)';
+    }
+  }
+
+  // Nego Modal Controls
+  const negoModal = document.getElementById('nego-modal');
+  function openNegoModal() {
+    if (negoModal) {
+      negoModal.classList.remove('hidden');
+      negoModal.classList.add('flex');
+    }
+  }
+
+  function closeNegoModal() {
+    if (negoModal) {
+      negoModal.classList.add('hidden');
+      negoModal.classList.remove('flex');
+    }
+  }
+
+  function setNegoPreset(val) {
+    const input = document.getElementById('nego-input');
+    if (input) input.value = val;
+  }
+
+  function submitNego() {
+    const input = document.getElementById('nego-input');
+    const price = input ? parseInt(input.value).toLocaleString('id-ID') : '12.200.000';
+    closeNegoModal();
+    showToast('Tawaran Rp ' + price + ' dikirim ke penjual 🤝');
+  }
+
+  function handleBuyEscrow() {
+    showToast('Memproses checkout Escrow Rekber...');
+  }
+
+  // Global Toast Function
+  function showToast(msg) {
+    const toast = document.getElementById('toast-notif');
+    const toastText = document.getElementById('toast-text');
+    if (!toast || !toastText) return;
+
+    toastText.textContent = msg;
+    toast.classList.remove('hidden');
+    toast.classList.add('flex');
+
+    setTimeout(() => {
+      toast.classList.add('hidden');
+      toast.classList.remove('flex');
+    }, 2800);
+  }
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.05)]" data-active-classes="text-primary font-semibold"><div class="relative flex justify-around items-center h-16 px-container-padding-mobile max-w-lg mx-auto"><a aria-current="page" class="flex flex-col items-center justify-center w-14 h-12 transition-colors text-primary font-semibold" data-path="beranda" href="#"><span class="material-symbols-outlined text-[22px]">home</span><span class="font-label-sm text-label-sm mt-0.5">Beranda</span></a><a class="flex flex-col items-center justify-center w-14 h-12 text-on-surface-variant hover:text-on-surface transition-colors" data-path="kategori" href="#"><span class="material-symbols-outlined text-[22px]">grid_view</span><span class="font-label-sm text-label-sm mt-0.5">Kategori</span></a><div class="relative -top-5 flex flex-col items-center"><a class="w-14 h-14 rounded-full bg-tertiary-container text-on-tertiary-container shadow-[0_8px_20px_rgba(187,88,0,0.35)] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform" data-path="jual-produk" href="#"><span class="material-symbols-outlined text-[28px]">add</span></a><span class="font-label-sm text-label-sm text-on-surface-variant mt-1 font-semibold">Jual</span></div><a class="flex flex-col items-center justify-center w-14 h-12 text-on-surface-variant hover:text-on-surface relative transition-colors" data-path="chat" href="#"><span class="material-symbols-outlined text-[22px]">chat_bubble</span><span class="font-label-sm text-label-sm mt-0.5">Chat</span><span class="absolute top-1 right-3 w-2 h-2 rounded-full bg-primary"></span></a><a class="flex flex-col items-center justify-center w-14 h-12 text-on-surface-variant hover:text-on-surface transition-colors" data-path="akun" href="#"><span class="material-symbols-outlined text-[22px]">person</span><span class="font-label-sm text-label-sm mt-0.5">Akun</span></a></div></nav></body></html>

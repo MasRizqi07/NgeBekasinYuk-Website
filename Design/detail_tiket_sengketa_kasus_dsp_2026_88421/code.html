@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'on-tertiary': '#ffffff', 'surface-container-highest': '#e1e2ea', 'inverse-surface': '#2d3037', 'on-secondary': '#ffffff', 'outline': '#727787', 'on-primary-fixed-variant': '#00419e', 'primary-container': '#006bfb', 'primary-fixed': '#dae2ff', 'on-secondary-fixed': '#002114', 'secondary-fixed': '#63fcc0', 'on-error-container': '#93000a', 'on-error': '#ffffff', 'tertiary-fixed': '#ffdbc8', 'surface-variant': '#e1e2ea', 'on-background': '#191c22', 'secondary': '#006c4b', 'on-primary-container': '#fefcff', 'inverse-primary': '#b1c5ff', 'on-secondary-fixed-variant': '#005138', 'on-secondary-container': '#00714f', 'error-container': '#ffdad6', 'surface': '#f9f9ff', 'on-tertiary-container': '#fffbff', 'surface-container-low': '#f2f3fc', 'tertiary-fixed-dim': '#ffb68b', 'surface-container-lowest': '#ffffff', 'primary': '#0055c9', 'secondary-container': '#60f9bd', 'error': '#ba1a1a', 'tertiary-container': '#bb5800', 'surface-bright': '#f9f9ff', 'surface-container': '#ecedf6', 'on-primary': '#ffffff', 'on-surface-variant': '#424655', 'on-tertiary-fixed-variant': '#753400', 'outline-variant': '#c2c6d8', 'surface-tint': '#0057ce', 'inverse-on-surface': '#eff0f9', 'primary-fixed-dim': '#b1c5ff', 'on-tertiary-fixed': '#321200', 'on-primary-fixed': '#001946', 'surface-container-high': '#e6e8f0', 'tertiary': '#954500', 'on-surface': '#191c22', 'background': '#f9f9ff', 'surface-dim': '#d8dae2', 'secondary-fixed-dim': '#3fdfa5' }, borderRadius: { 'DEFAULT': '0.25rem', 'lg': '0.5rem', 'xl': '0.75rem', 'full': '9999px' }, spacing: { 'container-padding-desktop': '1.5rem', 'space-sm': '0.5rem', 'space-lg': '1.25rem', 'space-4xl': '4rem', 'space-xl': '1.5rem', 'space-2xs': '0.125rem', 'gutter-desktop': '1.25rem', 'space-xs': '0.25rem', 'container-padding-mobile': '1rem', 'space-base': '1rem', 'space-2xl': '2rem', 'space-3xl': '3rem', 'gutter-mobile': '0.75rem', 'space-md': '0.75rem' }, fontFamily: { 'body-lg': ['Inter'], 'body-sm': ['Inter'], 'label-md': ['Inter'], 'headline-md': ['Inter'], 'price-lg': ['Inter'], 'label-sm': ['Inter'], 'label-lg': ['Inter'], 'body-md': ['Inter'], 'headline-lg': ['Inter'], 'display-lg-mobile': ['Inter'], 'price-md': ['Inter'], 'display-lg': ['Inter'], 'headline-sm': ['Inter'], 'price-sm': ['Inter'], 'headline-lg-mobile': ['Inter'] }, fontSize: { 'body-lg': ['16px', { lineHeight: '24px', letterSpacing: '0em', fontWeight: '400' }], 'body-sm': ['12px', { lineHeight: '18px', letterSpacing: '0.005em', fontWeight: '400' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.01em', fontWeight: '500' }], 'headline-md': ['18px', { lineHeight: '26px', letterSpacing: '-0.01em', fontWeight: '600' }], 'price-lg': ['22px', { lineHeight: '28px', letterSpacing: '-0.02em', fontWeight: '700' }], 'label-sm': ['10px', { lineHeight: '14px', letterSpacing: '0.02em', fontWeight: '600' }], 'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.005em', fontWeight: '600' }], 'body-md': ['14px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '400' }], 'headline-lg': ['24px', { lineHeight: '32px', letterSpacing: '-0.015em', fontWeight: '600' }], 'display-lg-mobile': ['26px', { lineHeight: '34px', letterSpacing: '-0.015em', fontWeight: '700' }], 'price-md': ['16px', { lineHeight: '22px', letterSpacing: '-0.015em', fontWeight: '700' }], 'display-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.02em', fontWeight: '700' }], 'headline-sm': ['16px', { lineHeight: '24px', letterSpacing: '-0.005em', fontWeight: '600' }], 'price-sm': ['13px', { lineHeight: '18px', letterSpacing: '-0.01em', fontWeight: '700' }], 'headline-lg-mobile': ['20px', { lineHeight: '28px', letterSpacing: '-0.01em', fontWeight: '600' }] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-container-padding-mobile flex items-center justify-between gap-space-xs"><div class="flex items-center gap-space-xs min-w-0 flex-1"><button aria-label="Kembali" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors flex-shrink-0" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="A modern minimalist emblem logo for 'NgeBekasinYuk', a secure secondhand gadget marketplace. Flat vector style featuring a stylized shield merged with a tech gadget chip and a green checkmark, using trust blue (#0F6FFF) and vibrant escrow green (#00C48C). Clean white/transparent background.. Design context: - Primary color: #0f6fff
+- Font: inter
+- Mode: light
+- Roundness: rounded-md
+. The logo should be visually consistent with these brand tokens." class="h-7 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1W2nJIdxG94LzusQ04NxKEldvYdTOmP9hqtSQHFpVR0OBHbw6RlW_jXc6dLtl6xXr660H3Q43DazLRHwoZnONIiZ0dVrpAyJUX3NbOmJBR9cXVdsc3FOkjczMQdCPWXU9DBmYClpc1A59tecp5_Yz1bWwOahwrKIQZcmWyFlfl8pEgJ5_m5FTjpgNX_eMwVOdOEP8o6RloAXnOnuC1l34RoKhDAr6uDOdsonnVn-w2CeyGnXVpaSismwA"/><div class="flex flex-col min-w-0"><h1 class="font-headline-md text-headline-md text-on-surface truncate">Ruang Obrolan</h1><div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm"><span class="material-symbols-outlined text-[14px]">verified_user</span><span>Rekber Terlindungi</span></div></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Pilihan percakapan" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[22px]">more_vert</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full pt-16 bg-surface flex-1"><div class="flex flex-col w-full pb-24">
+<!-- Status & SLA Countdown Banner -->
+<section class="px-container-padding-mobile py-space-sm bg-tertiary-container/10">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-tertiary">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Batas Waktu Mediasi Tahap 1</span>
+</div>
+<span class="font-label-md text-label-md text-tertiary font-bold" id="sla-timer">44j : 31m : 58s</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-tertiary-container h-full rounded-full transition-all duration-500" style="width: 72%;"></div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Penjual wajib menanggapi &amp; mengunggah bukti QC packing sebelum batas waktu berakhir.
+      </p>
+</div>
+</section>
+<div class="px-container-padding-mobile flex flex-col gap-space-md mt-space-sm">
+<!-- Ticket Meta Pill Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between gap-space-sm flex-wrap">
+<div class="flex items-center gap-1.5 bg-surface-container-low px-2.5 py-1 rounded-full">
+<span class="font-label-md text-label-md text-on-surface-variant">Tiket</span>
+<span class="font-headline-sm text-headline-sm text-primary tracking-tight font-semibold" id="ticket-id">DSP-2026-88421</span>
+<button class="flex items-center text-outline hover:text-primary transition-colors ml-0.5" onclick="navigator.clipboard.writeText('DSP-2026-88421'); showToast('Nomor tiket berhasil disalin!');" title="Salin ID Kasus" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm px-2.5 py-1 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+          Menunggu Bukti Penjual
+        </span>
+</div>
+<!-- Secure Escrow Custody Banner -->
+<div class="bg-secondary/10 rounded-lg p-space-sm flex items-start gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-on-secondary text-[18px]">lock</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1">
+<span class="font-label-md text-label-md text-secondary font-bold">Dana Rp 8.500.000 Terkunci Aman</span>
+<span class="material-symbols-outlined text-secondary text-[16px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+            Kustodian Resmi PT NgeBekasin Nusantara. Saldo tidak akan dicairkan ke penjual sampai investigasi sengketa selesai atau disepakati kedua pihak.
+          </p>
+</div>
+</div>
+</div>
+<!-- Order & Product Snapshot -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-space-xs border-b-0">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Detail Pesanan Rekber</span>
+<span class="font-label-md text-label-md text-on-surface font-mono">#STX-2026-0701</span>
+</div>
+<div class="flex gap-space-sm items-center">
+<img class="w-16 h-16 rounded-lg object-cover flex-shrink-0 bg-surface-container" data-alt="Close up sharp studio product photo of a sleek Apple MacBook Air M1 in space grey color on a clean white tech desk, pristine keyboard and trackpad display" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkWG7Sz_sUpraniQ69WX24MQTgqzorNsedCM66Z-sAMVmJbe_erxsIGGuTRROnbNvph-GsH2BZ7rnMOL7FSTITdrGVQo8_U6GEm6QBSHAF1q7pSumvADjrnkgttEQ6UKQNOypMwiGv3NlE_6tw9gMw-V-d8otWmEQRmrBw-LyTETWOdynPL-0hvHzF4RC-z_2q3ATU_A85QDbaqBhFXkP5kgeO-LiWi0f1SIilqhPyllSbhDkIpeRD"/>
+<div class="flex flex-col min-w-0 flex-1">
+<h2 class="font-headline-sm text-headline-sm text-on-surface truncate">MacBook Air M1 256GB Space Grey</h2>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm px-1.5 py-0.5 rounded">Mulus 99%</span>
+<span class="text-outline text-body-sm">•</span>
+<span class="font-price-sm text-price-sm text-on-surface">Rp 8.500.000</span>
+</div>
+</div>
+</div>
+<!-- Parties Involved -->
+<div class="grid grid-cols-2 gap-space-xs pt-space-xs bg-surface-container-low rounded-lg p-2.5">
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-outline">Pembeli (Pelapor)</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">Budi Pratama</span>
+<span class="material-symbols-outlined text-secondary text-[14px]" style="font-variation-settings: 'FILL' 1;" title="e-KYC Verified">check_circle</span>
+</div>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-outline">Penjual (Terlapor)</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">Dimas Aditya</span>
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;" title="Power Merchant">workspace_premium</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Claim & Evidence Section -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-error">
+<span class="material-symbols-outlined text-[18px]">report_problem</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Klaim Cacat oleh Pembeli</h3>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Hari ini, 10:14 WIB</span>
+</div>
+<div class="bg-error-container/20 rounded-lg p-space-sm">
+<span class="font-label-md text-label-md text-on-surface font-semibold block mb-0.5">Masalah: Layar Garis Hijau (Greenline Defect)</span>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          "Barang baru saya unboxing dan nyalakan, langsung muncul garis hijau vertikal dari atas ke bawah. Padahal deskripsi seller bilang 100% mulus tanpa minus. Saya minta retur dan 100% dana refund."
+        </p>
+</div>
+<!-- Horizontal Evidence Gallery -->
+<div class="flex flex-col gap-1.5 mt-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Lampiran Bukti Pembeli (4 File)</span>
+<span class="font-label-sm text-label-sm text-primary">Ketuk untuk Memperbesar</span>
+</div>
+<div class="flex gap-space-sm overflow-x-auto pb-space-xs pt-1 -mx-1 px-1">
+<!-- Evidence 1: Video Unboxing -->
+<div class="relative w-32 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container cursor-pointer group shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Video thumbnail of an unboxing setup on a wooden desk, cutting transit seal with a box cutter, neutral ambient daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC29jtC_g0E8Ebu_0X4RWyAjiWKVVbrwQBZjg4Z35UDWY2XYISvdNz76TUKSqj8FiIOxf7RaugyG36NPyRj8jvTJ_qubPB_cafSCuPwFWHSHCA6Nc5QNKK9HqYzDTgquKbcTAbrNXxLJp6XsGVgRuk6h3X3m_Xhr5Ym5BBt8sbBCNnzmAVS_1r4cc4cvSURBmWqNUtl2Ci0zLYaLCE0bg8q4jaNl68OKc7f0tnbaY0Syfwb_m8M9TTM"/>
+<div class="absolute inset-0 bg-inverse-surface/40 flex flex-col items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[28px] group-hover:scale-110 transition-transform">play_circle</span>
+<span class="font-label-sm text-label-sm font-medium mt-0.5 bg-inverse-surface/70 px-1 rounded">03:42 Min</span>
+</div>
+<span class="absolute bottom-1 left-1 bg-on-background/80 text-on-primary font-label-sm text-[9px] px-1 rounded">Unboxing</span>
+</div>
+<!-- Evidence 2: Greenline defect photo -->
+<div class="relative w-32 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container cursor-pointer shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Macro photography of a laptop Retina screen showing a bright vertical green line artifact running down the LCD display on dark grey desktop background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADJHdHoyGrplpYiGTM0G5PWFyl7YY1M3LzSPsGyH-nWXg10VsvC0pvteWqygLY0Lt_7OfXUfHVb-L4D-12qSZPxThhXfYg3_bcJK3Mk5ueDKKq3uzF2z9nDGjOjpOy46RTRV_YiCqHGzZSH9c6kvIoWKAB7qnbCshhV6dnyNSAXGgdFViWYjtxNcaAjg-My-5KGNWDbiIbqgm4v7ovF3zARGh60u-QmsidMbcK1IV4nu-gf05U3xnx"/>
+<span class="absolute bottom-1 left-1 bg-error text-on-error font-label-sm text-[9px] px-1 rounded">Garis Hijau</span>
+</div>
+<!-- Evidence 3: Serial number check -->
+<div class="relative w-32 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container cursor-pointer shadow-sm">
+<img class="w-full h-full object-cover" data-alt="High detail photo of the serial number barcode printed on original white laptop packaging box matching the bottom engraved serial of the device" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0ofur9hFBK0U3j6tEgiJjb5gjswyMlqeXfbSEU__gf5cm8pxp0Urt5NVtKkoqziUR9_2pB-lcpwyOLoFQt-uxQ66d6ASIh8Jx-11eCcBEBCUSiCayzO62WeZjeIoOWkoxayONvEtl9RI7QoIDSX0RroE2NAMDp_O2a8q3JkhQMmJsi4EbSl7eOa-3Sw8hgnfntYKZf1xqWx1grQ4acgWC_nXN0xtv3ZjJRaRGd-e8Mr7bgi29oB3G"/>
+<span class="absolute bottom-1 left-1 bg-on-background/80 text-on-primary font-label-sm text-[9px] px-1 rounded">Cek SN Dus</span>
+</div>
+<!-- Evidence 4: Outer box shipping condition -->
+<div class="relative w-32 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container cursor-pointer shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Photo of corrugated cardboard shipping package with plastic bubble wrap and J&amp;T Express thermal label intact without puncture holes" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-wyzoqKJA0VQmGiRLx_kh3nWaxMxuqRu2Bt_zJlwx_V4KkQnSdigCfIehMRFzCuF_ujC2l8u1xhu4Pd1mNMKwGNoVc5PW8lAp4YquBYqZYIrpyEOQL7iJ3_7V4TIyo9IWFcGXof_bjIDCFRkaWNH05JiGUJ9gIAXMX8FrwJLcdGDGkMbb0BBF7-TUz30GwENr5fGHvLI0E1tgHoiJJGEk-4FZXwZS-zh5cnLjd9mez04_Kt6I5J2l"/>
+<span class="absolute bottom-1 left-1 bg-on-background/80 text-on-primary font-label-sm text-[9px] px-1 rounded">Kardus Resi</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Seller Response Section & Dropzone -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-outline text-[20px]">storefront</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Tanggapan Penjual</h3>
+</div>
+<span class="font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed px-2 py-0.5 rounded-full font-medium">Pending</span>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col items-center text-center gap-space-xs">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary mb-1">
+<span class="material-symbols-outlined text-[24px]">video_file</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Unggah Bukti QC &amp; Video Packing</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-xs">
+          Kirimkan video sebelum paket dikirim yang menampilkan fungsi layar menyala normal &amp; penempelan segel anti-tamper.
+        </p>
+<button class="mt-space-xs bg-primary text-on-primary px-space-base py-2 rounded-lg font-label-lg text-label-lg flex items-center gap-1.5 shadow-md active:scale-98 transition-transform" onclick="document.getElementById('seller-file-input').click()" type="button">
+<span class="material-symbols-outlined text-[18px]">cloud_upload</span>
+          Pilih File Bukti (Maks. 200MB)
+        </button>
+<input accept="video/*,image/*" class="hidden" id="seller-file-input" onchange="showToast('File QC siap diunggah!')" type="file"/>
+</div>
+</div>
+<!-- Settlement Proposals / Pilihan Opsi Mediasi -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Opsi Solusi Rekomendasi Mediator</h3>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">2 Pilihan Terbuka</span>
+</div>
+<!-- Option A -->
+<label class="cursor-pointer bg-surface-container-low rounded-xl p-space-sm flex items-start gap-space-sm hover:bg-surface-container transition-colors">
+<input checked="" class="mt-1 accent-primary w-4 h-4" name="settlement_option" type="radio" value="retur"/>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg text-on-surface font-bold">Opsi A: Retur Penuh &amp; Refund 100%</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Unit dikirim kembali ke penjual. Dana <strong class="text-on-surface">Rp 8.500.000</strong> dikembalikan penuh ke pembeli setelah unit diterima. Biaya ongkir retur ditanggung penjual.
+          </p>
+</div>
+</label>
+<!-- Option B -->
+<label class="cursor-pointer bg-surface-container-low rounded-xl p-space-sm flex items-start gap-space-sm hover:bg-surface-container transition-colors">
+<input class="mt-1 accent-primary w-4 h-4" name="settlement_option" type="radio" value="partial"/>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg text-on-surface font-bold">Opsi B: Kompensasi Servis LCD (Refund Parsial)</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Pembeli tetap menyimpan laptop. Penjual setuju mentransfer refund kompensasi sebesar <strong class="text-primary font-bold">Rp 1.800.000</strong> untuk perbaikan layar, sisa dana Rp 6.700.000 dicairkan ke penjual.
+          </p>
+</div>
+</label>
+</div>
+<!-- Tri-Party Mediation Chat Timeline -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[20px]">forum</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Ruang Komunikasi 3 Pihak</h3>
+</div>
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded-full font-medium">Diawasi Tim Kepatuhan</span>
+</div>
+<div class="flex flex-col gap-space-md">
+<!-- Admin Official Message -->
+<div class="flex gap-space-sm items-start">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary flex-shrink-0 font-label-sm font-bold">
+<span class="material-symbols-outlined text-[16px]">shield_person</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-1.5 mb-1">
+<span class="font-label-md text-label-md text-primary font-semibold">Sarah L. (Admin Mediasi)</span>
+<span class="bg-primary/10 text-primary font-label-sm text-[10px] px-1.5 py-0.2 rounded-full font-medium">Verified Staff</span>
+<span class="font-label-sm text-label-sm text-outline ml-auto">10:25</span>
+</div>
+<div class="bg-primary-fixed/30 rounded-2xl rounded-tl-sm p-space-sm text-on-surface">
+<p class="font-body-md text-body-md leading-relaxed">
+                Halo Budi dan Dimas. Tiket sengketa resmi dibuka. Dana transaksi senilai <strong>Rp 8.500.000 telah dibekukan sementara di escrow</strong>. Silakan pihak penjual (@Dimas Aditya) mengunggah video serial number dan pengujian fungsi layar sebelum paket diserahkan ke J&amp;T Express dalam 44 jam ke depan.
+              </p>
+</div>
+</div>
+</div>
+<!-- Buyer Response -->
+<div class="flex gap-space-sm items-start">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant flex-shrink-0 font-label-sm font-bold">
+            BP
+          </div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-1.5 mb-1">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Budi Pratama (Pembeli)</span>
+<span class="font-label-sm text-label-sm text-outline ml-auto">10:38</span>
+</div>
+<div class="bg-surface-container-low rounded-2xl rounded-tl-sm p-space-sm text-on-surface">
+<p class="font-body-md text-body-md leading-relaxed">
+                Baik Mbak Admin, video unboxing sudah saya sertakan di atas. Direkam lengkap tanpa jeda mulai dari paket utuh segel lakban sampai macbook dinyalakan pertama kali. Saya siap retur jika seller tidak mau opsi kompensasi LCD.
+              </p>
+</div>
+</div>
+</div>
+<!-- System Activity Log Event -->
+<div class="flex items-center justify-center my-space-xs">
+<div class="bg-surface-container px-3 py-1 rounded-full flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">notifications_active</span>
+            Notifikasi SMS &amp; WhatsApp SLA telah dikirimkan ke Penjual
+          </div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Floating Action Dock -->
+<div class="fixed bottom-0 inset-x-0 bg-surface-container-lowest/95 backdrop-blur-md p-container-padding-mobile shadow-[0_-4px_16px_rgba(0,0,0,0.06)] pb-safe z-40">
+<div class="flex flex-col gap-2 max-w-lg mx-auto w-full">
+<button class="w-full h-12 bg-primary hover:bg-primary-container text-on-primary rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(15,111,255,0.32)] active:scale-98 transition-all" onclick="handleReplyModal()" type="button">
+<span class="material-symbols-outlined text-[20px]">send</span>
+<span>Kirim Bukti &amp; Balas Mediator</span>
+</button>
+<div class="flex items-center justify-center gap-4 pt-0.5">
+<button class="flex items-center gap-1.5 text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md py-1" onclick="showToast('Menghubungkan ke Hotline Escrow 24/7...')" type="button">
+<span class="material-symbols-outlined text-[16px] text-secondary">support_agent</span>
+<span>Hotline Darurat Escrow (24/7)</span>
+</button>
+<span class="text-outline text-body-sm">•</span>
+<button class="text-on-surface-variant hover:text-primary font-label-md text-label-md py-1" onclick="showToast('Panduan Kebijakan Sengketa Terbuka')" type="button">
+          Aturan Garansi Rekber
+        </button>
+</div>
+</div>
+</div>
+<!-- Toast Notification Template -->
+<div class="fixed top-20 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface px-4 py-2 rounded-full font-label-md text-label-md shadow-xl transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2" id="toast">
+<span class="material-symbols-outlined text-secondary text-[18px]">check_circle</span>
+<span id="toast-text">Notifikasi</span>
+</div>
+</div>
+<script>
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toast-text');
+    if (!toast || !toastText) return;
+    toastText.textContent = message;
+    toast.classList.remove('opacity-0', 'pointer-events-none');
+    toast.classList.add('opacity-100');
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'pointer-events-none');
+      toast.classList.remove('opacity-100');
+    }, 2800);
+  }
+
+  function handleReplyModal() {
+    const userReply = prompt('Tulis pesan tanggapan atau konfirmasi solusi mediasi:');
+    if (userReply && userReply.trim().length > 0) {
+      showToast('Pesan & bukti berhasil dikirimkan ke ruang mediasi!');
+    }
+  }
+
+  // Visual countdown simulation
+  (function() {
+    let totalSeconds = (44 * 3600) + (31 * 60) + 58;
+    const timerElem = document.getElementById('sla-timer');
+    if (!timerElem) return;
+
+    setInterval(() => {
+      if (totalSeconds <= 0) return;
+      totalSeconds--;
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      timerElem.textContent = `${hours}j : ${minutes < 10 ? '0' : ''}${minutes}m : ${seconds < 10 ? '0' : ''}${seconds}s`;
+    }, 1000);
+  })();
+</script></main></body></html>

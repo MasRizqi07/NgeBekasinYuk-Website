@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>NgeBekasinYuk Enterprise Admin Console</title><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      "colors": {
+        "primary": "#0055c9",
+        "secondary-container": "#60f9bd",
+        "on-primary": "#ffffff",
+        "on-error-container": "#93000a",
+        "on-secondary-container": "#00714f",
+        "surface-tint": "#0057ce",
+        "inverse-primary": "#b1c5ff",
+        "on-primary-fixed-variant": "#00419e",
+        "on-secondary-fixed": "#002114",
+        "tertiary-fixed": "#ffdbc8",
+        "on-secondary-fixed-variant": "#005138",
+        "surface-bright": "#f9f9ff",
+        "inverse-on-surface": "#eff0f9",
+        "primary-fixed-dim": "#b1c5ff",
+        "on-primary-fixed": "#001946",
+        "surface-container-lowest": "#ffffff",
+        "on-primary-container": "#fefcff",
+        "surface-container-low": "#f2f3fc",
+        "on-tertiary-container": "#fffbff",
+        "primary-container": "#006bfb",
+        "outline-variant": "#c2c6d8",
+        "secondary": "#006c4b",
+        "inverse-surface": "#2d3037",
+        "on-tertiary-fixed": "#321200",
+        "primary-fixed": "#dae2ff",
+        "surface": "#f9f9ff",
+        "on-tertiary-fixed-variant": "#753400",
+        "error-container": "#ffdad6",
+        "surface-dim": "#d8dae2",
+        "surface-container": "#ecedf6",
+        "surface-variant": "#e1e2ea",
+        "secondary-fixed": "#63fcc0",
+        "tertiary-container": "#bb5800",
+        "surface-container-highest": "#e1e2ea",
+        "error": "#ba1a1a",
+        "outline": "#727787",
+        "on-error": "#ffffff",
+        "surface-container-high": "#e6e8f0",
+        "on-tertiary": "#ffffff",
+        "tertiary-fixed-dim": "#ffb68b",
+        "secondary-fixed-dim": "#3fdfa5",
+        "on-surface-variant": "#424655",
+        "background": "#f9f9ff",
+        "tertiary": "#954500",
+        "on-surface": "#191c22",
+        "on-background": "#191c22",
+        "on-secondary": "#ffffff"
+      },
+      "borderRadius": {
+        "DEFAULT": "0.25rem",
+        "lg": "0.5rem",
+        "xl": "0.75rem",
+        "full": "9999px"
+      },
+      "spacing": {
+        "space-4xl": "4rem",
+        "space-2xs": "0.125rem",
+        "container-padding-desktop": "1.5rem",
+        "gutter-desktop": "1.25rem",
+        "gutter-mobile": "0.75rem",
+        "space-lg": "1.25rem",
+        "space-sm": "0.5rem",
+        "space-md": "0.75rem",
+        "space-2xl": "2rem",
+        "space-base": "1rem",
+        "space-xl": "1.5rem",
+        "space-xs": "0.25rem",
+        "space-3xl": "3rem",
+        "container-padding-mobile": "1rem"
+      },
+      "fontFamily": {
+        "body-lg": ["Inter"],
+        "headline-sm": ["Inter"],
+        "body-md": ["Inter"],
+        "body-sm": ["Inter"],
+        "display-lg": ["Inter"],
+        "price-md": ["Inter"],
+        "label-lg": ["Inter"],
+        "price-lg": ["Inter"],
+        "headline-lg-mobile": ["Inter"],
+        "price-sm": ["Inter"],
+        "headline-md": ["Inter"],
+        "headline-lg": ["Inter"],
+        "label-sm": ["Inter"],
+        "label-md": ["Inter"],
+        "display-lg-mobile": ["Inter"]
+      },
+      "fontSize": {
+        "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+        "headline-sm": ["16px", {"lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600"}],
+        "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400"}],
+        "body-sm": ["12px", {"lineHeight": "18px", "letterSpacing": "0.005em", "fontWeight": "400"}],
+        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+        "price-md": ["16px", {"lineHeight": "22px", "letterSpacing": "-0.015em", "fontWeight": "700"}],
+        "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.005em", "fontWeight": "600"}],
+        "price-lg": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+        "headline-lg-mobile": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+        "price-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+        "headline-md": ["18px", {"lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+        "label-sm": ["10px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+        "display-lg-mobile": ["26px", {"lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "700"}]
+      }
+    }
+  }
+}</script></head><body class="bg-background font-body-md text-body-md text-on-surface min-h-screen"><aside class="fixed left-0 top-0 bottom-0 w-72 bg-surface-container-lowest z-50 flex flex-col shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-container-padding-desktop flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="NgeBekasinYuk Enterprise" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W2nJIdxG94LzusQ04NxKEldvYdTOmP9hqtSQHFpVR0OBHbw6RlW_jXc6dLtl6xXr660H3Q43DazLRHwoZnONIiZ0dVrpAyJUX3NbOmJBR9cXVdsc3FOkjczMQdCPWXU9DBmYClpc1A59tecp5_Yz1bWwOahwrKIQZcmWyFlfl8pEgJ5_m5FTjpgNX_eMwVOdOEP8o6RloAXnOnuC1l34RoKhDAr6uDOdsonnVn-w2CeyGnXVpaSismwA"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface font-bold tracking-tight">NgeBekasinYuk</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Ops & Mediation</span></div></div></div><div class="px-container-padding-desktop py-space-sm"><div class="flex items-center justify-between px-space-md py-space-xs rounded bg-surface-container-low"><div class="flex items-center gap-space-xs"><span class="w-2 h-2 rounded-full bg-secondary"></span><span class="font-label-sm text-label-sm font-semibold text-on-surface">PROD-CLUSTER-JKT</span></div><span class="font-label-sm text-label-sm text-secondary font-bold">99.98%</span></div></div><div class="flex-1 overflow-y-auto px-space-md py-space-sm"><div class="px-space-md py-space-xs font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Core Mediation</div><nav class="space-y-space-xs flex flex-col" data-active-classes="bg-primary text-on-primary font-bold shadow-[0_4px_16px_0_rgba(15,111,255,0.32)]"><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="overview" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[20px]">dashboard</span><span class="font-body-md text-body-md">Dashboard</span></div></a><a aria-current="page" class="flex items-center justify-between px-space-md py-space-sm rounded-lg transition-colors bg-primary text-on-primary font-bold shadow-[0_4px_16px_0_rgba(15,111,255,0.32)]" data-path="mediasi-sengketa" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[20px]">gavel</span><span class="font-body-md text-body-md">Mediasi Sengketa</span></div><span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container font-bold">14</span></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="review-e-kyc" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[20px]">verified_user</span><span class="font-body-md text-body-md">Review e-KYC</span></div><span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed font-bold">28</span></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="moderasi-listing" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[20px]">devices</span><span class="font-body-md text-body-md">Moderasi Listing</span></div></a><div class="pt-space-md px-space-md py-space-xs font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Financial & Safety</div><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="manajemen-escrow" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[20px]">account_balance</span><span class="font-body-md text-body-md">Escrow & Finansial</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="audit-log" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[20px]">security</span><span class="font-body-md text-body-md">Audit Log Keamanan</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="pengaturan-sistem" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-body-md text-body-md">Pengaturan Sistem</span></div></a></nav></div><div class="p-space-md bg-surface-container-low m-space-md rounded-xl flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col min-w-0 flex-1"><span class="font-label-md text-label-md text-on-surface font-semibold truncate">Sarah Lestari</span><span class="font-label-sm text-label-sm text-on-surface-variant truncate">Risk & Ops Lead</span></div><span class="material-symbols-outlined text-on-surface-variant text-[18px]">more_vert</span></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-container-padding-desktop"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs font-label-md text-label-md text-on-surface-variant"><span class="text-on-surface-variant">Admin Hub</span><span class="material-symbols-outlined text-[14px]">chevron_right</span><span class="text-primary font-semibold">Pusat Sengketa & Operasi</span></div><span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed font-bold">PROD-CLUSTER-JKT</span></div><div class="flex items-center gap-space-lg"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-space-md text-on-surface-variant text-[20px]">search</span><input class="w-80 h-10 pl-10 pr-space-md bg-surface-container-low rounded-xl font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary" placeholder="Cari No. Tiket, No. Rekber, IMEI, UID User..." type="text"/></div><div class="relative flex items-center"><button class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-low text-on-surface hover:bg-surface-container-high transition-colors relative"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-error rounded-full ring-2 ring-surface"></span></button></div><div class="flex items-center gap-space-sm pl-space-md"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="hidden xl:flex flex-col text-right"><span class="font-label-md text-label-md text-on-surface font-semibold">Sarah Lestari</span><span class="font-label-sm text-label-sm text-secondary font-medium">Super Admin - Risk & Ops Lead</span></div></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-container-padding-desktop py-space-xl"><div class="flex flex-col w-full space-y-space-xl">
+<!-- TOP KPI METRIC CARDS -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-lg">
+<!-- Metric 1: Total GMV -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Total GMV Bulan Ini</span>
+<span class="font-price-lg text-price-lg text-on-surface font-bold mt-space-xs">Rp 3.842.500.000</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-secondary-fixed/50 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">payments</span>
+</div>
+</div>
+<div class="mt-space-md flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-bold bg-secondary-fixed text-on-secondary-fixed">
+<span class="material-symbols-outlined text-[14px] mr-0.5">trending_up</span>+18.4% MoM
+          </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">vs Sept 2026</span>
+</div>
+<!-- Inline Sparkline SVG -->
+<svg class="w-20 h-6 text-secondary overflow-visible" fill="none" viewbox="0 0 80 24">
+<path d="M0 20L15 17L30 19L45 11L60 14L80 3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+<path d="M0 20L15 17L30 19L45 11L60 14L80 3V24H0Z" fill="currentColor" fill-opacity="0.08"></path>
+</svg>
+</div>
+</div>
+<!-- Metric 2: Escrow Aktif -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Transaksi Escrow Aktif</span>
+<span class="font-price-lg text-price-lg text-on-surface font-bold mt-space-xs">428 Transaksi</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">shield_lock</span>
+</div>
+</div>
+<div class="mt-space-md flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-md text-label-md text-primary font-semibold">Rp 1.240.800.000</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">dana kustodian</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">BCA & Bank Mandiri</span>
+</div>
+</div>
+<!-- Metric 3: Tiket Dispute Terbuka -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Tiket Dispute Terbuka</span>
+<div class="flex items-baseline gap-space-sm mt-space-xs">
+<span class="font-price-lg text-price-lg text-on-surface font-bold">14 Kasus</span>
+<span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container font-bold">5 High-Risk</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-error-container flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-[22px]">gavel</span>
+</div>
+</div>
+<div class="mt-space-md flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-error font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">timer</span>
+          4 Kasus SLA < 6 Jam
+        </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Rata-rata 11.2 Jam</span>
+</div>
+</div>
+<!-- Metric 4: e-KYC Verification -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">User Terverifikasi e-KYC</span>
+<span class="font-price-lg text-price-lg text-on-surface font-bold mt-space-xs">1.284 Penjual</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[22px]">verified_user</span>
+</div>
+</div>
+<div class="mt-space-md flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-md text-label-md text-tertiary font-bold">28 Antrean</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Menunggu Review KTP/Dukcapil</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-bold">98.2% Lolos</span>
+</div>
+</div>
+</section>
+<!-- QUICK FILTER & OPS CONTROL BAR -->
+<section class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex flex-wrap items-center gap-space-sm">
+<!-- Date Range Picker Pill -->
+<div class="flex items-center gap-space-xs bg-surface-container-low px-space-md py-space-xs rounded-full cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">calendar_today</span>
+<span class="font-label-md text-label-md text-on-surface font-medium">1 Okt 2026 - 26 Okt 2026 (Bulan Ini)</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">expand_more</span>
+</div>
+<!-- Filter Chips -->
+<button class="px-3.5 py-1.5 rounded-full font-label-md text-label-md font-semibold bg-primary text-on-primary shadow-sm hover:opacity-95 transition-all">
+        Semua Tiket (14)
+      </button>
+<button class="px-3.5 py-1.5 rounded-full font-label-md text-label-md font-semibold bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition-all flex items-center gap-1">
+<span>🔥 High Value > Rp 5jt</span>
+<span class="w-5 h-5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm flex items-center justify-center">5</span>
+</button>
+<button class="px-3.5 py-1.5 rounded-full font-label-md text-label-md font-semibold bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition-all flex items-center gap-1">
+<span>⚠️ Resi Invalid</span>
+<span class="w-5 h-5 rounded-full bg-surface-container-highest text-on-surface font-label-sm text-label-sm flex items-center justify-center">3</span>
+</button>
+<button class="px-3.5 py-1.5 rounded-full font-label-md text-label-md font-semibold bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition-all flex items-center gap-1">
+<span>🚫 Indikasi Fraud / Palsu</span>
+<span class="w-5 h-5 rounded-full bg-error text-on-error font-label-sm text-label-sm flex items-center justify-center">2</span>
+</button>
+<button class="px-3.5 py-1.5 rounded-full font-label-md text-label-md font-semibold bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high transition-all flex items-center gap-1">
+<span>⏳ SLA Menipis < 6 Jam</span>
+<span class="w-5 h-5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm flex items-center justify-center">4</span>
+</button>
+</div>
+<!-- Ops Actions -->
+<div class="flex items-center gap-space-xs">
+<button class="flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-surface-container-low text-on-surface hover:bg-surface-container-high transition-colors font-label-md text-label-md font-medium" title="Sinkronisasi Webhook Gateway & Logistik">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+<span>Refresh Webhook Log</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-surface-container-low text-on-surface hover:bg-surface-container-high transition-colors font-label-md text-label-md font-medium">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Ekspor CSV / Audit</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold shadow-sm hover:opacity-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+<span>Sesi Mediasi Cepat</span>
+</button>
+</div>
+</section>
+<!-- TWO-PANE SPLIT DISPUTE RESOLUTION WORKSPACE -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT PANE: TICKET QUEUE LIST (~360px on wide desktops) -->
+<div class="lg:col-span-4 xl:col-span-4 space-y-space-md">
+<!-- Search & Sorting Header -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm space-y-space-sm">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-space-md top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="w-full h-10 pl-10 pr- space-md bg-surface-container-low rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary" placeholder="No. Pesanan, Buyer, Seller, Case ID..." type="text"/>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant px-space-xs">
+<span>Menampilkan 14 antrean sengketa</span>
+<button class="flex items-center gap-0.5 hover:text-on-surface transition-colors">
+<span>Prioritas Tertinggi</span>
+<span class="material-symbols-outlined text-[14px]">arrow_downward</span>
+</button>
+</div>
+</div>
+<!-- Queue Cards Container -->
+<div class="space-y-space-sm">
+<!-- Card 1: ACTIVE / SELECTED -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-md border-l-4 border-l-primary cursor-pointer hover:bg-surface-container-low/40 transition-all relative overflow-hidden">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm font-bold text-primary">#DSP-2026-0812</span>
+<span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container font-bold uppercase">URGENT > 5JT</span>
+</div>
+<!-- SLA Warning Pill Pulsing -->
+<div class="flex items-center gap-1 bg-tertiary-fixed text-on-tertiary-fixed px-2 py-0.5 rounded-full font-label-sm text-label-sm font-bold animate-pulse">
+<span class="material-symbols-outlined text-[13px]">hourglass_top</span>
+<span>Sisa 04:12:00</span>
+</div>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold truncate">MacBook Air M1 256GB Space Grey</h4>
+<span class="font-body-sm text-body-sm text-on-surface-variant block mt-0.5">Order STX-2026-88421 • Kategori: <span class="text-error font-medium">Barang Rusak / Layar Defect</span></span>
+<div class="mt-space-md pt-space-xs border-t border-surface-container flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="flex -space-x-1.5 overflow-hidden">
+<div class="inline-block h-6 w-6 rounded-full bg-primary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold text-on-primary-fixed">B</div>
+<div class="inline-block h-6 w-6 rounded-full bg-secondary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold text-on-secondary-fixed">D</div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface">Budi P. <span class="text-on-surface-variant font-normal">vs</span> Dimas A.</span>
+</div>
+<span class="font-price-md text-price-md text-primary font-bold">Rp 8.500.000</span>
+</div>
+</div>
+<!-- Card 2: Queued Item -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm cursor-pointer hover:bg-surface-container-low transition-all">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm font-bold text-on-surface-variant">#DSP-2026-0811</span>
+<span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-high text-on-surface font-semibold uppercase">RESI ANOMALI</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-low text-on-surface-variant px-2 py-0.5 rounded-full font-label-sm text-label-sm font-medium">
+<span class="material-symbols-outlined text-[13px]">schedule</span>
+<span>Sisa 08:45:12</span>
+</div>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold truncate">Sony A7 III Body Only (SC 12.400)</h4>
+<span class="font-body-sm text-body-sm text-on-surface-variant block mt-0.5">Order STX-2026-88390 • Kategori: Pengiriman Terhenti</span>
+<div class="mt-space-md pt-space-xs border-t border-surface-container flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="flex -space-x-1.5 overflow-hidden">
+<div class="inline-block h-6 w-6 rounded-full bg-surface-container-highest flex items-center justify-center font-label-sm text-label-sm font-bold text-on-surface">R</div>
+<div class="inline-block h-6 w-6 rounded-full bg-surface-container-high flex items-center justify-center font-label-sm text-label-sm font-bold text-on-surface">K</div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface">Rian S. <span class="text-on-surface-variant font-normal">vs</span> KameraJakarta</span>
+</div>
+<span class="font-price-md text-price-md text-on-surface font-bold">Rp 9.750.000</span>
+</div>
+</div>
+<!-- Card 3: Indikasi Palsu -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm cursor-pointer hover:bg-surface-container-low transition-all">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm font-bold text-on-surface-variant">#DSP-2026-0809</span>
+<span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container font-semibold uppercase">INDIKASI PALSU</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-low text-on-surface-variant px-2 py-0.5 rounded-full font-label-sm text-label-sm font-medium">
+<span class="material-symbols-outlined text-[13px]">schedule</span>
+<span>Sisa 18:20:00</span>
+</div>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold truncate">AirPods Pro Gen 2 USB-C Garansi Resmi</h4>
+<span class="font-body-sm text-body-sm text-on-surface-variant block mt-0.5">Order STX-2026-88210 • Serial Number Tidak Terdaftar Apple</span>
+<div class="mt-space-md pt-space-xs border-t border-surface-container flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="flex -space-x-1.5 overflow-hidden">
+<div class="inline-block h-6 w-6 rounded-full bg-surface-container-highest flex items-center justify-center font-label-sm text-label-sm font-bold text-on-surface">A</div>
+<div class="inline-block h-6 w-6 rounded-full bg-surface-container-high flex items-center justify-center font-label-sm text-label-sm font-bold text-on-surface">V</div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface">Anisa T. <span class="text-on-surface-variant font-normal">vs</span> VaporTechID</span>
+</div>
+<span class="font-price-md text-price-md text-on-surface font-bold">Rp 2.450.000</span>
+</div>
+</div>
+<!-- Card 4: Hardware Defect -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm cursor-pointer hover:bg-surface-container-low transition-all">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm font-bold text-on-surface-variant">#DSP-2026-0805</span>
+<span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-high text-on-surface font-semibold uppercase">HARDWARE</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-low text-on-surface-variant px-2 py-0.5 rounded-full font-label-sm text-label-sm font-medium">
+<span class="material-symbols-outlined text-[13px]">schedule</span>
+<span>Sisa 21:04:15</span>
+</div>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold truncate">ASUS ROG Strix RTX 3080 10GB OC</h4>
+<span class="font-body-sm text-body-sm text-on-surface-variant block mt-0.5">Order STX-2026-88155 • Crash saat Furmark 4K</span>
+<div class="mt-space-md pt-space-xs border-t border-surface-container flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="flex -space-x-1.5 overflow-hidden">
+<div class="inline-block h-6 w-6 rounded-full bg-surface-container-highest flex items-center justify-center font-label-sm text-label-sm font-bold text-on-surface">F</div>
+<div class="inline-block h-6 w-6 rounded-full bg-surface-container-high flex items-center justify-center font-label-sm text-label-sm font-bold text-on-surface">M</div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface">Fahmi K. <span class="text-on-surface-variant font-normal">vs</span> MegaRigGaming</span>
+</div>
+<span class="font-price-md text-price-md text-on-surface font-bold">Rp 6.850.000</span>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT PANE: MEDIATION WORKSPACE & EVIDENCE INSPECTOR -->
+<div class="lg:col-span-8 xl:col-span-8 space-y-space-lg">
+<!-- Workspace Header & Case Metadata -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm space-y-space-md">
+<div class="flex flex-wrap items-start justify-between gap-space-md">
+<div class="space-y-space-2xs">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface">Sengketa #DSP-2026-0812</span>
+<span class="px-2.5 py-1 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container font-bold">PRIORITAS TINGGI</span>
+<span class="px-2.5 py-1 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed font-bold">ESCROW HELD</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+              No. Pesanan: <span class="font-semibold text-on-surface">STX-2026-88421</span> • Dibuat: 26 Okt 2026, 12:45 WIB oleh Pembeli
+            </p>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block">Dana Escrow Ditahan</span>
+<span class="font-price-lg text-price-lg text-primary font-bold">Rp 8.500.000</span>
+</div>
+</div>
+<!-- Escrow Custodian & Courier Meta Strip -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md pt-space-md border-t border-surface-container">
+<div class="flex items-start gap-space-sm bg-surface-container-low p-space-md rounded-xl">
+<span class="material-symbols-outlined text-primary text-[22px] mt-0.5">account_balance</span>
+<div class="space-y-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Payment & Escrow Lock</span>
+<p class="font-body-sm text-body-sm text-on-surface font-semibold">MIDTRANS-CHARG-998214-ID</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Rekening Kustodian BCA PT NgeBekasin Yuk (OJK Monitored)</p>
+</div>
+</div>
+<div class="flex items-start gap-space-sm bg-surface-container-low p-space-md rounded-xl">
+<span class="material-symbols-outlined text-secondary text-[22px] mt-0.5">local_shipping</span>
+<div class="space-y-space-2xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Kurir & Logistik Terpadu</span>
+<p class="font-body-sm text-body-sm text-on-surface font-semibold">J&T Express • Resi: JT9928174620</p>
+<p class="font-body-sm text-body-sm text-secondary font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> DELIVERED (26 Okt 11:28 WIB)
+              </p>
+</div>
+</div>
+</div>
+</div>
+<!-- SIDE-BY-SIDE COMPARATIVE EVIDENCE INSPECTION -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+<!-- BUYER EVIDENCE PANE -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm space-y-space-md relative border-t-4 border-t-primary">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center font-bold text-on-primary-fixed">B</div>
+<div>
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface block">Budi Pratama</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Pembeli (Penggugat) • Anggota Sejak 2024</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm bg-surface-container-high text-on-surface font-semibold">Skor Trust: 98</span>
+</div>
+<!-- Video Unboxing Player Mock -->
+<div class="relative rounded-xl overflow-hidden bg-inverse-surface group aspect-video flex items-center justify-center shadow-inner">
+<img class="absolute inset-0 w-full h-full object-cover opacity-60" data-alt="Close-up view of an unboxed sleek MacBook Air screen on a wooden desk displaying a bright vertical neon green glitch line across the retina display, cinematic soft lighting from window, high-fidelity technology product photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRTbFAOv8W_XbBkuklHWrt6clzjiyXf5Jt_WWzjJ4HmwL8_nptcJqQmcjAdS-QYUE1LqpYCaB-Vzz2MfF2vom66TKpqlXzKrhEJaoETa-9M0vp7IWxRIamaZazLGTjnpgGxsV6ubT9AGGEc2hylFbOXkv4fcfwU3KL1BpJkkoKcXEgO5JvPCtQMbyqmi1WWYNHChBoODldZ_Yy9GO5MxtD2kFwOAicSe8wCvD2jYHFariTHu-Pb_wU"/>
+<div class="relative z-10 flex flex-col items-center gap-space-xs text-center p-space-md">
+<button class="w-12 h-12 rounded-full bg-primary/90 text-on-primary flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[28px] pl-1">play_arrow</span>
+</button>
+<span class="font-label-md text-label-md text-on-primary font-semibold drop-shadow">Unboxing_MacBook_Full360.mp4</span>
+<span class="font-label-sm text-label-sm text-inverse-on-surface bg-inverse-surface/80 px-2 py-0.5 rounded-full">Durasi 03:42 • Timestamp 01:15</span>
+</div>
+<div class="absolute bottom-2 left-2 right-2 bg-inverse-surface/90 backdrop-blur px-2.5 py-1 rounded text-on-primary font-label-sm text-label-sm flex items-center justify-between">
+<span class="text-tertiary-fixed font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bookmark</span> 01:15 - Garis Hijau Muncul
+              </span>
+<span class="text-outline-variant">1080p HD • No Cut</span>
+</div>
+</div>
+<!-- 3 Photo Thumbnails -->
+<div class="grid grid-cols-3 gap-space-xs">
+<div class="rounded-lg overflow-hidden relative group aspect-square bg-surface-container cursor-pointer">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Macro photography of an Apple MacBook display panel showing a bright illuminated vertical defect pixel strip with sharp edge details under clean studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDl_-U-HnLMn-R29SEbmYSe8aGt73qGZV4VNBbHkq0FeA9-vQ477A_FJo0OK0OyRPdtUYCFgGcjXZLJVvpvcD4Y8G4v4rldEtyOktwm4UaWlN1p6Bf7ni0khrwl7kIGtAQmmRial-rlW6baef7Gcm2f-rokJcAn6Zfl8AlHtWagKWnG_mshJA6mGtS_dH7H70MjG2fFAApuqSxZeU7tQzqGMF5qIpHWbJ4Eo7F28BLNPhE7adLqTKlu"/>
+<span class="absolute bottom-1 left-1 right-1 font-label-sm text-[9px] bg-inverse-surface/80 text-on-primary px-1 py-0.5 rounded truncate">Macro_Layar.jpg</span>
+</div>
+<div class="rounded-lg overflow-hidden relative group aspect-square bg-surface-container cursor-pointer">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Crisp close-up shot of the laser-engraved serial number on the bottom aluminum chassis of a space grey MacBook compared side-by-side with original retail box barcode label" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqkjJ-9R30XqlxP2gF84Zwue6vSYD6g05sCN0_16zzwxi00QhqOSce3FZ8sO9ox2KtHDnWHLma1CiIFp5V7TaYi0OzM7_RUbORe42o21QU4qMVyaE4Bi0yvHOtrOIaPMt6UFds-jt1JJZtGPR4wV50tZStplF191dyVMxdy5oFljcynJiwIYxPaITdaD352FlOdnRl4Ao5E40wIlHdyfKsUkfhlTELKAgbi7kVrB2ROfuF4kkDD5QM"/>
+<span class="absolute bottom-1 left-1 right-1 font-label-sm text-[9px] bg-inverse-surface/80 text-on-primary px-1 py-0.5 rounded truncate">Serial_Match.jpg</span>
+</div>
+<div class="rounded-lg overflow-hidden relative group aspect-square bg-surface-container cursor-pointer">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Cardboard shipping box with severe corner compression and dented corrugated fluting showing clear external shipping damage transit wear" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlbIGcTqLplKzp0FXmVqVx-EdPKk4JOrC9dclsoEy56T-Ybvh_UeTz0IJlF0bAEUizWPA-hfHCHfQP_0K4MTCCT9Z8dvYiGyYGsK_352iYHTMkpDTprC6Il53cu8fiHQdvQUdAUPKEOMNpYGaIlzqw_DwiNWTIxZ-pG-6XsqDBw0q4f0V24pxDx1yTAynzJFUo8YDiuLd5KgyDucnAIdAaB6XrRBcJL_ZT-zDQtA3QvZuieBgpz9IS"/>
+<span class="absolute bottom-1 left-1 right-1 font-label-sm text-[9px] bg-inverse-surface/80 text-on-primary px-1 py-0.5 rounded truncate">Kardus_Penyok.jpg</span>
+</div>
+</div>
+<!-- Buyer Statement -->
+<div class="bg-surface-container-low p-space-md rounded-xl space-y-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Keterangan Penggugat:</span>
+<p class="font-body-sm text-body-sm text-on-surface leading-relaxed">
+              “Layar ada garis vertikal hijau sejak pertama kali buka kardus & boot laptop. Deskripsi seller menulis kondisi mulus 100% tanpa cacat layar. Rekaman unboxing tanpa jeda/cut sama sekali.”
+            </p>
+</div>
+</div>
+<!-- SELLER EVIDENCE PANE -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm space-y-space-md relative border-t-4 border-t-secondary">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center font-bold text-on-secondary-fixed">D</div>
+<div>
+<div class="flex items-center gap-1">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface block">Dimas Aditya</span>
+<span class="material-symbols-outlined text-secondary text-[16px]" title="Verified e-KYC">verified</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Penjual (Tergugat) • Power Merchant Pro</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed font-bold">Verified e-KYC ✅</span>
+</div>
+<!-- Video QC Packing Player Mock -->
+<div class="relative rounded-xl overflow-hidden bg-inverse-surface group aspect-video flex items-center justify-center shadow-inner">
+<img class="absolute inset-0 w-full h-full object-cover opacity-60" data-alt="Electronics seller testing and wrapping a clean flawless MacBook Air screen in thick protective multi-layer air-bubble film inside a bright packaging station with barcode scanner" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIbKRY9k0o7HlfY1KlOVSNR2UoEF-RSJJeiHq5BapAAPr7nrC5IfQqax1kLZS82NttiqQAePg2SoIE1uc7W2A8QHrsMz2fybNa9zcgfBuXNEYvruERGWNks_kr1J2VwOcqi_eKoqRcsPhKNs8pc1BqqEZjhNxHHSidaoJp-jYLh7BdwtuXv21wiGE9HtcCl-MLY949ETssQCtfDEr0rOuMZz5Z3gsufK8iUpvrQXcvs-iA7_8D4nPS"/>
+<div class="relative z-10 flex flex-col items-center gap-space-xs text-center p-space-md">
+<button class="w-12 h-12 rounded-full bg-secondary/90 text-on-secondary flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[28px] pl-1">play_arrow</span>
+</button>
+<span class="font-label-md text-label-md text-on-primary font-semibold drop-shadow">QC_Test_Layar_Sebelum_Kemas.mp4</span>
+<span class="font-label-sm text-label-sm text-inverse-on-surface bg-inverse-surface/80 px-2 py-0.5 rounded-full">Durasi 02:15 • 24 Okt 09:40 WIB</span>
+</div>
+<div class="absolute bottom-2 left-2 right-2 bg-inverse-surface/90 backdrop-blur px-2.5 py-1 rounded text-on-primary font-label-sm text-label-sm flex items-center justify-between">
+<span class="text-secondary-fixed font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified</span> QC Layar Clear 0 Dead Pixel
+              </span>
+<span class="text-outline-variant">Drop Point Counter Cam</span>
+</div>
+</div>
+<!-- 3 Photo Thumbnails -->
+<div class="grid grid-cols-3 gap-space-xs">
+<div class="rounded-lg overflow-hidden relative group aspect-square bg-surface-container cursor-pointer">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Official store retail invoice receipt from authorized reseller iBox Indonesia showing itemized sale of Apple MacBook laptop with date stamp and tax invoice" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrz1t5Jb-9HqftrZaTX_juvPYsy52D_6_cmVgOd0d7WonKbT_fVQb0yuDxS-TYQ1D2nHdUu2nFYqKoZkRVvB_oR9wF-8eg902r1GxeXaH3FlVJk-prjuWDYHHjSwD02n1Jodey-3jyzZclog2Bs3CaLPcLjuxZ9NkUpmpLn36LIm6LNu4KZe7wcwJXV8yV-MOFfxBTlGMB5etl6tFDgX2ZVu5e_Ch_gvPXIoZSt4NWBcZbHdYgzT_X"/>
+<span class="absolute bottom-1 left-1 right-1 font-label-sm text-[9px] bg-inverse-surface/80 text-on-primary px-1 py-0.5 rounded truncate">Nota_iBox.pdf</span>
+</div>
+<div class="rounded-lg overflow-hidden relative group aspect-square bg-surface-container cursor-pointer">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Protective thick triple layer bubble wrap enclosing an electronic device before insertion into cardboard box, clean packing tape seals" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAT71PGFS4h5jSk0x68JUlJy8utEYp0gVXcchz4W7kOM5bpVvmptjQIvvYs9VqoEQ-JOP2zOgca7Ev-WyLqcthsZe0PG-QD5S_Lkp8ZRdawHn6gxpEBmyh_vf31VgAB6wbczPuiCFppAApV1gZ4Tj17pzMWzAmffvXYrVP1zVY6P2fBrbUyFW3GdqhCcndEGy4p20AdrTmkXClOOJJu3XZ4Y67dpFsDtFhGDTBPLZL7MK4ubTlMti_-"/>
+<span class="absolute bottom-1 left-1 right-1 font-label-sm text-[9px] bg-inverse-surface/80 text-on-primary px-1 py-0.5 rounded truncate">Wrap_3_Lapis.jpg</span>
+</div>
+<div class="rounded-lg overflow-hidden relative group aspect-square bg-surface-container cursor-pointer">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Courier shipping parcel label with scannable barcode receipt stamped by local shipping logistics branch counter officer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYJD61Si_sZuib4kRcSvZTG1jAyE-OCqjBnjPXs1sTX1eHheacSJNXZkOmMJWKYtfCKzWMIqH4DnTp_GLDb6LhGIcTPKOQ0MGoXD-_7WFs8MHgxdey-jIXfWR0TBOUZ1ZuZArXKumIucU1eJS1GG3N8XAJCJ06qmYoBXI8M5IsrPjZpitGYaaqxBxmnf3Cv6I74aNm-02JdOo8tSexFmGAr7dOsmkJa0ZCUWkTM-BJwJ4d75mchx1P"/>
+<span class="absolute bottom-1 left-1 right-1 font-label-sm text-[9px] bg-inverse-surface/80 text-on-primary px-1 py-0.5 rounded truncate">Resi_DropPoint.jpg</span>
+</div>
+</div>
+<!-- Seller Statement -->
+<div class="bg-surface-container-low p-space-md rounded-xl space-y-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Keterangan Tergugat:</span>
+<p class="font-body-sm text-body-sm text-on-surface leading-relaxed">
+              “Unit 100% mulus saat tes dan packing di drop point J&T 24 Okt. Video QC lengkap menyala normal. Kemungkinan terkena benturan atau tumpukan handling ekspedisi saat sortir transit.”
+            </p>
+</div>
+</div>
+</div>
+<!-- COURIER TRACKING LOG (WEBHOOK LOGISTIK) -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm space-y-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">route</span>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Log Pelacakan Ekspedisi Real-Time (J&T Express)</h3>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">Webhook Synced: 26 Okt 14:02 WIB</span>
+</div>
+<div class="relative pl-6 space-y-space-md before:content-[''] before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface-container-high">
+<!-- Item 1: Delivered -->
+<div class="relative flex items-start gap-space-md">
+<div class="absolute -left-6 top-1 w-5 h-5 rounded-full bg-secondary flex items-center justify-center text-on-secondary ring-4 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[12px]">check</span>
+</div>
+<div class="space-y-0.5">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-md text-label-md font-bold text-on-surface">26 Okt 11:28 WIB • DELIVERED</span>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed font-medium">Tanda Tangan Tercatat</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Paket diserahkan oleh Kurir (Ahmad F.) kepada Budi Pratama (Penerima Langsung).</p>
+</div>
+</div>
+<!-- Item 2: Transit Overload Warning -->
+<div class="relative flex items-start gap-space-md">
+<div class="absolute -left-6 top-1 w-5 h-5 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container ring-4 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[12px]">priority_high</span>
+</div>
+<div class="space-y-0.5">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-md text-label-md font-bold text-tertiary">25 Okt 03:20 WIB • MANIFEST SORTIR GATEWAY CAKUNG</span>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm bg-error-container text-on-error-container font-bold">Catatan Anomali Transit</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Catatan Internal Hub Cakung: “Volume muatan tinggi, indikasi tumpukan kontainer berat pada segmen JKT-HUB-04”.
+              </p>
+</div>
+</div>
+<!-- Item 3: Drop-off -->
+<div class="relative flex items-start gap-space-md">
+<div class="absolute -left-6 top-1 w-5 h-5 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface ring-4 ring-surface-container-lowest">
+<span class="material-symbols-outlined text-[12px]">inventory_2</span>
+</div>
+<div class="space-y-0.5">
+<span class="font-label-md text-label-md font-bold text-on-surface">24 Okt 10:15 WIB • DROP-OFF BERHASIL</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Drop Point J&T Kebon Jeruk, Jakarta Barat. Berat ditimbang: 2.15 kg.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- INTERNAL AUDIT & MEDIATION NOTES -->
+<div class="bg-surface-container-low p-space-lg rounded-xl shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs text-on-surface font-headline-sm text-headline-sm font-semibold">
+<span class="material-symbols-outlined text-primary text-[20px]">lock_clock</span>
+<span>Catatan Investigasi Internal (Auditor Risk & Ops)</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-highest px-2 py-0.5 rounded">Confidential • Internal Only</span>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-lg space-y-space-xs">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="font-bold text-primary">Sarah Lestari (Risk & Ops Lead)</span>
+<span class="text-on-surface-variant">26 Okt 2026, 13:10 WIB</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface leading-relaxed">
+            “Video unboxing pembeli valid tanpa jeda/cut. Namun kardus luar tampak lekukan kompresi di sisi kanan sesuai foto Kardus_Penyok.jpg. Seller juga punya bukti video fungsi layar normal sebelum kirim. Polis asuransi pengiriman gadget aktif (Premi Rp 15.000, Cover hingga Rp 10.000.000). Sangat direkomendasikan solusi kompensasi klaim ekspedisi atau retur refund bersyarat.”
+          </p>
+</div>
+</div>
+<!-- VERDICT DECISION PANEL (FORM PUTUSAN RESMI) -->
+<div class="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm space-y-space-lg border-2 border-primary/20">
+<div class="flex items-center justify-between">
+<div>
+<h3 class="font-headline-lg text-headline-lg font-bold text-on-surface">Putusan Sengketa Resmi & Eksekusi Escrow</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              Pilih tindakan akhir sengketa. Keputusan tercatat pada blockchain audit & sistem perbankan.
+            </p>
+</div>
+<span class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">balance</span>
+</span>
+</div>
+<!-- Decision Radio Group -->
+<div class="space-y-space-sm" id="verdict-options">
+<!-- Option 1: Full Refund to Buyer -->
+<label class="flex items-start gap-space-md p-space-md rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container-high/60 transition-all">
+<input checked="" class="mt-1 w-4 h-4 text-primary focus:ring-primary" name="verdict" type="radio" value="refund_buyer"/>
+<div class="space-y-space-2xs">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm font-bold text-error">[Putuskan untuk Pembeli / FULL REFUND]</span>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm bg-error-container text-on-error-container font-bold">Rp 8.500.000 ke Buyer</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Dana escrow dikembalikan 100% ke saldo pembeli. Penjual diwajibkan menerima retur unit atau dikenai penalti reputasi (-15 Trust Score).
+              </p>
+</div>
+</label>
+<!-- Option 2: Release to Seller -->
+<label class="flex items-start gap-space-md p-space-md rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container-high/60 transition-all">
+<input class="mt-1 w-4 h-4 text-primary focus:ring-primary" name="verdict" type="radio" value="release_seller"/>
+<div class="space-y-space-2xs">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">[Putuskan untuk Penjual / COMPLETED]</span>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed font-bold">Rp 8.500.000 ke Seller</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Lepas dana ke saldo dompet penjual. Komplain ditolak dengan dasar bukti video packing lengkap dan dugaan kelalaian pihak ketiga.
+              </p>
+</div>
+</label>
+<!-- Option 3: Partial Settlement / Split -->
+<label class="flex items-start gap-space-md p-space-md rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container-high/60 transition-all">
+<input class="mt-1 w-4 h-4 text-primary focus:ring-primary" name="verdict" type="radio" value="partial_split"/>
+<div class="space-y-space-2xs">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">[Solusi Parsial / Nego Mediasi & Asuransi]</span>
+<span class="px-2 py-0.5 rounded font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed font-bold">Split Compensation</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Kompensasi servis layar Rp 2.000.000 ke pembeli + lepas Rp 6.500.000 ke penjual, atau ajukan klaim asuransi logistik J&T Rp 8.500.000.
+              </p>
+</div>
+</label>
+</div>
+<!-- Mandatory Consideration Textarea -->
+<div class="space-y-space-xs">
+<label class="block font-label-md text-label-md font-semibold text-on-surface">
+            Catatan Pertimbangan Resmi <span class="text-error">*</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-normal">(Wajib diisi - dikirim otomatis ke email para pihak dan OJK Compliance Log)</span>
+</label>
+<textarea class="w-full p-space-md rounded-xl bg-surface-container-low text-on-surface font-body-sm text-body-sm border-0 focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest placeholder:text-outline" placeholder="Tuliskan argumen hukum internal, evaluasi bukti visual unboxing vs video QC, serta rujukan klausul Syarat & Ketentuan NgeBekasinYuk Enterprise..." rows="4">Berdasarkan investigasi menyeluruh tim Risk & Ops, video unboxing pembeli menunjukkan keaslian cacat layar saat pertama boot. Ditemukan pula indikasi benturan penanganan ekspedisi Cakung. Sesuai Klausul Perlindungan Rekber Bab IV Pasal 8, permohonan retur-refund disetujui penuh dengan proteksi retur berbayar.</textarea>
+</div>
+<!-- Action Control Buttons -->
+<div class="flex flex-wrap items-center justify-between gap-space-md pt-space-sm border-t border-surface-container">
+<div class="flex items-center gap-space-xs">
+<button class="px-space-md py-space-sm rounded-lg text-on-surface-variant font-label-md text-label-md font-medium hover:bg-surface-container-high transition-colors" type="button">
+              Simpan Draft Internal
+            </button>
+<button class="px-space-md py-space-sm rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md font-medium hover:bg-surface-container-high transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[18px]">contact_support</span>
+<span>Minta Bukti Tambahan Kurir (Hold 24 Jam)</span>
+</button>
+</div>
+<button class="px-space-xl py-space-sm rounded-lg bg-error text-on-error font-label-md text-label-md font-bold shadow-md hover:bg-error/90 flex items-center gap-2 transition-all" id="btn-open-confirm" type="button">
+<span class="material-symbols-outlined text-[20px]">lock_reset</span>
+<span>Eksekusi Putusan & Buka Otorisasi 2FA 🔒</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- DESTRUCTIVE ACTION CONFIRMATION MODAL OVERLAY -->
+<div class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-space-base hidden" id="modal-confirm-backdrop">
+<div class="bg-surface-container-lowest max-w-lg w-full rounded-2xl shadow-2xl overflow-hidden p-space-xl space-y-space-lg relative animate-in fade-in zoom-in duration-200">
+<!-- Close Button -->
+<button class="absolute top-space-md right-space-md w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors" id="btn-close-modal">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+<!-- Modal Header -->
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-error-container text-error flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[28px]">warning</span>
+</div>
+<div class="space-y-space-2xs">
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface">Konfirmasi Eksekusi Pelepasan Dana Escrow</h3>
+<span class="font-label-sm text-label-sm text-error font-semibold">TINDAKAN INI TIDAK DAPAT DIBATALKAN (IRREVERSIBLE)</span>
+</div>
+</div>
+<!-- Warning Description Card -->
+<div class="bg-error-container/40 p-space-md rounded-xl space-y-space-xs text-on-error-container font-body-sm text-body-sm">
+<p class="font-semibold">Perhatian Keamanan Finansial:</p>
+<p>
+          Anda akan mengeksekusi pengembalian dana penuh <span class="font-bold">Rp 8.500.000</span> dari rekening Kustodian BCA ke saldo dompet Pembeli (<span class="font-bold">Budi Pratama</span>). Perintah rilis webhook akan langsung dikirimkan ke Midtrans API secara real-time.
+        </p>
+</div>
+<!-- 2FA Authenticator Inputs -->
+<div class="space-y-space-sm">
+<label class="block font-label-md text-label-md font-semibold text-on-surface">
+          Masukkan 6-Digit Kode Authenticator Admin (2FA TOTP):
+        </label>
+<div class="flex items-center justify-between gap-space-xs">
+<input class="w-12 h-14 text-center font-display-lg text-display-lg font-bold bg-surface-container-low rounded-xl focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest outline-none" maxlength="1" type="text" value="7"/>
+<input class="w-12 h-14 text-center font-display-lg text-display-lg font-bold bg-surface-container-low rounded-xl focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest outline-none" maxlength="1" type="text" value="4"/>
+<input class="w-12 h-14 text-center font-display-lg text-display-lg font-bold bg-surface-container-low rounded-xl focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest outline-none" maxlength="1" type="text" value="2"/>
+<span class="text-outline-variant font-bold text-headline-lg">-</span>
+<input class="w-12 h-14 text-center font-display-lg text-display-lg font-bold bg-surface-container-low rounded-xl focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest outline-none" maxlength="1" type="text" value="9"/>
+<input class="w-12 h-14 text-center font-display-lg text-display-lg font-bold bg-surface-container-low rounded-xl focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest outline-none border border-primary" maxlength="1" placeholder="•" type="text"/>
+<input class="w-12 h-14 text-center font-display-lg text-display-lg font-bold bg-surface-container-low rounded-xl focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest outline-none" maxlength="1" placeholder="•" type="text"/>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">security</span>
+          Otorisasi sesi Super Admin: Sarah Lestari (ID: ADM-99021)
+        </p>
+</div>
+<!-- Confirmation CTA Buttons -->
+<div class="flex items-center justify-end gap-space-sm pt-space-sm">
+<button class="px-space-lg py-space-sm rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md font-semibold hover:bg-surface-container-high transition-colors" id="btn-cancel-modal" type="button">
+          Batalkan
+        </button>
+<button class="px-space-xl py-space-sm rounded-lg bg-error text-on-error font-label-md text-label-md font-bold shadow-lg hover:bg-error/90 transition-all flex items-center gap-2" id="btn-confirm-exec" type="button">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span>Otorisasi & Lepaskan Dana</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Micro-Interactions JavaScript -->
+<script>
+    (function() {
+      const openModalBtn = document.getElementById('btn-open-confirm');
+      const closeModalBtn = document.getElementById('btn-close-modal');
+      const cancelModalBtn = document.getElementById('btn-cancel-modal');
+      const confirmExecBtn = document.getElementById('btn-confirm-exec');
+      const modalBackdrop = document.getElementById('modal-confirm-backdrop');
+
+      function openModal() {
+        modalBackdrop.classList.remove('hidden');
+      }
+
+      function closeModal() {
+        modalBackdrop.classList.add('hidden');
+      }
+
+      if (openModalBtn) openModalBtn.addEventListener('click', openModal);
+      if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+      if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+
+      if (confirmExecBtn) {
+        confirmExecBtn.addEventListener('click', function() {
+          this.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span><span>Mengeksekusi Webhook...</span>';
+          this.disabled = true;
+          setTimeout(function() {
+            closeModal();
+            alert('Sengketa #DSP-2026-0812 berhasil diputuskan. Dana Rp 8.500.000 telah dilepaskan kembali ke Pembeli dan tercatat di OJK Audit Log.');
+            confirmExecBtn.disabled = false;
+            confirmExecBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">verified</span><span>Otorisasi & Lepaskan Dana</span>';
+          }, 1200);
+        });
+      }
+
+      // Close modal on Escape key press
+      window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !modalBackdrop.classList.contains('hidden')) {
+          closeModal();
+        }
+      });
+    })();
+  </script>
+</div></main></div></body></html>

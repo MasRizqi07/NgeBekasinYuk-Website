@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'on-tertiary': '#ffffff', 'surface-container-highest': '#e1e2ea', 'inverse-surface': '#2d3037', 'on-secondary': '#ffffff', 'outline': '#727787', 'on-primary-fixed-variant': '#00419e', 'primary-container': '#006bfb', 'primary-fixed': '#dae2ff', 'on-secondary-fixed': '#002114', 'secondary-fixed': '#63fcc0', 'on-error-container': '#93000a', 'on-error': '#ffffff', 'tertiary-fixed': '#ffdbc8', 'surface-variant': '#e1e2ea', 'on-background': '#191c22', 'secondary': '#006c4b', 'on-primary-container': '#fefcff', 'inverse-primary': '#b1c5ff', 'on-secondary-fixed-variant': '#005138', 'on-secondary-container': '#00714f', 'error-container': '#ffdad6', 'surface': '#f9f9ff', 'on-tertiary-container': '#fffbff', 'surface-container-low': '#f2f3fc', 'tertiary-fixed-dim': '#ffb68b', 'surface-container-lowest': '#ffffff', 'primary': '#0055c9', 'secondary-container': '#60f9bd', 'error': '#ba1a1a', 'tertiary-container': '#bb5800', 'surface-bright': '#f9f9ff', 'surface-container': '#ecedf6', 'on-primary': '#ffffff', 'on-surface-variant': '#424655', 'on-tertiary-fixed-variant': '#753400', 'outline-variant': '#c2c6d8', 'surface-tint': '#0057ce', 'inverse-on-surface': '#eff0f9', 'primary-fixed-dim': '#b1c5ff', 'on-tertiary-fixed': '#321200', 'on-primary-fixed': '#001946', 'surface-container-high': '#e6e8f0', 'tertiary': '#954500', 'on-surface': '#191c22', 'background': '#f9f9ff', 'surface-dim': '#d8dae2', 'secondary-fixed-dim': '#3fdfa5' }, borderRadius: { 'DEFAULT': '0.25rem', 'lg': '0.5rem', 'xl': '0.75rem', 'full': '9999px' }, spacing: { 'container-padding-desktop': '1.5rem', 'space-sm': '0.5rem', 'space-lg': '1.25rem', 'space-4xl': '4rem', 'space-xl': '1.5rem', 'space-2xs': '0.125rem', 'gutter-desktop': '1.25rem', 'space-xs': '0.25rem', 'container-padding-mobile': '1rem', 'space-base': '1rem', 'space-2xl': '2rem', 'space-3xl': '3rem', 'gutter-mobile': '0.75rem', 'space-md': '0.75rem' }, fontFamily: { 'body-lg': ['Inter'], 'body-sm': ['Inter'], 'label-md': ['Inter'], 'headline-md': ['Inter'], 'price-lg': ['Inter'], 'label-sm': ['Inter'], 'label-lg': ['Inter'], 'body-md': ['Inter'], 'headline-lg': ['Inter'], 'display-lg-mobile': ['Inter'], 'price-md': ['Inter'], 'display-lg': ['Inter'], 'headline-sm': ['Inter'], 'price-sm': ['Inter'], 'headline-lg-mobile': ['Inter'] }, fontSize: { 'body-lg': ['16px', { lineHeight: '24px', letterSpacing: '0em', fontWeight: '400' }], 'body-sm': ['12px', { lineHeight: '18px', letterSpacing: '0.005em', fontWeight: '400' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.01em', fontWeight: '500' }], 'headline-md': ['18px', { lineHeight: '26px', letterSpacing: '-0.01em', fontWeight: '600' }], 'price-lg': ['22px', { lineHeight: '28px', letterSpacing: '-0.02em', fontWeight: '700' }], 'label-sm': ['10px', { lineHeight: '14px', letterSpacing: '0.02em', fontWeight: '600' }], 'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.005em', fontWeight: '600' }], 'body-md': ['14px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '400' }], 'headline-lg': ['24px', { lineHeight: '32px', letterSpacing: '-0.015em', fontWeight: '600' }], 'display-lg-mobile': ['26px', { lineHeight: '34px', letterSpacing: '-0.015em', fontWeight: '700' }], 'price-md': ['16px', { lineHeight: '22px', letterSpacing: '-0.015em', fontWeight: '700' }], 'display-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.02em', fontWeight: '700' }], 'headline-sm': ['16px', { lineHeight: '24px', letterSpacing: '-0.005em', fontWeight: '600' }], 'price-sm': ['13px', { lineHeight: '18px', letterSpacing: '-0.01em', fontWeight: '700' }], 'headline-lg-mobile': ['20px', { lineHeight: '28px', letterSpacing: '-0.01em', fontWeight: '600' }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-container-padding-mobile flex items-center justify-between gap-space-xs"><div class="flex items-center gap-space-xs min-w-0 flex-1"><button aria-label="Kembali" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors flex-shrink-0" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="A modern minimalist emblem logo for 'NgeBekasinYuk', a secure secondhand gadget marketplace. Flat vector style featuring a stylized shield merged with a tech gadget chip and a green checkmark, using trust blue (#0F6FFF) and vibrant escrow green (#00C48C). Clean white/transparent background.. Design context: - Primary color: #0f6fff
+- Font: inter
+- Mode: light
+- Roundness: rounded-md
+. The logo should be visually consistent with these brand tokens." class="h-7 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1W2nJIdxG94LzusQ04NxKEldvYdTOmP9hqtSQHFpVR0OBHbw6RlW_jXc6dLtl6xXr660H3Q43DazLRHwoZnONIiZ0dVrpAyJUX3NbOmJBR9cXVdsc3FOkjczMQdCPWXU9DBmYClpc1A59tecp5_Yz1bWwOahwrKIQZcmWyFlfl8pEgJ5_m5FTjpgNX_eMwVOdOEP8o6RloAXnOnuC1l34RoKhDAr6uDOdsonnVn-w2CeyGnXVpaSismwA"/><div class="flex flex-col min-w-0"><h1 class="font-headline-md text-headline-md text-on-surface truncate">Ruang Obrolan</h1><div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm"><span class="material-symbols-outlined text-[14px]">verified_user</span><span>Rekber Terlindungi</span></div></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Pilihan percakapan" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[22px]">more_vert</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full pt-16 bg-surface flex-1"><div class="flex flex-col w-full pb-10">
+<!-- Interactive Toast Notification -->
+<div class="fixed top-20 inset-x-4 z-50 transition-all duration-300 transform -translate-y-12 opacity-0 pointer-events-none flex items-center justify-between gap-space-sm bg-inverse-surface text-inverse-on-surface px-space-base py-space-md rounded-xl shadow-xl" id="saveToast">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary-container text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-sm text-body-sm font-medium">Preferensi notifikasi berhasil diperbarui!</span>
+</div>
+<span class="material-symbols-outlined text-surface-variant text-[16px] cursor-pointer" onclick="hideToast()">close</span>
+</div>
+<!-- Intro Header Banner -->
+<div class="px-container-padding-mobile pt-space-md pb-space-sm">
+<div class="flex items-start justify-between">
+<div class="space-y-1">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-semibold tracking-tight">Preferensi Notifikasi</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">Pilih cara dan jenis pemberitahuan yang ingin kamu terima terkait transaksi gadget kamu.</p>
+</div>
+<div class="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center flex-shrink-0 ml-2">
+<span class="material-symbols-outlined text-primary text-[22px]" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+</div>
+</div>
+</div>
+<!-- Channel Overview Cards -->
+<div class="px-container-padding-mobile mt-space-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Saluran Pengiriman Utama</span>
+<span class="font-label-sm text-label-sm text-primary font-semibold">3 dari 3 Aktif</span>
+</div>
+<!-- Push Notification App Card -->
+<div class="bg-surface-container-lowest p-space-base rounded-xl shadow-sm space-y-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">phone_android</span>
+</div>
+<div>
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Push Notification</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-secondary/10 text-secondary font-medium">Aktif</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Notifikasi instan di layar kunci HP</p>
+</div>
+</div>
+<button aria-checked="true" class="channel-toggle w-12 h-6 rounded-full bg-primary relative p-0.5 transition-colors focus:outline-none" onclick="toggleSwitch(this)" role="switch" type="button">
+<div class="w-5 h-5 bg-on-primary rounded-full shadow-sm transform translate-x-6 transition-transform"></div>
+</button>
+</div>
+</div>
+<!-- WhatsApp Gateway Card -->
+<div class="bg-surface-container-lowest p-space-base rounded-xl shadow-sm space-y-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-secondary/15 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[24px]">chat</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">WhatsApp Gateway</span>
+<span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-secondary text-on-secondary font-semibold">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                Centang Hijau
+              </span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant font-mono mt-0.5">+62 812-****-8901</p>
+</div>
+</div>
+<button aria-checked="true" class="channel-toggle w-12 h-6 rounded-full bg-primary relative p-0.5 transition-colors focus:outline-none" onclick="toggleSwitch(this)" role="switch" type="button">
+<div class="w-5 h-5 bg-on-primary rounded-full shadow-sm transform translate-x-6 transition-transform"></div>
+</button>
+</div>
+<div class="pt-space-xs bg-surface-container-low px-space-sm py-1.5 rounded-lg">
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-secondary">shield</span>
+          Update nomor resi, SLA inspeksi, &amp; kode OTP transaksi.
+        </p>
+</div>
+</div>
+<!-- Email Card -->
+<div class="bg-surface-container-lowest p-space-base rounded-xl shadow-sm space-y-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-tertiary-container/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[24px]">mail</span>
+</div>
+<div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Email Transaksional</span>
+<p class="font-label-md text-label-md text-on-surface-variant font-mono mt-0.5">dimas.aditya@gmail.com</p>
+</div>
+</div>
+<button aria-checked="true" class="channel-toggle w-12 h-6 rounded-full bg-primary relative p-0.5 transition-colors focus:outline-none" onclick="toggleSwitch(this)" role="switch" type="button">
+<div class="w-5 h-5 bg-on-primary rounded-full shadow-sm transform translate-x-6 transition-transform"></div>
+</button>
+</div>
+<div class="pt-space-xs bg-surface-container-low px-space-sm py-1.5 rounded-lg">
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-tertiary">receipt_long</span>
+          Bukti transfer, invoice escrow, &amp; laporan mediasi resmi.
+        </p>
+</div>
+</div>
+</div>
+<!-- Mandatory Security Advisory Notice -->
+<div class="px-container-padding-mobile mt-space-md">
+<div class="bg-surface-container-high p-space-base rounded-xl flex items-start gap-space-sm shadow-sm">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+</div>
+<div class="space-y-0.5">
+<p class="font-label-lg text-label-lg text-on-surface font-semibold">Protokol Keamanan Rekber</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+          Pemberitahuan keamanan akun, batas waktu SLA, dan sengketa transaksi penting tidak dapat dinonaktifkan demi perlindungan mutlak dana escrow Anda.
+        </p>
+</div>
+</div>
+</div>
+<!-- Detailed Categories Accordion / Groups -->
+<div class="px-container-padding-mobile mt-space-lg space-y-space-md">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">Kategori Pemberitahuan</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Sesuaikan kanal</span>
+</div>
+<!-- Group 1: Transaksi & Escrow (Locked/High Priority) -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-space-base bg-secondary/5 flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-secondary text-on-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Transaksi &amp; Rekber</span>
+<span class="px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-secondary text-on-secondary font-bold">Wajib Aktif</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Update perpindahan dana aman &amp; logistik</p>
+</div>
+</div>
+</div>
+<div class="p-space-base space-y-space-md bg-surface-container-lowest">
+<!-- Event 1.1 -->
+<div class="space-y-2">
+<div class="flex items-start justify-between gap-space-sm">
+<div>
+<p class="font-label-lg text-label-lg text-on-surface font-semibold">Perubahan Status Escrow</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Dana masuk, barang dikirim, paket sampai tujuan</p>
+</div>
+</div>
+<!-- Channel indicators -->
+<div class="flex items-center gap-2 pt-1">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container font-label-md text-label-md text-primary font-medium">
+<span class="material-symbols-outlined text-[14px]">phone_android</span> Push <span class="material-symbols-outlined text-[12px] text-secondary">check</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container font-label-md text-label-md text-secondary font-medium">
+<span class="material-symbols-outlined text-[14px]">chat</span> WA <span class="material-symbols-outlined text-[12px] text-secondary">check</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container font-label-md text-label-md text-tertiary font-medium">
+<span class="material-symbols-outlined text-[14px]">mail</span> Email <span class="material-symbols-outlined text-[12px] text-secondary">check</span>
+</div>
+</div>
+</div>
+<!-- Event 1.2 -->
+<div class="space-y-2 bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex items-start justify-between gap-space-sm">
+<div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-error">timer</span>
+<p class="font-label-lg text-label-lg text-on-surface font-semibold">Peringatan SLA Inspeksi Gadget</p>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Countdown 2x24 jam uji fungsi otomatis berakhir</p>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">lock</span>
+</div>
+<p class="font-label-sm text-label-sm text-error font-medium">Saluran terkunci ON demi mencegah dana cair otomatis saat ada kendala.</p>
+</div>
+<!-- Event 1.3 -->
+<div class="space-y-2">
+<div class="flex items-start justify-between gap-space-sm">
+<div>
+<p class="font-label-lg text-label-lg text-on-surface font-semibold">Pencairan Saldo Dompet Berhasil</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Notifikasi dana dilepas ke rekening bank penjual</p>
+</div>
+</div>
+<div class="flex items-center gap-2 pt-1">
+<span class="px-2.5 py-1 rounded-lg bg-surface-container font-label-md text-label-md text-on-surface-variant">Push: ON</span>
+<span class="px-2.5 py-1 rounded-lg bg-surface-container font-label-md text-label-md text-on-surface-variant">WA: ON</span>
+<span class="px-2.5 py-1 rounded-lg bg-surface-container font-label-md text-label-md text-on-surface-variant">Email: ON</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Group 2: Negosiasi & Chat -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-space-base bg-primary/5 flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">forum</span>
+</div>
+<div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Negosiasi &amp; Chat Langsung</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Respon cepat tawaran dari pembeli</p>
+</div>
+</div>
+</div>
+<div class="p-space-base space-y-space-md">
+<!-- Event 2.1 -->
+<div class="flex items-center justify-between">
+<div class="pr-2">
+<p class="font-label-lg text-label-lg text-on-surface font-semibold">Tawaran Harga Masuk</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Calon pembeli mengajukan nego harga gadget</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-label-sm font-label-sm text-primary font-medium">App Push</span>
+<span class="text-label-sm font-label-sm text-outline">•</span>
+<span class="text-label-sm font-label-sm text-secondary font-medium">WhatsApp</span>
+</div>
+</div>
+<button aria-checked="true" class="w-12 h-6 rounded-full bg-primary relative p-0.5 transition-colors focus:outline-none flex-shrink-0" onclick="toggleSwitch(this)" role="switch" type="button">
+<div class="w-5 h-5 bg-on-primary rounded-full shadow-sm transform translate-x-6 transition-transform"></div>
+</button>
+</div>
+<!-- Event 2.2 -->
+<div class="flex items-center justify-between">
+<div class="pr-2">
+<p class="font-label-lg text-label-lg text-on-surface font-semibold">Tawaran Diterima / Ditolak Seller</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Kabar keputusan penawaran yang diajukan</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-label-sm font-label-sm text-primary font-medium">App Push</span>
+<span class="text-label-sm font-label-sm text-outline">•</span>
+<span class="text-label-sm font-label-sm text-secondary font-medium">WhatsApp</span>
+</div>
+</div>
+<button aria-checked="true" class="w-12 h-6 rounded-full bg-primary relative p-0.5 transition-colors focus:outline-none flex-shrink-0" onclick="toggleSwitch(this)" role="switch" type="button">
+<div class="w-5 h-5 bg-on-primary rounded-full shadow-sm transform translate-x-6 transition-transform"></div>
+</button>
+</div>
+<!-- Event 2.3 -->
+<div class="flex items-center justify-between">
+<div class="pr-2">
+<p class="font-label-lg text-label-lg text-on-surface font-semibold">Pesan Chat Baru</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Tanya kondisi barang, tes baterai, kelengkapan</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-label-sm font-label-sm text-primary font-medium">Push App Saja</span>
+</div>
+</div>
+<button aria-checked="true" class="w-12 h-6 rounded-full bg-primary relative p-0.5 transition-colors focus:outline-none flex-shrink-0" onclick="toggleSwitch(this)" role="switch" type="button">
+<div class="w-5 h-5 bg-on-primary rounded-full shadow-sm transform translate-x-6 transition-transform"></div>
+</button>
+</div>
+</div>
+</div>
+<!-- Group 3: Sengketa & Mediasi (Kritis) -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-space-base bg-error-container/40 flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-error text-on-error flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">gavel</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-error font-semibold">Sengketa &amp; Mediasi</span>
+<span class="px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-error text-on-error font-bold">Kritis</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Resolusi komplain unit &amp; ketidaksesuaian</p>
+</div>
+</div>
+</div>
+<div class="p-space-base space-y-space-md">
+<!-- Event 3.1 -->
+<div class="flex items-start justify-between gap-space-sm">
+<div>
+<div class="flex items-center gap-1.5">
+<p class="font-label-lg text-label-lg text-on-surface font-semibold">Panggilan Mediasi &amp; Komplain Masuk</p>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Saat buyer komplain fisik lecet atau minus hardware</p>
+<div class="flex items-center gap-2 mt-2">
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface">Push: ON</span>
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface">WA: ON</span>
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface">Email: ON</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px] mt-1">lock</span>
+</div>
+<!-- Event 3.2 -->
+<div class="flex items-start justify-between gap-space-sm">
+<div>
+<p class="font-label-lg text-label-lg text-on-surface font-semibold">Keputusan Putusan Tim Rekber</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Instruksi retur gadget atau pelepasan dana akhir</p>
+<div class="flex items-center gap-2 mt-2">
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface">Push: ON</span>
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface">WA: ON</span>
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface">Email: ON</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px] mt-1">lock</span>
+</div>
+</div>
+</div>
+<!-- Group 4: Promo & Rekomendasi Gadget -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-space-base bg-tertiary-container/10 flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-tertiary text-on-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">sell</span>
+</div>
+<div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Promo &amp; Rekomendasi Gadget</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Flash sale, subsidi ongkir, &amp; info harga turun</p>
+</div>
+</div>
+</div>
+<div class="p-space-base space-y-space-md">
+<!-- Promo 4.1 -->
+<div class="flex items-center justify-between">
+<div class="pr-2">
+<p class="font-label-lg text-label-lg text-on-surface font-semibold">Flash Sale &amp; Promo Bebas Ongkir</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Hanya dikirim lewat newsletter email berkala</p>
+</div>
+<button aria-checked="false" class="w-12 h-6 rounded-full bg-surface-container-highest relative p-0.5 transition-colors focus:outline-none flex-shrink-0" onclick="toggleSwitch(this)" role="switch" type="button">
+<div class="w-5 h-5 bg-on-primary rounded-full shadow-sm transform translate-x-0 transition-transform"></div>
+</button>
+</div>
+<!-- Promo 4.2 -->
+<div class="flex items-center justify-between">
+<div class="pr-2">
+<p class="font-label-lg text-label-lg text-on-surface font-semibold">Gadget Wishlist Turun Harga</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Saat HP / laptop yang kamu simpan turun harga</p>
+</div>
+<button aria-checked="true" class="w-12 h-6 rounded-full bg-primary relative p-0.5 transition-colors focus:outline-none flex-shrink-0" onclick="toggleSwitch(this)" role="switch" type="button">
+<div class="w-5 h-5 bg-on-primary rounded-full shadow-sm transform translate-x-6 transition-transform"></div>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Do Not Disturb Feature (Mode Hening) -->
+<div class="px-container-padding-mobile mt-space-lg">
+<div class="bg-surface-container-lowest p-space-base rounded-xl shadow-sm space-y-space-sm">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[22px]">bedtime</span>
+</div>
+<div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Mode Hening (Jangan Ganggu)</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Bisukan suara chat &amp; promo saat jam istirahat</p>
+</div>
+</div>
+<button aria-checked="true" class="w-12 h-6 rounded-full bg-primary relative p-0.5 transition-colors focus:outline-none flex-shrink-0" id="dndSwitch" onclick="toggleDND(this)" role="switch" type="button">
+<div class="w-5 h-5 bg-on-primary rounded-full shadow-sm transform translate-x-6 transition-transform"></div>
+</button>
+</div>
+<div class="pt-space-xs flex items-center justify-between bg-surface-container-low px-space-base py-space-sm rounded-lg" id="dndTimeContainer">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">schedule</span>
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Jadwal Hening</span>
+</div>
+<span class="font-label-lg text-label-lg text-primary font-bold">22:00 - 07:00 WIB</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px] text-error">priority_high</span>
+<span>Notifikasi sengketa darurat tetap berbunyi demi proteksi dana.</span>
+</div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="px-container-padding-mobile mt-space-xl space-y-space-sm">
+<button class="w-full h-12 bg-primary text-on-primary rounded-xl font-label-lg text-label-lg font-semibold flex items-center justify-center gap-2 shadow-lg hover:bg-primary-container transition-all active:scale-[0.98]" id="btnSavePreferences" onclick="triggerSave()" type="button">
+<span class="material-symbols-outlined text-[20px]">done_all</span>
+<span>Simpan Preferensi Notifikasi</span>
+</button>
+<p class="text-center font-label-sm text-label-sm text-on-surface-variant">
+      Pengaturan langsung tersinkronisasi ke perangkat Anda &amp; cloud server.
+    </p>
+</div>
+</div>
+<script>
+  function toggleSwitch(element) {
+    const isChecked = element.getAttribute('aria-checked') === 'true';
+    const thumb = element.firstElementChild;
+
+    if (isChecked) {
+      element.setAttribute('aria-checked', 'false');
+      element.classList.remove('bg-primary');
+      element.classList.add('bg-surface-container-highest');
+      thumb.classList.remove('translate-x-6');
+      thumb.classList.add('translate-x-0');
+    } else {
+      element.setAttribute('aria-checked', 'true');
+      element.classList.remove('bg-surface-container-highest');
+      element.classList.add('bg-primary');
+      thumb.classList.remove('translate-x-0');
+      thumb.classList.add('translate-x-6');
+    }
+  }
+
+  function toggleDND(element) {
+    toggleSwitch(element);
+    const isChecked = element.getAttribute('aria-checked') === 'true';
+    const container = document.getElementById('dndTimeContainer');
+    if (container) {
+      if (!isChecked) {
+        container.classList.add('opacity-40', 'pointer-events-none');
+      } else {
+        container.classList.remove('opacity-40', 'pointer-events-none');
+      }
+    }
+  }
+
+  function triggerSave() {
+    const toast = document.getElementById('saveToast');
+    const btn = document.getElementById('btnSavePreferences');
+    if (!toast || !btn) return;
+
+    btn.disabled = true;
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px]">progress_activity</span><span>Menyimpan...</span>';
+
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = originalContent;
+
+      toast.classList.remove('-translate-y-12', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        hideToast();
+      }, 3500);
+    }, 600);
+  }
+
+  function hideToast() {
+    const toast = document.getElementById('saveToast');
+    if (toast) {
+      toast.classList.add('-translate-y-12', 'opacity-0', 'pointer-events-none');
+      toast.classList.remove('translate-y-0', 'opacity-100');
+    }
+  }
+</script></main></body></html>

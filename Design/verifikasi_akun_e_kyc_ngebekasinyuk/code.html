@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'on-tertiary': '#ffffff', 'surface-container-highest': '#e1e2ea', 'inverse-surface': '#2d3037', 'on-secondary': '#ffffff', 'outline': '#727787', 'on-primary-fixed-variant': '#00419e', 'primary-container': '#006bfb', 'primary-fixed': '#dae2ff', 'on-secondary-fixed': '#002114', 'secondary-fixed': '#63fcc0', 'on-error-container': '#93000a', 'on-error': '#ffffff', 'tertiary-fixed': '#ffdbc8', 'surface-variant': '#e1e2ea', 'on-background': '#191c22', 'secondary': '#006c4b', 'on-primary-container': '#fefcff', 'inverse-primary': '#b1c5ff', 'on-secondary-fixed-variant': '#005138', 'on-secondary-container': '#00714f', 'error-container': '#ffdad6', 'surface': '#f9f9ff', 'on-tertiary-container': '#fffbff', 'surface-container-low': '#f2f3fc', 'tertiary-fixed-dim': '#ffb68b', 'surface-container-lowest': '#ffffff', 'primary': '#0055c9', 'secondary-container': '#60f9bd', 'error': '#ba1a1a', 'tertiary-container': '#bb5800', 'surface-bright': '#f9f9ff', 'surface-container': '#ecedf6', 'on-primary': '#ffffff', 'on-surface-variant': '#424655', 'on-tertiary-fixed-variant': '#753400', 'outline-variant': '#c2c6d8', 'surface-tint': '#0057ce', 'inverse-on-surface': '#eff0f9', 'primary-fixed-dim': '#b1c5ff', 'on-tertiary-fixed': '#321200', 'on-primary-fixed': '#001946', 'surface-container-high': '#e6e8f0', 'tertiary': '#954500', 'on-surface': '#191c22', 'background': '#f9f9ff', 'surface-dim': '#d8dae2', 'secondary-fixed-dim': '#3fdfa5' }, borderRadius: { 'DEFAULT': '0.25rem', 'lg': '0.5rem', 'xl': '0.75rem', 'full': '9999px' }, spacing: { 'container-padding-desktop': '1.5rem', 'space-sm': '0.5rem', 'space-lg': '1.25rem', 'space-4xl': '4rem', 'space-xl': '1.5rem', 'space-2xs': '0.125rem', 'gutter-desktop': '1.25rem', 'space-xs': '0.25rem', 'container-padding-mobile': '1rem', 'space-base': '1rem', 'space-2xl': '2rem', 'space-3xl': '3rem', 'gutter-mobile': '0.75rem', 'space-md': '0.75rem' }, fontFamily: { 'body-lg': ['Inter'], 'body-sm': ['Inter'], 'label-md': ['Inter'], 'headline-md': ['Inter'], 'price-lg': ['Inter'], 'label-sm': ['Inter'], 'label-lg': ['Inter'], 'body-md': ['Inter'], 'headline-lg': ['Inter'], 'display-lg-mobile': ['Inter'], 'price-md': ['Inter'], 'display-lg': ['Inter'], 'headline-sm': ['Inter'], 'price-sm': ['Inter'], 'headline-lg-mobile': ['Inter'] }, fontSize: { 'body-lg': ['16px', { lineHeight: '24px', letterSpacing: '0em', fontWeight: '400' }], 'body-sm': ['12px', { lineHeight: '18px', letterSpacing: '0.005em', fontWeight: '400' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.01em', fontWeight: '500' }], 'headline-md': ['18px', { lineHeight: '26px', letterSpacing: '-0.01em', fontWeight: '600' }], 'price-lg': ['22px', { lineHeight: '28px', letterSpacing: '-0.02em', fontWeight: '700' }], 'label-sm': ['10px', { lineHeight: '14px', letterSpacing: '0.02em', fontWeight: '600' }], 'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.005em', fontWeight: '600' }], 'body-md': ['14px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '400' }], 'headline-lg': ['24px', { lineHeight: '32px', letterSpacing: '-0.015em', fontWeight: '600' }], 'display-lg-mobile': ['26px', { lineHeight: '34px', letterSpacing: '-0.015em', fontWeight: '700' }], 'price-md': ['16px', { lineHeight: '22px', letterSpacing: '-0.015em', fontWeight: '700' }], 'display-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.02em', fontWeight: '700' }], 'headline-sm': ['16px', { lineHeight: '24px', letterSpacing: '-0.005em', fontWeight: '600' }], 'price-sm': ['13px', { lineHeight: '18px', letterSpacing: '-0.01em', fontWeight: '700' }], 'headline-lg-mobile': ['20px', { lineHeight: '28px', letterSpacing: '-0.01em', fontWeight: '600' }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-container-padding-mobile flex items-center justify-between gap-space-xs"><div class="flex items-center gap-space-xs min-w-0 flex-1"><button aria-label="Kembali" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors flex-shrink-0" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="A modern minimalist emblem logo for 'NgeBekasinYuk', a secure secondhand gadget marketplace. Flat vector style featuring a stylized shield merged with a tech gadget chip and a green checkmark, using trust blue (#0F6FFF) and vibrant escrow green (#00C48C). Clean white/transparent background.. Design context: - Primary color: #0f6fff
+- Font: inter
+- Mode: light
+- Roundness: rounded-md
+. The logo should be visually consistent with these brand tokens." class="h-7 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1W2nJIdxG94LzusQ04NxKEldvYdTOmP9hqtSQHFpVR0OBHbw6RlW_jXc6dLtl6xXr660H3Q43DazLRHwoZnONIiZ0dVrpAyJUX3NbOmJBR9cXVdsc3FOkjczMQdCPWXU9DBmYClpc1A59tecp5_Yz1bWwOahwrKIQZcmWyFlfl8pEgJ5_m5FTjpgNX_eMwVOdOEP8o6RloAXnOnuC1l34RoKhDAr6uDOdsonnVn-w2CeyGnXVpaSismwA"/><div class="flex flex-col min-w-0"><h1 class="font-headline-md text-headline-md text-on-surface truncate">Ruang Obrolan</h1><div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm"><span class="material-symbols-outlined text-[14px]">verified_user</span><span>Rekber Terlindungi</span></div></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Pilihan percakapan" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[22px]">more_vert</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full pt-16 bg-surface flex-1"><div class="flex flex-col w-full pb-10">
+<!-- Top Security Assurance Banner -->
+<div class="px-container-padding-mobile pt-space-md">
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Verifikasi Identitas e-KYC</span>
+</div>
+<div class="flex items-center gap-1 bg-secondary/10 text-secondary px-2.5 py-1 rounded-full font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[13px]">lock</span>
+<span>AES-256 SSL</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Wajib verifikasi e-KYC 1x seumur hidup untuk menjadi Penjual terpercaya, mengaktifkan fitur pasang iklan gadget, dan penarikan saldo escrow rekening.
+      </p>
+</div>
+</div>
+<!-- Stepper 4 Tahapan -->
+<div class="px-container-padding-mobile pt-space-md">
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm">
+<div class="flex items-center justify-between relative">
+<!-- Connecting Track Lines -->
+<div class="absolute left-6 right-6 top-4 h-[3px] bg-surface-container -z-0"></div>
+<div class="absolute left-6 w-1/3 top-4 h-[3px] bg-secondary -z-0"></div>
+<!-- Step 1: KTP Input (Done) -->
+<div class="flex flex-col items-center gap-1.5 z-10">
+<div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-md text-label-md shadow-sm">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">1. NIK KTP</span>
+</div>
+<!-- Step 2: Foto KTP (Active) -->
+<div class="flex flex-col items-center gap-1.5 z-10">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md text-label-md relative shadow-md">
+<span class="font-bold">2</span>
+<span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-tertiary-fixed-dim animate-ping"></span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-bold">2. Foto KTP</span>
+</div>
+<!-- Step 3: Selfie + KTP (Pending) -->
+<div class="flex flex-col items-center gap-1.5 z-10">
+<div class="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center font-label-md text-label-md">
+<span>3</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">3. Selfie</span>
+</div>
+<!-- Step 4: Review (Pending) -->
+<div class="flex flex-col items-center gap-1.5 z-10">
+<div class="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center font-label-md text-label-md">
+<span>4</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">4. Tinjau</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Camera / Viewfinder Box Foto KTP -->
+<div class="px-container-padding-mobile pt-space-md">
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Pindai e-KTP Fisik Asli</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Posisikan KTP pas di dalam bingkai pemindai</p>
+</div>
+<button class="p-2 rounded-full bg-surface-container text-on-surface-variant active:bg-surface-variant" id="btn-flash" onclick="toggleFlash()">
+<span class="material-symbols-outlined text-[20px]" id="flash-icon">flash_off</span>
+</button>
+</div>
+<!-- Live Viewfinder Frame with Real-time Guides -->
+<div class="relative w-full aspect-[16/10] bg-inverse-surface rounded-xl overflow-hidden flex items-center justify-center shadow-inner">
+<!-- Scan Beam Animation -->
+<div class="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary-container to-transparent opacity-90 animate-pulse top-1/4"></div>
+<!-- Camera Ambient Vignette -->
+<div class="absolute inset-0 bg-radial from-transparent via-black/20 to-black/60 pointer-events-none"></div>
+<!-- Corner Reticle Guides -->
+<div class="absolute inset-4 pointer-events-none flex flex-col justify-between">
+<div class="flex justify-between">
+<div class="w-7 h-7 border-t-[3px] border-l-[3px] border-primary rounded-tl-lg"></div>
+<div class="w-7 h-7 border-t-[3px] border-r-[3px] border-primary rounded-tr-lg"></div>
+</div>
+<div class="flex justify-between">
+<div class="w-7 h-7 border-b-[3px] border-l-[3px] border-primary rounded-bl-lg"></div>
+<div class="w-7 h-7 border-b-[3px] border-r-[3px] border-primary rounded-br-lg"></div>
+</div>
+</div>
+<!-- Simulated Indonesian e-KTP Mock Silhouette inside viewfinder -->
+<div class="w-[82%] h-[82%] bg-surface/10 rounded-lg p-3 flex flex-col justify-between backdrop-blur-[1px] relative">
+<!-- Top KTP Bar -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]">verified</span>
+<div class="h-2 w-20 bg-surface/30 rounded"></div>
+</div>
+<div class="h-2 w-12 bg-surface/30 rounded"></div>
+</div>
+<!-- Middle Details Layout -->
+<div class="flex gap-2.5 items-center">
+<!-- Simulated Chip & Text Lines -->
+<div class="flex-1 flex flex-col gap-1.5">
+<div class="w-7 h-5 bg-tertiary-fixed-dim/40 rounded-sm"></div>
+<div class="h-2.5 w-3/4 bg-primary-fixed/50 rounded"></div>
+<div class="h-2 w-1/2 bg-surface/30 rounded"></div>
+<div class="h-2 w-2/3 bg-surface/30 rounded"></div>
+</div>
+<!-- Photo Box Target -->
+<div class="w-16 h-20 bg-surface/20 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-surface/50 text-[24px]">account_box</span>
+</div>
+</div>
+<!-- Real-time Status Overlay -->
+<div class="bg-inverse-surface/80 rounded px-2 py-1 self-center flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary-fixed animate-ping"></span>
+<span class="text-on-primary font-label-sm text-label-sm">Sensor Otomatis Terdeteksi</span>
+</div>
+</div>
+</div>
+<!-- Real-time Quality Badges Grid -->
+<div class="grid grid-cols-2 gap-2">
+<div class="flex items-center gap-1.5 bg-secondary/10 px-2.5 py-1.5 rounded-lg text-secondary">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span class="font-label-sm text-label-sm">Posisi Pas Presisi</span>
+</div>
+<div class="flex items-center gap-1.5 bg-secondary/10 px-2.5 py-1.5 rounded-lg text-secondary">
+<span class="material-symbols-outlined text-[16px]">text_fields</span>
+<span class="font-label-sm text-label-sm">NIK &amp; Teks Terbaca</span>
+</div>
+<div class="flex items-center gap-1.5 bg-tertiary/10 px-2.5 py-1.5 rounded-lg text-tertiary">
+<span class="material-symbols-outlined text-[16px]">wb_sunny</span>
+<span class="font-label-sm text-label-sm">Hindari Pantulan Silau</span>
+</div>
+<div class="flex items-center gap-1.5 bg-secondary/10 px-2.5 py-1.5 rounded-lg text-secondary">
+<span class="material-symbols-outlined text-[16px]">filter_tilt_shift</span>
+<span class="font-label-sm text-label-sm">Resolusi Tajam (HD)</span>
+</div>
+</div>
+<!-- Action Controls -->
+<div class="flex items-center justify-between pt-1">
+<button class="flex items-center gap-1.5 px-3 py-2.5 rounded-lg bg-surface-container text-on-surface-variant active:bg-surface-variant font-label-md text-label-md" type="button">
+<span class="material-symbols-outlined text-[18px]">photo_library</span>
+<span>Ambil Galeri</span>
+</button>
+<!-- Big Shutter Button -->
+<button aria-label="Ambil Foto KTP" class="w-14 h-14 rounded-full bg-surface-container-lowest p-1 shadow-lg flex items-center justify-center border-2 border-primary active:scale-95 transition-transform" id="shutter-btn" onclick="triggerCapture()">
+<div class="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[24px]">photo_camera</span>
+</div>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-2.5 rounded-lg bg-surface-container text-on-surface-variant active:bg-surface-variant font-label-md text-label-md" onclick="retakePhoto()" type="button">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+<span>Atur Ulang</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Selfie Validation Preview Card (Next Step Guide) -->
+<div class="px-container-padding-mobile pt-space-md">
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">face</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Tahap Selanjutnya: Selfie + KTP</span>
+</div>
+<span class="bg-primary/10 text-primary px-2 py-0.5 rounded-full font-label-sm text-label-sm">Liveness Aktif</span>
+</div>
+<div class="bg-surface-container-low rounded-lg p-space-base flex items-center gap-space-base">
+<!-- Oval Silhouette Preview -->
+<div class="w-20 h-24 rounded-full bg-primary-fixed flex-shrink-0 flex items-center justify-center relative overflow-hidden shadow-inner">
+<span class="material-symbols-outlined text-[44px] text-on-primary-fixed-variant">person</span>
+<div class="absolute bottom-1 right-1 w-8 h-6 bg-secondary-fixed rounded flex items-center justify-center shadow">
+<span class="material-symbols-outlined text-on-secondary-fixed text-[12px]">badge</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 min-w-0">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Pegang KTP di samping pipi. Wajah harus tampak jelas tanpa kacamata hitam, masker, atau topi pelindung.
+          </p>
+<div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+<span>Deteksi Biometrik AI 3 Detik</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Form Verifikasi OCR Data Hasil Scan -->
+<div class="px-container-padding-mobile pt-space-md">
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Konfirmasi Data e-KTP</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Periksa kesesuaian hasil OCR otomatis</p>
+</div>
+<div class="flex items-center gap-1 bg-secondary/10 text-secondary px-2.5 py-1 rounded-full font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+<span>OCR 99% Akurat</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-base">
+<!-- Field NIK -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant font-medium">Nomor Induk Kependudukan (NIK)</label>
+<div class="relative flex items-center">
+<input class="w-full h-11 bg-surface-container-low rounded-lg px-3 pr-10 font-body-md text-body-md text-on-surface tracking-wider outline-none" id="nik-input" readonly="" type="password" value="3175062408980002"/>
+<button class="absolute right-2.5 text-outline p-1 active:text-on-surface" onclick="toggleNikVisibility()" type="button">
+<span class="material-symbols-outlined text-[20px]" id="nik-eye-icon">visibility</span>
+</button>
+</div>
+</div>
+<!-- Field Nama Lengkap -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant font-medium">Nama Lengkap Sesuai KTP</label>
+<input class="w-full h-11 bg-surface-container-low rounded-lg px-3 font-body-md text-body-md text-on-surface outline-none" type="text" value="Achmad Rizqi Mubarok"/>
+</div>
+<!-- Field Tanggal Lahir -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant font-medium">Tanggal Lahir</label>
+<div class="relative flex items-center">
+<input class="w-full h-11 bg-surface-container-low rounded-lg px-3 font-body-md text-body-md text-on-surface outline-none" type="text" value="24 Agustus 1998"/>
+<span class="material-symbols-outlined absolute right-3 text-outline text-[20px]">calendar_today</span>
+</div>
+</div>
+<!-- Field Alamat Lengkap -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant font-medium">Alamat Lengkap</label>
+<textarea class="w-full bg-surface-container-low rounded-lg p-3 font-body-md text-body-md text-on-surface outline-none resize-none" rows="2">Jl. Mawar Asri No. 18, RT 04/RW 02, Pondok Kelapa, Duren Sawit, Jakarta Timur</textarea>
+</div>
+<div class="bg-primary/5 rounded-lg p-2.5 flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[18px] mt-0.5">info</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Nama lengkap ini wajib sama dengan nama pada buku tabungan bank kamu untuk pencairan saldo escrow NgeBekasinYuk.
+          </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Benefits of e-KYC Card -->
+<div class="px-container-padding-mobile pt-space-md">
+<div class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">stars</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Keuntungan Akun Terverifikasi</h3>
+</div>
+<div class="grid grid-cols-1 gap-space-sm">
+<div class="flex items-center gap-space-base p-2.5 rounded-lg bg-surface-container-low">
+<div class="w-9 h-9 rounded-full bg-secondary/15 text-secondary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">verified_user</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface">Badge Terverifikasi Resmi</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Badge centang biru hijau muncul di setiap listing gadget &amp; profil.</span>
+</div>
+</div>
+<div class="flex items-center gap-space-base p-2.5 rounded-lg bg-surface-container-low">
+<div class="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">trending_up</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface">+20 Poin Trust Score Penjual</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Iklan gadget kamu diprioritaskan di hasil pencarian teratas pembeli.</span>
+</div>
+</div>
+<div class="flex items-center gap-space-base p-2.5 rounded-lg bg-surface-container-low">
+<div class="w-9 h-9 rounded-full bg-tertiary/15 text-tertiary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">storefront</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface">Buka Hak Jual Tanpa Batas</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Bebas listing puluhan gadget bekas dengan escrow proteksi otomatis.</span>
+</div>
+</div>
+<div class="flex items-center gap-space-base p-2.5 rounded-lg bg-surface-container-low">
+<div class="w-9 h-9 rounded-full bg-secondary/15 text-secondary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface">Pencairan Dana Escrow Instan</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Tarik saldo dompet 24/7 real-time via jaringan BI-FAST ke bank mana pun.</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Security Legal Notice UU PDP -->
+<div class="px-container-padding-mobile pt-space-md">
+<div class="bg-surface-container-low rounded-xl p-space-base flex gap-space-sm items-start">
+<span class="material-symbols-outlined text-secondary text-[20px] mt-0.5">security</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Data KTP kamu disimpan terenkripsi dengan standar perbankan AES-256 dan hanya digunakan untuk validasi identitas sesuai <strong>UU Perlindungan Data Pribadi (UU PDP No. 27/2022)</strong>. NgeBekasinYuk tidak pernah membagikan data pribadi kepada pihak ketiga tanpa izin.
+      </p>
+</div>
+</div>
+<!-- Submission CTA Bar -->
+<div class="px-container-padding-mobile pt-space-lg flex flex-col gap-space-sm">
+<button class="w-full h-13 py-3.5 bg-primary text-on-primary rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-lg active:opacity-95 transition-all" id="submit-ekyc-btn" onclick="submitKYC()">
+<span>Kirim Data Verifikasi e-KYC</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<div class="flex items-center justify-center gap-1.5 py-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">support_agent</span>
+<span class="font-body-sm text-body-sm">Butuh bantuan proses e-KYC?</span>
+<a class="font-label-sm text-label-sm text-primary font-semibold" href="#">Hubungi CS 24/7</a>
+</div>
+</div>
+</div>
+<script>
+  let flashActive = false;
+  let nikHidden = true;
+
+  function toggleFlash() {
+    flashActive = !flashActive;
+    const icon = document.getElementById('flash-icon');
+    const btn = document.getElementById('btn-flash');
+    if (flashActive) {
+      icon.textContent = 'flash_on';
+      btn.classList.remove('bg-surface-container', 'text-on-surface-variant');
+      btn.classList.add('bg-tertiary-fixed-dim', 'text-on-tertiary-fixed');
+    } else {
+      icon.textContent = 'flash_off';
+      btn.classList.remove('bg-tertiary-fixed-dim', 'text-on-tertiary-fixed');
+      btn.classList.add('bg-surface-container', 'text-on-surface-variant');
+    }
+  }
+
+  function toggleNikVisibility() {
+    const input = document.getElementById('nik-input');
+    const icon = document.getElementById('nik-eye-icon');
+    nikHidden = !nikHidden;
+    if (nikHidden) {
+      input.type = 'password';
+      icon.textContent = 'visibility';
+    } else {
+      input.type = 'text';
+      icon.textContent = 'visibility_off';
+    }
+  }
+
+  function triggerCapture() {
+    const btn = document.getElementById('shutter-btn');
+    btn.classList.add('scale-90');
+    setTimeout(() => {
+      btn.classList.remove('scale-90');
+      alert('Foto KTP berhasil dipindai dengan deteksi AI!');
+    }, 200);
+  }
+
+  function retakePhoto() {
+    alert('Kamera di-reset. Posisikan e-KTP pada kotak pemindai.');
+  }
+
+  function submitKYC() {
+    const submitBtn = document.getElementById('submit-ekyc-btn');
+    submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px]">progress_activity</span><span>Memproses Data OCR...</span>';
+    submitBtn.disabled = true;
+    setTimeout(() => {
+      submitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">check_circle</span><span>Data Terkirim! Lanjut ke Selfie</span>';
+      submitBtn.classList.remove('bg-primary');
+      submitBtn.classList.add('bg-secondary');
+    }, 1200);
+  }
+</script></main></body></html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beri Ulasan Gadget - NgeBekasinYuk</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              primary: '#0F6FFF',
+              hover: '#0A5BD6',
+              secondary: '#00C48C',
+              accent: '#FF7A00',
+              danger: '#E5484D',
+              warning: '#F5A524',
+            },
+            surface: {
+              app: '#F7F8FA',
+              card: '#FFFFFF',
+              subtle: '#EFF2F6',
+              border: '#E3E8EF',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #E3E8EF;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-gray-900/60 min-h-screen flex items-end sm:items-center justify-center p-0 sm:p-4 text-[#1A1D23] antialiased">
+
+  <!-- Modal Container / Bottom Sheet -->
+  <div class="relative w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] border border-surface-border animate-in slide-in-from-bottom duration-300">
+    
+    <!-- Drag indicator handle for mobile -->
+    <div class="pt-3 pb-1 flex justify-center sm:hidden">
+      <div class="w-10 h-1.5 bg-gray-300 rounded-full"></div>
+    </div>
+
+    <!-- Modal Header -->
+    <div class="px-5 pt-3 pb-4 border-b border-surface-border/70 flex items-start justify-between relative bg-white">
+      <div>
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold mb-1.5">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+          </svg>
+          Pesanan Selesai • Escrow Cair
+        </div>
+        <h1 class="text-xl font-bold text-[#1A1D23] flex items-center gap-1.5">
+          Beri Ulasan Gadget Kamu <span class="text-amber-500">⭐</span>
+        </h1>
+        <p class="text-xs text-[#5C6575] mt-1 leading-relaxed">
+          Ulasan kamu membantu komunitas tech shopper menghindari barang minus.
+        </p>
+      </div>
+
+      <!-- Close Button -->
+      <button type="button" aria-label="Tutup Modal" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors ml-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Scrollable Body Content -->
+    <div class="p-5 space-y-5 overflow-y-auto custom-scrollbar bg-white">
+      
+      <!-- 1. Product Snapshot Card -->
+      <div class="flex items-center gap-3.5 p-3 rounded-xl bg-[#F7F8FA] border border-surface-border">
+        <div class="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 border border-black/5">
+          <img 
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAC1rH287l18JCyBVftI0SVu8oGSWIeeP3pqutFVYbVFiYBR-YwHNg0PZgecmdQgZ-NAkN5S9i0IQr69G0qW_VqXJhF3U0NV2E7zz5w6sG1liALBjxdeHtYXQ5r8c0VeHLzzPoDrMyM6RVqnfK5EdTO1tnNeRhIT03s0x3iMqQOyMCSOMAsHN_zT5bZQhrtTfRaNHK5EV3qqZQTB5aV6yq_jGwrJE8N44ncyIEwTj8PeVLN3tzsXR7V" 
+            alt="iPad Mini 6 64GB WiFi Space Grey" 
+            class="w-full h-full object-cover"
+          >
+          <div class="absolute top-0 right-0 bg-brand-primary text-white text-[9px] font-bold px-1 rounded-bl">
+            iBox
+          </div>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-1 text-[11px] text-[#5C6575] mb-0.5">
+            <span>Penjual:</span>
+            <span class="font-semibold text-[#1A1D23] flex items-center gap-1">
+              Ahmad Tech
+              <svg class="w-3.5 h-3.5 text-brand-primary inline" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+            </span>
+          </div>
+          <h2 class="text-xs sm:text-sm font-semibold text-[#1A1D23] truncate">
+            iPad Mini 6 64GB WiFi Space Grey
+          </h2>
+          <div class="flex items-center gap-2 mt-0.5 text-[11px] text-[#8A94A6]">
+            <span>STX-2026-0812</span>
+            <span>•</span>
+            <span class="text-emerald-600 font-medium">Verified Purchase</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Interactive Overall Star Rating -->
+      <div class="text-center py-1">
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#5C6575] mb-2">
+          Kepuasan Transaksi & Kondisi Unit
+        </label>
+        
+        <!-- 5 Star Buttons -->
+        <div class="flex justify-center items-center gap-2.5 my-1" id="starContainer">
+          <!-- Star 1 -->
+          <button type="button" class="group p-1 focus:outline-none transition-transform active:scale-90 hover:scale-110">
+            <svg class="w-8 h-8 text-amber-400 fill-amber-400 drop-shadow-sm transition-colors" viewBox="0 0 24 24">
+              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            </svg>
+          </button>
+          <!-- Star 2 -->
+          <button type="button" class="group p-1 focus:outline-none transition-transform active:scale-90 hover:scale-110">
+            <svg class="w-8 h-8 text-amber-400 fill-amber-400 drop-shadow-sm transition-colors" viewBox="0 0 24 24">
+              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            </svg>
+          </button>
+          <!-- Star 3 -->
+          <button type="button" class="group p-1 focus:outline-none transition-transform active:scale-90 hover:scale-110">
+            <svg class="w-8 h-8 text-amber-400 fill-amber-400 drop-shadow-sm transition-colors" viewBox="0 0 24 24">
+              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            </svg>
+          </button>
+          <!-- Star 4 -->
+          <button type="button" class="group p-1 focus:outline-none transition-transform active:scale-90 hover:scale-110">
+            <svg class="w-8 h-8 text-amber-400 fill-amber-400 drop-shadow-sm transition-colors" viewBox="0 0 24 24">
+              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            </svg>
+          </button>
+          <!-- Star 5 -->
+          <button type="button" class="group p-1 focus:outline-none transition-transform active:scale-90 hover:scale-110">
+            <svg class="w-8 h-8 text-amber-400 fill-amber-400 drop-shadow-sm transition-colors" viewBox="0 0 24 24">
+              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Rating Label Feedback -->
+        <div class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-xs font-bold border border-amber-200/80">
+          <span>✨</span>
+          <span>Sangat Puas! Unit Sesuai Ekspektasi</span>
+        </div>
+      </div>
+
+      <!-- 3. Parameter Quick Chips (Kondisi sesuai deskripsi?) -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-xs font-bold text-[#1A1D23]">
+            Apa yang paling memuaskan dari unit ini?
+          </label>
+          <span class="text-[11px] text-[#8A94A6]">Pilih yang sesuai</span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <!-- Chip 1 Selected -->
+          <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-brand-primary border border-brand-primary shadow-sm transition-colors">
+            <svg class="w-3.5 h-3.5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            Fisik Mulus Sesuai
+          </button>
+          <!-- Chip 2 Selected -->
+          <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-brand-primary border border-brand-primary shadow-sm transition-colors">
+            <svg class="w-3.5 h-3.5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            Baterai Normal
+          </button>
+          <!-- Chip 3 Selected -->
+          <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-brand-primary border border-brand-primary shadow-sm transition-colors">
+            <svg class="w-3.5 h-3.5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            Kelengkapan Lengkap
+          </button>
+          <!-- Chip 4 Selected -->
+          <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-brand-primary border border-brand-primary shadow-sm transition-colors">
+            <svg class="w-3.5 h-3.5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            Pengemasan Super Tebal
+          </button>
+          <!-- Chip 5 (Extra) -->
+          <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white text-[#5C6575] border border-surface-border hover:bg-gray-50 transition-colors">
+            <span>+</span> Seller Ramah & Cepat Nego
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. Photo & Video Upload Box -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-xs font-bold text-[#1A1D23]">
+            Foto & Video Bukti Cek Fisik
+          </label>
+          <span class="text-[11px] text-[#8A94A6]">1/5 Terunggah</span>
+        </div>
+
+        <!-- Grid with 1 uploaded preview + dropzone -->
+        <div class="grid grid-cols-4 gap-2.5">
+          
+          <!-- Uploaded thumbnail preview -->
+          <div class="relative group rounded-xl overflow-hidden aspect-square border border-surface-border bg-gray-100 shadow-sm">
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAC1rH287l18JCyBVftI0SVu8oGSWIeeP3pqutFVYbVFiYBR-YwHNg0PZgecmdQgZ-NAkN5S9i0IQr69G0qW_VqXJhF3U0NV2E7zz5w6sG1liALBjxdeHtYXQ5r8c0VeHLzzPoDrMyM6RVqnfK5EdTO1tnNeRhIT03s0x3iMqQOyMCSOMAsHN_zT5bZQhrtTfRaNHK5EV3qqZQTB5aV6yq_jGwrJE8N44ncyIEwTj8PeVLN3tzsXR7V" alt="Bukti Fisik iPad" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <button type="button" aria-label="Hapus Foto" class="p-1 bg-red-600 text-white rounded-full hover:bg-red-700">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded font-medium">
+              Foto 1
+            </div>
+          </div>
+
+          <!-- Add Photo / Dropzone Button -->
+          <button type="button" class="col-span-3 flex flex-col items-center justify-center p-3.5 rounded-xl border-2 border-dashed border-brand-primary/40 bg-blue-50/40 hover:bg-blue-50 hover:border-brand-primary transition-all text-center group cursor-pointer">
+            <div class="w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+            </div>
+            <p class="text-xs font-semibold text-brand-primary">
+              Unggah foto unboxing / cek layar
+            </p>
+            <p class="text-[10px] text-[#8A94A6] mt-0.5">
+              Maks. 5 foto (JPG, PNG) atau video maks. 30 detik
+            </p>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- 5. Written Feedback Textarea -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label for="reviewText" class="text-xs font-bold text-[#1A1D23]">
+            Tulis Cerita & Pengalaman Kamu
+          </label>
+          <span class="text-[11px] text-[#8A94A6]">Min. 20 karakter</span>
+        </div>
+        <div class="relative">
+          <textarea 
+            id="reviewText"
+            rows="3" 
+            class="w-full text-xs sm:text-sm rounded-xl border border-surface-border p-3 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary placeholder:text-gray-400 resize-none transition-all"
+            placeholder="Ceritakan kondisi fisik, fungsi tombol, layar, atau pengalaman negosiasi dengan penjual..."
+          >Barang sesuai deskripsi banget! Body mulus tanpa dent, iCloud clean, layar True Tone berfungsi normal. Packing kayu dan bubble wrap tebal banget jadi aman di kurir. Rekber NgeBekasinYuk bikin transaksi tanpa waswas!</textarea>
+          <div class="text-[10px] text-right text-emerald-600 font-medium mt-1">
+            ✓ 214 karakter • Cukup detail & membantu
+          </div>
+        </div>
+      </div>
+
+      <!-- Trust Assurance Box -->
+      <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-gray-50 border border-surface-border text-[11px] text-[#5C6575]">
+        <svg class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span>
+          Ulasan ini akan ditandai lencana <strong class="text-[#1A1D23]">"Pembeli Terverifikasi Escrow"</strong> dan ditampilkan di profil toko <span class="font-medium text-[#1A1D23]">Ahmad Tech</span>.
+        </span>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer / Sticky CTA -->
+    <div class="p-4 sm:p-5 border-t border-surface-border bg-white flex flex-col sm:flex-row items-center gap-2.5">
+      <button 
+        type="button" 
+        class="w-full sm:flex-1 h-12 bg-brand-primary hover:bg-brand-hover active:scale-[0.99] text-white font-bold text-sm rounded-xl shadow-md shadow-brand-primary/25 transition-all flex items-center justify-center gap-2"
+      >
+        <span>Kirim Ulasan & Selesaikan</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+        </svg>
+      </button>
+
+      <button 
+        type="button" 
+        class="w-full sm:w-auto px-4 h-10 text-xs font-semibold text-[#5C6575] hover:text-[#1A1D23] transition-colors text-center"
+      >
+        Nanti Saja
+      </button>
+    </div>
+
+  </div>
+
+</body>
+</html>

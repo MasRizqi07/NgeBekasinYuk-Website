@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'on-tertiary': '#ffffff', 'surface-container-highest': '#e1e2ea', 'inverse-surface': '#2d3037', 'on-secondary': '#ffffff', 'outline': '#727787', 'on-primary-fixed-variant': '#00419e', 'primary-container': '#006bfb', 'primary-fixed': '#dae2ff', 'on-secondary-fixed': '#002114', 'secondary-fixed': '#63fcc0', 'on-error-container': '#93000a', 'on-error': '#ffffff', 'tertiary-fixed': '#ffdbc8', 'surface-variant': '#e1e2ea', 'on-background': '#191c22', 'secondary': '#006c4b', 'on-primary-container': '#fefcff', 'inverse-primary': '#b1c5ff', 'on-secondary-fixed-variant': '#005138', 'on-secondary-container': '#00714f', 'error-container': '#ffdad6', 'surface': '#f9f9ff', 'on-tertiary-container': '#fffbff', 'surface-container-low': '#f2f3fc', 'tertiary-fixed-dim': '#ffb68b', 'surface-container-lowest': '#ffffff', 'primary': '#0055c9', 'secondary-container': '#60f9bd', 'error': '#ba1a1a', 'tertiary-container': '#bb5800', 'surface-bright': '#f9f9ff', 'surface-container': '#ecedf6', 'on-primary': '#ffffff', 'on-surface-variant': '#424655', 'on-tertiary-fixed-variant': '#753400', 'outline-variant': '#c2c6d8', 'surface-tint': '#0057ce', 'inverse-on-surface': '#eff0f9', 'primary-fixed-dim': '#b1c5ff', 'on-tertiary-fixed': '#321200', 'on-primary-fixed': '#001946', 'surface-container-high': '#e6e8f0', 'tertiary': '#954500', 'on-surface': '#191c22', 'background': '#f9f9ff', 'surface-dim': '#d8dae2', 'secondary-fixed-dim': '#3fdfa5' }, borderRadius: { 'DEFAULT': '0.25rem', 'lg': '0.5rem', 'xl': '0.75rem', 'full': '9999px' }, spacing: { 'container-padding-desktop': '1.5rem', 'space-sm': '0.5rem', 'space-lg': '1.25rem', 'space-4xl': '4rem', 'space-xl': '1.5rem', 'space-2xs': '0.125rem', 'gutter-desktop': '1.25rem', 'space-xs': '0.25rem', 'container-padding-mobile': '1rem', 'space-base': '1rem', 'space-2xl': '2rem', 'space-3xl': '3rem', 'gutter-mobile': '0.75rem', 'space-md': '0.75rem' }, fontFamily: { 'body-lg': ['Inter'], 'body-sm': ['Inter'], 'label-md': ['Inter'], 'headline-md': ['Inter'], 'price-lg': ['Inter'], 'label-sm': ['Inter'], 'label-lg': ['Inter'], 'body-md': ['Inter'], 'headline-lg': ['Inter'], 'display-lg-mobile': ['Inter'], 'price-md': ['Inter'], 'display-lg': ['Inter'], 'headline-sm': ['Inter'], 'price-sm': ['Inter'], 'headline-lg-mobile': ['Inter'] }, fontSize: { 'body-lg': ['16px', { lineHeight: '24px', letterSpacing: '0em', fontWeight: '400' }], 'body-sm': ['12px', { lineHeight: '18px', letterSpacing: '0.005em', fontWeight: '400' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.01em', fontWeight: '500' }], 'headline-md': ['18px', { lineHeight: '26px', letterSpacing: '-0.01em', fontWeight: '600' }], 'price-lg': ['22px', { lineHeight: '28px', letterSpacing: '-0.02em', fontWeight: '700' }], 'label-sm': ['10px', { lineHeight: '14px', letterSpacing: '0.02em', fontWeight: '600' }], 'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.005em', fontWeight: '600' }], 'body-md': ['14px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '400' }], 'headline-lg': ['24px', { lineHeight: '32px', letterSpacing: '-0.015em', fontWeight: '600' }], 'display-lg-mobile': ['26px', { lineHeight: '34px', letterSpacing: '-0.015em', fontWeight: '700' }], 'price-md': ['16px', { lineHeight: '22px', letterSpacing: '-0.015em', fontWeight: '700' }], 'display-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.02em', fontWeight: '700' }], 'headline-sm': ['16px', { lineHeight: '24px', letterSpacing: '-0.005em', fontWeight: '600' }], 'price-sm': ['13px', { lineHeight: '18px', letterSpacing: '-0.01em', fontWeight: '700' }], 'headline-lg-mobile': ['20px', { lineHeight: '28px', letterSpacing: '-0.01em', fontWeight: '600' }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-container-padding-mobile flex items-center justify-between gap-space-xs"><div class="flex items-center gap-space-xs min-w-0 flex-1"><button aria-label="Kembali" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors flex-shrink-0" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="A modern minimalist emblem logo for 'NgeBekasinYuk', a secure secondhand gadget marketplace. Flat vector style featuring a stylized shield merged with a tech gadget chip and a green checkmark, using trust blue (#0F6FFF) and vibrant escrow green (#00C48C). Clean white/transparent background.. Design context: - Primary color: #0f6fff
+- Font: inter
+- Mode: light
+- Roundness: rounded-md
+. The logo should be visually consistent with these brand tokens." class="h-7 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1W2nJIdxG94LzusQ04NxKEldvYdTOmP9hqtSQHFpVR0OBHbw6RlW_jXc6dLtl6xXr660H3Q43DazLRHwoZnONIiZ0dVrpAyJUX3NbOmJBR9cXVdsc3FOkjczMQdCPWXU9DBmYClpc1A59tecp5_Yz1bWwOahwrKIQZcmWyFlfl8pEgJ5_m5FTjpgNX_eMwVOdOEP8o6RloAXnOnuC1l34RoKhDAr6uDOdsonnVn-w2CeyGnXVpaSismwA"/><div class="flex flex-col min-w-0"><h1 class="font-headline-md text-headline-md text-on-surface truncate">Ruang Obrolan</h1><div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm"><span class="material-symbols-outlined text-[14px]">verified_user</span><span>Rekber Terlindungi</span></div></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Pilihan percakapan" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[22px]">more_vert</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full pt-16 bg-surface flex-1"><div class="flex flex-col w-full pb-32 bg-surface">
+<!-- Escrow Trust Micro-Banner -->
+<section class="px-container-padding-mobile pt-space-md">
+<div class="bg-gradient-to-r from-secondary-container/40 via-surface-container-low to-primary-fixed/40 p-space-md rounded-xl shadow-sm flex items-start gap-space-sm relative overflow-hidden">
+<div class="w-9 h-9 rounded-lg bg-surface-container-lowest flex items-center justify-center text-secondary shadow-sm flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Dana Aman Ditahan Rekber</h2>
+<span class="bg-secondary text-on-secondary font-label-sm text-label-sm px-1.5 py-0.5 rounded-full">Proteksi 100%</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+          Dana baru dicairkan ke penjual setelah kamu terima paket &amp; lulus uji fungsi <span class="font-semibold text-on-surface">2x24 jam</span>.
+        </p>
+</div>
+</div>
+</section>
+<!-- Address Selection Section -->
+<section class="px-container-padding-mobile mt-space-base">
+<div class="bg-surface-container-lowest p-space-base rounded-xl shadow-sm">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-1.5 text-primary">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Alamat Pengiriman</span>
+</div>
+<span class="bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded-md">Utama</span>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface">Budi Pratama</span>
+<span class="bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm px-1.5 py-0.5 rounded">Rumah</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">• 0812-8921-4432</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5 leading-relaxed">
+          Jl. Mawar Asri No. 18, RT 04/RW 02, Pondok Kelapa, Duren Sawit, Kota Jakarta Timur, DKI Jakarta 13450
+        </p>
+<div class="mt-2.5 flex items-center justify-between">
+<div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Titik Pin Lokasi Akurat</span>
+</div>
+<button class="font-label-md text-label-md text-primary font-medium flex items-center gap-0.5 hover:underline" type="button">
+            Ubah Alamat <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Product & Seller Section -->
+<section class="px-container-padding-mobile mt-space-base">
+<div class="bg-surface-container-lowest p-space-base rounded-xl shadow-sm">
+<!-- Seller Header -->
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="relative w-10 h-10 rounded-full bg-surface-container flex-shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A friendly Indonesian male tech gadget seller smiling warmly, wearing a neat casual navy shirt, crisp white studio lighting, trustworthy marketplace merchant avatar portrait." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCivYuQ1MnI7E6IupkVnB2wrdi0vZ4YEqyfTr2wFr4MaU5RbTNlZzKVLbY6mnGyFdyqX-FE0kVC8460WUMwZyEOE01o5wSIHm3BdBSMqOjiBicUzktSCRECCcm2fWwTgogLXVM-99usmt9_HZNnuqFofyCqzv1LkgmjmvKk2Re4EOV47Tt6eB8QeKSc4O8deh_Azmrwnk9_SF-A9p2wOHZXQYFmgiCIq8iIFvrTwvp_pdGJYaJOef8"/>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Dimas Aditya</span>
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-1.5 py-0.2 rounded flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                KYC Aktif
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">storefront</span>
+<span class="truncate">Gadget Store • Kota Jakarta Barat</span>
+</p>
+</div>
+</div>
+<button class="text-primary hover:text-on-primary-fixed-variant p-1" type="button">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</button>
+</div>
+<!-- Item Card -->
+<div class="bg-surface-container-low p-space-md rounded-lg mt-space-xs">
+<div class="flex gap-space-md">
+<div class="relative w-20 h-20 rounded-lg overflow-hidden bg-surface-container-highest flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Apple iPad Air 5 in elegant Starlight color displaying crisp retina screen on a modern clean oak desk with subtle warm ambient studio lighting, mint condition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSoZCjbay2vGyuL9c5V0UuS6ISwubNTs8UxDSQ3Xy8XNOiTohn8FkRTnn0bifNv1Y6Pkt-UtUzUwYeYbPdrIWn-YFaenC0ZI9evxtIQeyfcdDjMBpJE6o3fE21Z6pVJCIV2ki2FPpIAq_t3hJB6M-qFQUSfsUoEYznHD6Ev9G2mfo1pBtPdxzPcszriZdm8MqsmdXwXsd5lACzUJLH7keI9djL1_K6IXMoo5gCo8hizXKsoStJjm1h"/>
+<span class="absolute top-1 left-1 bg-surface-container-lowest/90 backdrop-blur-xs font-label-sm text-label-sm text-on-surface px-1 rounded shadow-xs">
+              Mulus 98%
+            </span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-headline-sm text-headline-sm text-on-surface line-clamp-2 leading-tight">
+              Apple iPad Air 5 64GB WiFi Starlight - Garansi Resmi iBox
+            </h3>
+<div class="mt-1.5 flex items-baseline gap-2">
+<span class="font-price-md text-price-md text-primary font-bold" style="font-feature-settings: 'tnum';">
+                Rp 6.900.000
+              </span>
+<span class="font-body-sm text-body-sm text-outline line-through" style="font-feature-settings: 'tnum';">
+                Rp 7.500.000
+              </span>
+</div>
+<div class="mt-1.5 inline-flex items-center gap-1 bg-secondary-container/50 text-on-secondary-container px-2 py-0.5 rounded-full font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[13px]">sell</span>
+<span>Harga Deal Nego Chat</span>
+</div>
+</div>
+</div>
+<!-- Specifications tags -->
+<div class="mt-3 pt-2.5 flex flex-wrap gap-1.5">
+<span class="bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm px-2 py-1 rounded">
+            📦 Dus Lengkap
+          </span>
+<span class="bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm px-2 py-1 rounded">
+            ⚡ Charger 20W Original
+          </span>
+<span class="bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm px-2 py-1 rounded">
+            🧾 Nota iBox Ada
+          </span>
+</div>
+<!-- Seller Note -->
+<div class="mt-3">
+<label class="font-label-sm text-label-sm text-on-surface-variant block mb-1" for="seller-note">
+            Catatan untuk Penjual
+          </label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest text-on-surface font-body-sm text-body-sm rounded-lg px-3 py-2 pr-12 placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest" id="seller-note" maxlength="150" placeholder="Contoh: Tolong bubble wrap ekstra tebal + stiker fragile ya" type="text"/>
+<span class="absolute right-2.5 top-2.5 font-label-sm text-label-sm text-outline select-none">0/150</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Shipping Method Section -->
+<section class="px-container-padding-mobile mt-space-base">
+<div class="bg-surface-container-lowest p-space-base rounded-xl shadow-sm">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-1.5 text-primary">
+<span class="material-symbols-outlined text-[20px]">local_shipping</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Metode &amp; Opsi Pengiriman</span>
+</div>
+</div>
+<!-- Courier tabs -->
+<div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+<button class="px-3.5 py-1.5 rounded-full bg-primary text-on-primary font-label-md text-label-md whitespace-nowrap shadow-xs flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">check</span>
+          J&amp;T Express
+        </button>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md whitespace-nowrap" type="button">
+          SiCepat Haluan
+        </button>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md whitespace-nowrap" type="button">
+          JNE Trucking/Reg
+        </button>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md whitespace-nowrap" type="button">
+          GoSend Instant
+        </button>
+</div>
+<!-- Selected Courier Service Card -->
+<div class="bg-surface-container-low p-space-md rounded-lg mt-space-xs flex items-center justify-between">
+<div class="flex items-start gap-2.5 min-w-0">
+<div class="w-4 h-4 rounded-full bg-primary flex items-center justify-center mt-1 flex-shrink-0">
+<div class="w-1.5 h-1.5 rounded-full bg-surface-container-lowest"></div>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">J&amp;T Reguler</span>
+<span class="bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm px-1.5 py-0.2 rounded">1-2 Hari Kerja</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Estimasi tiba lusa di Pondok Kelapa</p>
+</div>
+</div>
+<div class="text-right flex-shrink-0 pl-2">
+<span class="font-price-md text-price-md text-on-surface" style="font-feature-settings: 'tnum';">Rp 22.000</span>
+<button class="block font-label-sm text-label-sm text-primary font-medium hover:underline mt-0.5" type="button">
+            Ubah Layanan
+          </button>
+</div>
+</div>
+<!-- Compulsory Gadget Transit Insurance Box -->
+<div class="bg-primary-fixed/20 p-space-md rounded-lg mt-space-sm flex items-start gap-2.5">
+<div class="w-5 h-5 rounded bg-primary flex items-center justify-center text-on-primary mt-0.5 flex-shrink-0">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface">Asuransi Pengiriman Gadget</span>
+<span class="font-price-sm text-price-sm text-primary" style="font-feature-settings: 'tnum';">+Rp 15.000</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Wajib untuk nilai barang &gt; Rp 1jt. Melindungi kompensasi 100% jika unit hilang atau rusak akibat kurir.
+          </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Payment Method Selection -->
+<section class="px-container-padding-mobile mt-space-base">
+<div class="bg-surface-container-lowest p-space-base rounded-xl shadow-sm">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-1.5 text-primary">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Metode Pembayaran Escrow</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-11 h-8 rounded bg-surface-container-lowest flex items-center justify-center font-headline-sm text-headline-sm font-black text-primary shadow-xs">
+            BCA
+          </div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">BCA Virtual Account</span>
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-1.5 py-0.2 rounded">Otomatis</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Bebas biaya verifikasi transfer</p>
+</div>
+</div>
+<button class="font-label-md text-label-md text-primary font-medium hover:underline flex items-center" type="button">
+          Ubah <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Payment Summary Card -->
+<section class="px-container-padding-mobile mt-space-base">
+<div class="bg-surface-container-lowest p-space-base rounded-xl shadow-sm">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-space-sm">Ringkasan Pembayaran</h3>
+<div class="space-y-2.5 font-body-sm text-body-sm">
+<div class="flex justify-between items-center text-on-surface-variant">
+<span>Total Harga Barang (1 unit)</span>
+<span class="font-medium text-on-surface" style="font-feature-settings: 'tnum';">Rp 6.900.000</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<span>Total Ongkos Kirim (J&amp;T)</span>
+<span class="font-medium text-on-surface" style="font-feature-settings: 'tnum';">Rp 22.000</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<span>Asuransi Kehilangan &amp; Fisik</span>
+<span class="font-medium text-on-surface" style="font-feature-settings: 'tnum';">Rp 15.000</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span>Biaya Layanan Escrow (Rekber)</span>
+<span class="material-symbols-outlined text-[14px] text-outline">help</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="line-through text-outline" style="font-feature-settings: 'tnum';">Rp 172.500</span>
+<span class="text-secondary font-bold">GRATIS</span>
+</div>
+</div>
+<div class="pt-3 mt-1 bg-surface-container-high h-[1px] w-full"></div>
+<div class="flex justify-between items-center pt-1">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Total Tagihan</span>
+<span class="font-price-lg text-price-lg text-primary font-bold" style="font-feature-settings: 'tnum';">
+            Rp 6.937.000
+          </span>
+</div>
+</div>
+</div>
+</section>
+<!-- Sticky Bottom Checkout Bar -->
+<div class="fixed bottom-0 inset-x-0 bg-surface-container-lowest/95 backdrop-blur-lg shadow-lg z-40 pb-safe">
+<!-- Escrow Protection Sticky Microcopy -->
+<div class="bg-secondary-container/40 px-container-padding-mobile py-1.5 flex items-center justify-center gap-1.5 text-on-secondary-container font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">shield</span>
+<span>Garansi 100% Uang Kembali bila barang tidak sesuai deskripsi</span>
+</div>
+<div class="h-20 px-container-padding-mobile flex items-center justify-between gap-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Total Pembayaran</span>
+<span class="font-price-lg text-price-lg text-primary font-extrabold tracking-tight" style="font-feature-settings: 'tnum';">
+          Rp 6.937.000
+        </span>
+</div>
+<button class="flex-1 max-w-[210px] h-[48px] bg-primary hover:bg-on-primary-fixed-variant active:scale-[0.98] transition-all text-on-primary rounded-xl font-label-lg text-label-lg font-bold flex items-center justify-center gap-1.5 shadow-[0_4px_16px_rgba(0,85,201,0.3)]" id="btn-pay-escrow" type="button">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+<span>Bayar Escrow</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  // Simple micro-interaction for note counter and mock click behavior
+  (function() {
+    const noteInput = document.getElementById('seller-note');
+    if (noteInput) {
+      const counter = noteInput.nextElementSibling;
+      noteInput.addEventListener('input', (e) => {
+        const len = e.target.value.length;
+        if (counter) counter.textContent = `${len}/150`;
+      });
+    }
+
+    const payButton = document.getElementById('btn-pay-escrow');
+    if (payButton) {
+      payButton.addEventListener('click', () => {
+        payButton.innerHTML = `
+          <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+          <span>Menghubungkan...</span>
+        `;
+        setTimeout(() => {
+          payButton.innerHTML = `
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            <span>Kode VA Terbit</span>
+          `;
+          payButton.classList.remove('bg-primary');
+          payButton.classList.add('bg-secondary');
+        }, 800);
+      });
+    }
+  })();
+</script></main></body></html>

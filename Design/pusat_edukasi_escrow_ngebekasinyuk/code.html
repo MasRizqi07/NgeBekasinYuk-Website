@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'on-tertiary': '#ffffff', 'surface-container-highest': '#e1e2ea', 'inverse-surface': '#2d3037', 'on-secondary': '#ffffff', 'outline': '#727787', 'on-primary-fixed-variant': '#00419e', 'primary-container': '#006bfb', 'primary-fixed': '#dae2ff', 'on-secondary-fixed': '#002114', 'secondary-fixed': '#63fcc0', 'on-error-container': '#93000a', 'on-error': '#ffffff', 'tertiary-fixed': '#ffdbc8', 'surface-variant': '#e1e2ea', 'on-background': '#191c22', 'secondary': '#006c4b', 'on-primary-container': '#fefcff', 'inverse-primary': '#b1c5ff', 'on-secondary-fixed-variant': '#005138', 'on-secondary-container': '#00714f', 'error-container': '#ffdad6', 'surface': '#f9f9ff', 'on-tertiary-container': '#fffbff', 'surface-container-low': '#f2f3fc', 'tertiary-fixed-dim': '#ffb68b', 'surface-container-lowest': '#ffffff', 'primary': '#0055c9', 'secondary-container': '#60f9bd', 'error': '#ba1a1a', 'tertiary-container': '#bb5800', 'surface-bright': '#f9f9ff', 'surface-container': '#ecedf6', 'on-primary': '#ffffff', 'on-surface-variant': '#424655', 'on-tertiary-fixed-variant': '#753400', 'outline-variant': '#c2c6d8', 'surface-tint': '#0057ce', 'inverse-on-surface': '#eff0f9', 'primary-fixed-dim': '#b1c5ff', 'on-tertiary-fixed': '#321200', 'on-primary-fixed': '#001946', 'surface-container-high': '#e6e8f0', 'tertiary': '#954500', 'on-surface': '#191c22', 'background': '#f9f9ff', 'surface-dim': '#d8dae2', 'secondary-fixed-dim': '#3fdfa5' }, borderRadius: { 'DEFAULT': '0.25rem', 'lg': '0.5rem', 'xl': '0.75rem', 'full': '9999px' }, spacing: { 'container-padding-desktop': '1.5rem', 'space-sm': '0.5rem', 'space-lg': '1.25rem', 'space-4xl': '4rem', 'space-xl': '1.5rem', 'space-2xs': '0.125rem', 'gutter-desktop': '1.25rem', 'space-xs': '0.25rem', 'container-padding-mobile': '1rem', 'space-base': '1rem', 'space-2xl': '2rem', 'space-3xl': '3rem', 'gutter-mobile': '0.75rem', 'space-md': '0.75rem' }, fontFamily: { 'body-lg': ['Inter'], 'body-sm': ['Inter'], 'label-md': ['Inter'], 'headline-md': ['Inter'], 'price-lg': ['Inter'], 'label-sm': ['Inter'], 'label-lg': ['Inter'], 'body-md': ['Inter'], 'headline-lg': ['Inter'], 'display-lg-mobile': ['Inter'], 'price-md': ['Inter'], 'display-lg': ['Inter'], 'headline-sm': ['Inter'], 'price-sm': ['Inter'], 'headline-lg-mobile': ['Inter'] }, fontSize: { 'body-lg': ['16px', { lineHeight: '24px', letterSpacing: '0em', fontWeight: '400' }], 'body-sm': ['12px', { lineHeight: '18px', letterSpacing: '0.005em', fontWeight: '400' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.01em', fontWeight: '500' }], 'headline-md': ['18px', { lineHeight: '26px', letterSpacing: '-0.01em', fontWeight: '600' }], 'price-lg': ['22px', { lineHeight: '28px', letterSpacing: '-0.02em', fontWeight: '700' }], 'label-sm': ['10px', { lineHeight: '14px', letterSpacing: '0.02em', fontWeight: '600' }], 'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.005em', fontWeight: '600' }], 'body-md': ['14px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '400' }], 'headline-lg': ['24px', { lineHeight: '32px', letterSpacing: '-0.015em', fontWeight: '600' }], 'display-lg-mobile': ['26px', { lineHeight: '34px', letterSpacing: '-0.015em', fontWeight: '700' }], 'price-md': ['16px', { lineHeight: '22px', letterSpacing: '-0.015em', fontWeight: '700' }], 'display-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.02em', fontWeight: '700' }], 'headline-sm': ['16px', { lineHeight: '24px', letterSpacing: '-0.005em', fontWeight: '600' }], 'price-sm': ['13px', { lineHeight: '18px', letterSpacing: '-0.01em', fontWeight: '700' }], 'headline-lg-mobile': ['20px', { lineHeight: '28px', letterSpacing: '-0.01em', fontWeight: '600' }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-container-padding-mobile flex items-center justify-between gap-space-xs"><div class="flex items-center gap-space-xs min-w-0 flex-1"><button aria-label="Kembali" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors flex-shrink-0" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="A modern minimalist emblem logo for 'NgeBekasinYuk', a secure secondhand gadget marketplace. Flat vector style featuring a stylized shield merged with a tech gadget chip and a green checkmark, using trust blue (#0F6FFF) and vibrant escrow green (#00C48C). Clean white/transparent background.. Design context: - Primary color: #0f6fff
+- Font: inter
+- Mode: light
+- Roundness: rounded-md
+. The logo should be visually consistent with these brand tokens." class="h-7 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1W2nJIdxG94LzusQ04NxKEldvYdTOmP9hqtSQHFpVR0OBHbw6RlW_jXc6dLtl6xXr660H3Q43DazLRHwoZnONIiZ0dVrpAyJUX3NbOmJBR9cXVdsc3FOkjczMQdCPWXU9DBmYClpc1A59tecp5_Yz1bWwOahwrKIQZcmWyFlfl8pEgJ5_m5FTjpgNX_eMwVOdOEP8o6RloAXnOnuC1l34RoKhDAr6uDOdsonnVn-w2CeyGnXVpaSismwA"/><div class="flex flex-col min-w-0"><h1 class="font-headline-md text-headline-md text-on-surface truncate">Ruang Obrolan</h1><div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm"><span class="material-symbols-outlined text-[14px]">verified_user</span><span>Rekber Terlindungi</span></div></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Pilihan percakapan" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[22px]">more_vert</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full pt-16 bg-surface flex-1"><div class="flex flex-col w-full pb-28">
+<!-- Interactive Navigation Sub-header / Breadcrumb Context -->
+<div class="px-container-padding-mobile pt-space-md pb-space-sm flex items-center justify-between">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+<span>Pusat Edukasi Escrow</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-fixed shadow-sm">
+<span class="material-symbols-outlined text-[14px]">verified_user</span>
+<span class="font-label-sm text-label-sm">100% Rekber Terlindungi</span>
+</div>
+</div>
+<!-- Hero Section -->
+<section class="px-container-padding-mobile pt-space-xs pb-space-lg flex flex-col">
+<!-- Trust Badge Pill -->
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm w-fit shadow-sm">
+<span class="material-symbols-outlined text-[15px] text-primary">security</span>
+<span>Garansi Perlindungan Pembeli 100%</span>
+</div>
+<!-- Catchy Headline & Subtitle -->
+<h2 class="mt-space-md font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight">
+      Beli Gadget Bekas Tanpa Waswas. Bukan Janji Manis, Tapi <span class="text-primary font-bold">Sistem Escrow</span>.
+    </h2>
+<p class="mt-space-xs font-body-md text-body-md text-on-surface-variant leading-relaxed">
+      Uang kamu tersimpan aman di rekening bersama resmi kami. Penjual nakal tidak akan pernah menerima uang sepeser pun sebelum kamu puas dan konfirmasi fisik barang.
+    </p>
+<!-- Visual Trust Highlights (Pills & Counters) -->
+<div class="grid grid-cols-3 gap-space-xs mt-space-md">
+<div class="bg-surface-container-lowest p-2.5 rounded-lg shadow-sm flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-primary text-[22px]">account_balance</span>
+<span class="mt-1 font-label-md text-label-md text-on-surface font-semibold">Rp 0 Sengketa</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bebas Biaya Klaim</span>
+</div>
+<div class="bg-surface-container-lowest p-2.5 rounded-lg shadow-sm flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-secondary text-[22px]">timer</span>
+<span class="mt-1 font-label-md text-label-md text-on-surface font-semibold">2x24 Jam</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Masa Uji Mandiri</span>
+</div>
+<div class="bg-surface-container-lowest p-2.5 rounded-lg shadow-sm flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-tertiary text-[22px]">gavel</span>
+<span class="mt-1 font-label-md text-label-md text-on-surface font-semibold">Kustodian BI</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Regulasi Resmi</span>
+</div>
+</div>
+<!-- Visual Hero Image Spotlight -->
+<div class="mt-space-md rounded-xl overflow-hidden shadow-sm relative aspect-[16/9] bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A smartphone screen displaying a secure verified transaction badge with an animated escrow checkmark in vibrant emerald green and bright tech blue, surrounded by miniature hardware diagnostic icons on a clean modern gradient backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQeXehsaG4yopCPWnNlKxbXhhVZXP0oGYJ313SJaaC4oVmkpsOXoN2lo4COv0tMeMa9Igim0wvwqSayBUCffKTpLUOqNSZP3xjEvh16JoENiYxdwE0dg2hL-0tpnFcNp77i6pE6mkwE3xQNXxRZzgSG2OJgCOKjx2L21y-7N3AeAqyy3beV65rgVjFWFBVKdLSBws906KVJHtfc5esPtclLw7AyUj-5gaViHClISCTUqpYAzLfjsKq"/>
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-transparent to-transparent flex items-end p-space-md">
+<div class="flex items-center gap-2 text-inverse-on-surface">
+<span class="material-symbols-outlined text-secondary-fixed text-[20px]">task_alt</span>
+<span class="font-label-md text-label-md font-medium">Rekening Escrow Resmi NgeBekasinYuk Dipercaya 85.000+ Transaksi</span>
+</div>
+</div>
+</div>
+<!-- Primary Hero CTA Anchor -->
+<div class="flex items-center gap-space-xs mt-space-md">
+<a class="flex-1 py-3 px-4 rounded-lg bg-primary text-on-primary text-center font-label-lg text-label-lg shadow-md hover:bg-primary-container transition-all flex items-center justify-center gap-1.5" href="#alur-escrow">
+<span>Pelajari Alur Transaksi</span>
+<span class="material-symbols-outlined text-[18px]">arrow_downward</span>
+</a>
+<button class="py-3 px-4 rounded-lg bg-surface-container-high text-on-surface font-label-lg text-label-lg shadow-sm flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[18px]">travel_explore</span>
+<span>Cari Gadget</span>
+</button>
+</div>
+</section>
+<!-- Step-by-Step Escrow Infographic -->
+<section class="px-container-padding-mobile pt-space-lg pb-space-lg bg-surface-container-low" id="alur-escrow">
+<div class="flex flex-col mb-space-md">
+<span class="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">3 Langkah Transparan</span>
+<h3 class="font-headline-md text-headline-md text-on-surface tracking-tight mt-0.5">Bagaimana Sistem Escrow Melindungi Kamu?</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Alur perlindungan otomatis yang memastikan dana kamu tidak raib sebelum unit teruji layak pakai.</p>
+</div>
+<!-- Timeline Wrapper -->
+<div class="flex flex-col gap-space-md relative">
+<!-- Step 1 Card -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+<span>Langkah 01</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Detik Pertama</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Kamu Bayar &amp; Dana Terkunci 🔐</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-relaxed">
+          Uang bukan ditransfer ke rekening pribadi seller, melainkan dienkripsi di rekening kustodian resmi NgeBekasinYuk. Penjual cuma menerima konfirmasi agar segera mengirim barang.
+        </p>
+<!-- Graphic Workflow Pill -->
+<div class="mt-3 p-2 rounded-lg bg-surface-container flex items-center justify-between text-on-surface">
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-[18px] text-primary">person</span>
+<span class="font-label-sm text-label-sm mt-0.5">Pembeli Bayar</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline">trending_flat</span>
+<div class="flex flex-col items-center px-2 py-1 bg-surface-container-lowest rounded-md shadow-sm">
+<span class="material-symbols-outlined text-[18px] text-secondary">encrypted</span>
+<span class="font-label-sm text-label-sm font-semibold text-secondary">Rekber Aman</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline">trending_flat</span>
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">storefront</span>
+<span class="font-label-sm text-label-sm mt-0.5">Seller Notif</span>
+</div>
+</div>
+</div>
+<!-- Step 2 Card -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">local_shipping</span>
+<span>Langkah 02</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">2x24 Jam Penuh</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Penjual Kirim &amp; Masa Inspeksi Mandiri 📦</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-relaxed">
+          Unit dikirim dengan nomor resi terdaftar. Waktu 2x24 jam baru mulai dihitung sejak kurir menekan status "Paket Diterima" di alamatmu. Cek hardware tanpa terburu-buru!
+        </p>
+<!-- Inspection Checkpoints -->
+<div class="mt-3 grid grid-cols-2 gap-2">
+<div class="flex items-center gap-1.5 p-2 rounded-lg bg-surface-container">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Booting &amp; OS</span>
+</div>
+<div class="flex items-center gap-1.5 p-2 rounded-lg bg-surface-container">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Dead Pixel Layar</span>
+</div>
+<div class="flex items-center gap-1.5 p-2 rounded-lg bg-surface-container">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Battery Health</span>
+</div>
+<div class="flex items-center gap-1.5 p-2 rounded-lg bg-surface-container">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Sinyal &amp; IMEI Resmi</span>
+</div>
+</div>
+</div>
+<!-- Step 3 Card -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+<span>Langkah 03</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold">Uang Cair / Refund</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Konfirmasi OK atau 100% Refund ⚖️</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-relaxed">
+          Semua kendali mutlak ada di tanganmu. Puas? Klik terima untuk mencairkan saldo ke penjual. Ada kerusakan fungsional? Ajukan sengketa dan uang kamu langsung kami kembalikan utuh.
+        </p>
+<!-- Two Branching Paths -->
+<div class="mt-3 flex flex-col gap-2">
+<div class="p-2.5 rounded-lg bg-surface-container flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[18px]">thumb_up</span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Kondisi Normal</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-medium">Dana Cair ke Seller</span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-[18px]">report_problem</span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Ada Masalah / Rusak</span>
+</div>
+<span class="font-label-sm text-label-sm text-error font-medium">Mediasi &amp; 100% Refund</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Comparison Section: Direct Transfer vs Escrow -->
+<section class="px-container-padding-mobile pt-space-lg pb-space-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-error uppercase font-bold tracking-wider">Perbandingan Nyata</span>
+<h3 class="font-headline-md text-headline-md text-on-surface tracking-tight mt-0.5">Jangan Sampai Menyesal: Transfer Langsung vs Escrow</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Mengapa 98% kasus penipuan online terjadi lewat ajakan transfer langsung ke rekening pribadi penjual.</p>
+<!-- Comparison Cards -->
+<div class="mt-space-md flex flex-col gap-space-sm">
+<!-- Item 1 -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">1. Risiko Uang Melayang / Dibawa Kabur</span>
+<div class="mt-2.5 grid grid-cols-2 gap-2">
+<div class="bg-error-container/60 p-2.5 rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-error-container font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">cancel</span> Transfer Langsung
+            </span>
+<p class="font-body-sm text-body-sm text-on-error-container mt-1">Sangat Tinggi! Modus transfer duluan lalu nomor WA langsung diblokir.</p>
+</div>
+<div class="bg-secondary-container/60 p-2.5 rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-secondary-container font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Escrow Kami
+            </span>
+<p class="font-body-sm text-body-sm text-on-secondary-container mt-1">0% Risiko! Seller baru terima uang setelah barang kamu cek layak.</p>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">2. Waktu Cek &amp; Uji Kelayakan Unit</span>
+<div class="mt-2.5 grid grid-cols-2 gap-2">
+<div class="bg-error-container/60 p-2.5 rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-error-container font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">cancel</span> Transfer Langsung
+            </span>
+<p class="font-body-sm text-body-sm text-on-error-container mt-1">Nol besar. Ada cacat baterai kembung atau LCD shadow ditanggung sendiri.</p>
+</div>
+<div class="bg-secondary-container/60 p-2.5 rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-secondary-container font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Escrow Kami
+            </span>
+<p class="font-body-sm text-body-sm text-on-secondary-container mt-1">Diberi masa uji 2x24 Jam resmi terlindungi oleh sistem.</p>
+</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">3. Fasilitas Mediasi dan Retur</span>
+<div class="mt-2.5 grid grid-cols-2 gap-2">
+<div class="bg-error-container/60 p-2.5 rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-error-container font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">cancel</span> Transfer Langsung
+            </span>
+<p class="font-body-sm text-body-sm text-on-error-container mt-1">Mustahil retur. Penjual bisa pura-pura tidak tahu dan menghilang.</p>
+</div>
+<div class="bg-secondary-container/60 p-2.5 rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-secondary-container font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Escrow Kami
+            </span>
+<p class="font-body-sm text-body-sm text-on-secondary-container mt-1">Tim Admin netral siap verifikasi unboxing &amp; cairkan refund utuh.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- High-Salience Danger Notice Box -->
+<section class="px-container-padding-mobile pb-space-lg">
+<div class="p-space-md rounded-xl bg-error-container text-on-error-container shadow-md flex flex-col">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-error text-[26px]">fmd_bad</span>
+<h4 class="font-headline-sm text-headline-sm text-error font-bold">PERINGATAN KERAS ANTI-PENIPUAN</h4>
+</div>
+<p class="font-body-sm text-body-sm leading-relaxed">
+        Dilarang keras bertransaksi atau transfer langsung di luar platform NgeBekasinYuk! Tim kami <strong class="underline">TIDAK DAPAT melindungi uangmu</strong> jika terjadi transaksi lewat rekening pribadi penjual. Tolak tegas dalih "DP dulu biar tidak keduluan pembeli lain".
+      </p>
+<div class="mt-space-sm pt-space-xs flex flex-col gap-1.5">
+<span class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-error">3 Ciri Penjual Penipu di Luar Sistem:</span>
+<div class="flex items-center gap-2 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-error">warning</span>
+<span>1. Minta DP via transfer bank pribadi</span>
+</div>
+<div class="flex items-center gap-2 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-error">warning</span>
+<span>2. Mengajak pindah chat ke WhatsApp pribadi</span>
+</div>
+<div class="flex items-center gap-2 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-error">warning</span>
+<span>3. Menolak pengiriman dengan kurir rekber resmi</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Real Customer Testimonials on Escrow Protection -->
+<section class="px-container-padding-mobile pb-space-lg flex flex-col">
+<div class="flex items-center justify-between mb-space-sm">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Kisah Nyata Dilindungi Escrow</h3>
+<div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">star</span>
+<span>4.9/5 dari 32rb Ulasan</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-sm">
+<!-- Testimonial 1 -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col">
+<div class="flex items-center gap-space-xs mb-2">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A portrait photograph of Dimas, an Indonesian university student in Surabaya wearing casual streetwear, smiling with genuine relief in a bright cafe setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCX6Cy4slz_mStQ9UTwfr1cl9vAa5Sb5ImSSeqUDZ-KC2CuKeATHvbYTgPJZEB_y-YaTZCCQtjVex8muS23yt7o6GhD_BKTCdY0e1EwkvO2Z7E66It7exsceB0geWgflQBBU8c7W3CeKdkLbQWPx824yiuxYOOeck9ZcPTX684epYJLKtOTc-y--RnBE2rTB86JENHhkCCM8Hy9ojmQuCF46tj7e0BKjhdGimAG_-NYpOFuySUw_ueR"/>
+</div>
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Dimas R.</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Surabaya • Beli ROG Zephyrus G14</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant italic">
+          "Pernah beli laptop gaming second, pas tes nyala ternyata layarnya flickering parah. Langsung klik ajukan komplain pas masa 2x24 jam. Dana refund Rp 8,2 juta balik 100% utuh tanpa drama. Coba kalau transfer langsung, pasti boncos!"
+        </p>
+<div class="mt-2 inline-flex items-center gap-1 text-secondary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>Klaim Refund Sukses • Disetujui Admin</span>
+</div>
+</div>
+<!-- Testimonial 2 -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col">
+<div class="flex items-center gap-space-xs mb-2">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional portrait of Sarah, a young Indonesian woman living in South Jakarta holding an iPhone, warm natural studio lighting with high confidence." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoHpQT4IuaVk66HAe-9IkUnVTlvEiRuPpoxlKXg9-0g2KUAnLIqFq4DXKiJKldB4lX7Oq0USNvJBBSFTkc09lqek3znnJuIZSx7ebEud1bY2fftNgDKcQrTNokh_OmbVJ_cGxYoRDQf6LX67cAWYtykuWy_Lnxe0s_rsVZf10aYIDuvJoo9Eh64Px9hnT4p8eXQwfaVYTIuDVYSUtfjE00VaVPs6cCfIObll9JBlzfRETT4td2aaM2"/>
+</div>
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Sarah N.</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Jakarta Selatan • Beli iPhone 13 Pro</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant italic">
+          "Aku gak paham teknis dalaman HP. Untung ada jeda 2 hari escrow, jadi sempat bawa HP-nya ke toko service langganan buat cek TrueTone dan Battery Health. Begitu teknisi konfirmasi ori semua, baru deh mantap klik cairkan dana."
+        </p>
+<div class="mt-2 inline-flex items-center gap-1 text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+<span>Transaksi Selesai • Seller Terverifikasi</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive FAQ Accordion -->
+<section class="px-container-padding-mobile pb-space-lg flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-space-sm">Pertanyaan Sering Ditanyakan (FAQ)</h3>
+<div class="flex flex-col gap-2" id="faq-list">
+<!-- FAQ Item 1 -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<button class="w-full p-space-md text-left flex items-center justify-between gap-2" onclick="toggleFaq(this)">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Berapa lama uang ditahan di escrow NgeBekasinYuk?</span>
+<span class="material-symbols-outlined text-outline transition-transform duration-200">expand_more</span>
+</button>
+<div class="px-space-md pb-space-md hidden text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+          Dana ditahan sejak pembayaran kamu terverifikasi hingga 2x24 jam setelah kurir menyerahkan barang ke alamatmu. Jika dalam waktu tersebut kamu tidak mengajukan komplain, dana otomatis kami teruskan ke penjual.
+        </div>
+</div>
+<!-- FAQ Item 2 -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<button class="w-full p-space-md text-left flex items-center justify-between gap-2" onclick="toggleFaq(this)">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Bagaimana jika seller menolak mengirim barang?</span>
+<span class="material-symbols-outlined text-outline transition-transform duration-200">expand_more</span>
+</button>
+<div class="px-space-md pb-space-md hidden text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+          Penjual memiliki batas waktu 1x24 jam untuk memproses dan menginput resi kurir terdaftar. Jika melewati batas tanpa pengiriman, transaksi otomatis batal secara sistem dan 100% uangmu kembali ke saldo akun tanpa potongan.
+        </div>
+</div>
+<!-- FAQ Item 3 -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<button class="w-full p-space-md text-left flex items-center justify-between gap-2" onclick="toggleFaq(this)">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Apakah ada biaya tambahan untuk perlindungan escrow?</span>
+<span class="material-symbols-outlined text-outline transition-transform duration-200">expand_more</span>
+</button>
+<div class="px-space-md pb-space-md hidden text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+          Perlindungan sistem escrow NgeBekasinYuk mengenakan biaya jasa penjaminan sangat terjangkau (hanya 1% atau maks Rp 15.000) demi menjamin ketersediaan tim mediasi hukum dan kustodian perbankan bersertifikasi.
+        </div>
+</div>
+</div>
+</section>
+<!-- Sticky Conversion Bottom Bar -->
+<div class="fixed bottom-0 inset-x-0 bg-surface-container-lowest/95 backdrop-blur-md px-container-padding-mobile py-space-sm pb-safe shadow-[0_-4px_16px_rgba(0,0,0,0.06)] z-40">
+<div class="max-w-md mx-auto flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Siap upgrade gadget tanpa rasa cemas?</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">shield</span> Garansi Aktif
+        </span>
+</div>
+<button class="w-full h-[48px] rounded-lg bg-primary text-on-primary font-label-lg text-label-lg font-semibold flex items-center justify-center gap-2 shadow-md hover:bg-primary-container active:scale-[0.98] transition-all">
+<span>Eksplorasi Gadget Terverifikasi</span>
+<span class="material-symbols-outlined text-[20px]">rocket_launch</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  function toggleFaq(btn) {
+    const content = btn.nextElementSibling;
+    const icon = btn.querySelector('.material-symbols-outlined');
+    if (content.classList.contains('hidden')) {
+      content.classList.remove('hidden');
+      icon.style.transform = 'rotate(180deg)';
+    } else {
+      content.classList.add('hidden');
+      icon.style.transform = 'rotate(0deg)';
+    }
+  }
+</script></main></body></html>
