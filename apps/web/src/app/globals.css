@@ -1,26 +1,129 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-inter: var(--font-inter, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif);
+  
+  /* Brand Tokens */
+  --brand-primary: #0F6FFF;
+  --brand-primary-hover: #0A5BD6;
+  --brand-primary-soft: #EBF2FF;
+  --brand-secondary: #00C48C;
+  --brand-secondary-light: #E6F9F3;
+  --brand-accent: #FF7A00;
+  --brand-accent-hover: #E66E00;
+  --brand-accent-soft: #FFF2E5;
+  --brand-danger: #E5484D;
+  --brand-danger-soft: #FDE8E8;
+  --brand-warning: #F5A524;
+  --brand-warning-soft: #FEF6E7;
+
+  /* Surfaces & Text */
+  --bg-app: #F7F8FA;
+  --bg-card: #FFFFFF;
+  --bg-subtle: #EFF2F6;
+  --border-color: #E3E8EF;
+  --text-primary: #1A1D23;
+  --text-secondary: #5C6575;
+  --text-muted: #8A94A6;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --font-sans: var(--font-inter);
+  
+  --color-brand-primary: #0F6FFF;
+  --color-brand-primary-hover: #0A5BD6;
+  --color-brand-primary-soft: #EBF2FF;
+  --color-brand-secondary: #00C48C;
+  --color-brand-secondary-light: #E6F9F3;
+  --color-brand-accent: #FF7A00;
+  --color-brand-accent-hover: #E66E00;
+  --color-brand-accent-soft: #FFF2E5;
+  --color-brand-danger: #E5484D;
+  --color-brand-danger-soft: #FDE8E8;
+  --color-brand-warning: #F5A524;
+  --color-brand-warning-soft: #FEF6E7;
+
+  /* Template Theme Colors Compatibility */
+  --color-primary: #0F6FFF;
+  --color-primary-container: #006bfb;
+  --color-primary-fixed: #dae2ff;
+  --color-primary-fixed-dim: #b1c5ff;
+  --color-on-primary: #ffffff;
+  --color-on-primary-fixed: #001946;
+  --color-on-primary-fixed-variant: #00419e;
+  --color-on-primary-container: #fefcff;
+  --color-inverse-primary: #b1c5ff;
+
+  --color-secondary: #00C48C;
+  --color-secondary-container: #60f9bd;
+  --color-secondary-fixed: #63fcc0;
+  --color-secondary-fixed-dim: #3fdfa5;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-fixed: #002114;
+  --color-on-secondary-fixed-variant: #005138;
+  --color-on-secondary-container: #00714f;
+
+  --color-tertiary: #FF7A00;
+  --color-tertiary-container: #bb5800;
+  --color-tertiary-fixed: #ffdbc8;
+  --color-tertiary-fixed-dim: #ffb68b;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-fixed: #321200;
+  --color-on-tertiary-fixed-variant: #753400;
+  --color-on-tertiary-container: #fffbff;
+
+  --color-error: #E5484D;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+
+  --color-surface: #F7F8FA;
+  --color-surface-dim: #d8dae2;
+  --color-surface-bright: #f9f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f2f3fc;
+  --color-surface-container: #ecedf6;
+  --color-surface-container-high: #e6e8f0;
+  --color-surface-container-highest: #e1e2ea;
+  --color-surface-variant: #e1e2ea;
+  --color-surface-tint: #0F6FFF;
+
+  --color-on-surface: #1A1D23;
+  --color-on-surface-variant: #5C6575;
+  --color-inverse-surface: #2d3037;
+  --color-inverse-on-surface: #eff0f9;
+  --color-outline: #727787;
+  --color-outline-variant: #E3E8EF;
+  --color-background: #F7F8FA;
+  --color-on-background: #1A1D23;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Custom Utilities */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' on, 'cv05' on, 'cv11' on;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #F7F8FA;
+  color: #1A1D23;
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  -webkit-font-smoothing: antialiased;
 }
