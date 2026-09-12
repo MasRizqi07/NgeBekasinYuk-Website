@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { encryptSensitiveSecret } from "../src/lib/security/encryption";
 
 const prisma = new PrismaClient();
 
@@ -7,6 +8,7 @@ async function main() {
   console.log("🌱 Starting deterministic database seeding for NgeBekasinYuk...");
 
   // Clean existing records in reverse dependency order
+  await prisma.adminStepUpGrant.deleteMany();
   await prisma.disputeMessage.deleteMany();
   await prisma.disputeEvidence.deleteMany();
   await prisma.dispute.deleteMany();
@@ -102,6 +104,8 @@ async function main() {
     },
   });
 
+  const encryptedAdminTotp = encryptSensitiveSecret("JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP");
+
   const admin = await prisma.user.create({
     data: {
       id: "usr-admin-ngebekasin",
@@ -111,7 +115,11 @@ async function main() {
       role: "ADMIN",
       hashedPassword: hashedAdminPw,
       isVerified: true,
-      totpSecret: "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
+      accountStatus: "ACTIVE",
+      totpSecretCiphertext: encryptedAdminTotp.ciphertext,
+      totpSecretIv: encryptedAdminTotp.iv,
+      totpSecretTag: encryptedAdminTotp.tag,
+      totpSecretKeyVersion: encryptedAdminTotp.keyVersion,
       isTotpEnrolled: true,
       sessionVersion: 1,
     },
@@ -126,7 +134,11 @@ async function main() {
       role: "ADMIN",
       hashedPassword: hashedAdminPw,
       isVerified: true,
-      totpSecret: "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
+      accountStatus: "ACTIVE",
+      totpSecretCiphertext: encryptedAdminTotp.ciphertext,
+      totpSecretIv: encryptedAdminTotp.iv,
+      totpSecretTag: encryptedAdminTotp.tag,
+      totpSecretKeyVersion: encryptedAdminTotp.keyVersion,
       isTotpEnrolled: true,
       sessionVersion: 1,
     },

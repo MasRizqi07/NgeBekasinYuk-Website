@@ -1,23 +1,30 @@
 # NgeBekasinYuk Architecture & System Design
+### Hardening Pass #3 Production Candidate System Architecture
 
-## 1. Architectural Philosophy
+## 1. Architectural Overview & Trust Boundaries
 
 NgeBekasinYuk is a Consumer-to-Consumer (C2C) secondhand technology marketplace with integrated Escrow (Rekening Bersama), price negotiation, a 2x24-hour buyer inspection window, and seller wallet disbursements.
 
-Following **Hardening Pass #2**, the application enforces strict server authority, cryptographic session integrity, database-native concurrency protection, and zero-compromise auditability:
+Following **Hardening Pass #3**, the application enforces dual-layer session verification, framework-native proxy routing, persistent distributed TOTP replay defense, application-layer secret encryption-at-rest, and single-use step-up authorization grants:
 
 ```text
 Browser (Next.js Client Components)
    ↓  HTTP / JSON (Cookies: SameSite=Lax, HttpOnly, Signed HMAC-SHA256)
-Next.js Edge Middleware (Cryptographic Signature Verification & CSP Headers)
-   ↓  (Rejects unsigned, tampered, or forged session claims before routing)
-App Router Route Handlers (/api/*)
+Next.js Proxy (src/proxy.ts)
+   ↓  Coarse Edge Gate: Verifies cryptographic HMAC-SHA256 signature, route roles, and applies CSP headers
+High-Risk API Route Handlers (/api/*)
+   ↓  Layer 2 Gate: Authoritative Database Session & Account Status Validation (validateAuthoritativeSession)
+      - Compares token.sessionVersion === dbUser.sessionVersion (immediate revocation)
+      - Enforces dbUser.accountStatus === "ACTIVE"
+      - Enforces authoritative dbUser.role
    ↓  Zod Schema Validation & Object-Level Ownership Checks
 Domain Services (OrderStateMachine, EscrowLedgerService, WalletLedgerService, DisputeService)
    ↓  Database-Native Conditional Atomic Transactions (PostgreSQL 16+)
-Prisma ORM (Versioned Migrations via prisma/migrations/*)
-   ↓  Append-Only Paired Financial Records & Audit Logs
-PostgreSQL Database & Immutable Audit Logs (EscrowLedgerEntry, WalletLedgerEntry, AuditLog)
+   ↓  Single-Use Step-Up Grant Consumption (AdminStepUpGrant.updateMany WHERE consumedAt IS NULL)
+   ↓  Distributed TOTP Replay Prevention (User.updateMany WHERE lastTotpStep < step)
+Prisma ORM (Versioned Forward Migrations via prisma/migrations/*)
+   ↓  Append-Only Paired Financial Records & Encrypted Sensitive Credentials (AES-256-GCM)
+PostgreSQL Database (EscrowLedgerEntry, WalletLedgerEntry, AuditLog, AdminStepUpGrant)
 ```
 
 ---
@@ -27,12 +34,13 @@ PostgreSQL Database & Immutable Audit Logs (EscrowLedgerEntry, WalletLedgerEntry
 | Responsibility | Authoritative Source | Client Role (Zustand / React) |
 |---|---|---|
 | Session Authentication | Web Crypto HMAC-SHA256 Signed Cookies | Session context store, UI header avatar |
+| Authoritative Privilege | PostgreSQL `User.sessionVersion`, `accountStatus`, `role` | Read-only session state from `/api/auth/session` |
 | Order Status & History | PostgreSQL 16+ / Prisma ORM | Optimistic UI, timeline rendering |
 | Escrow Balance & State | `EscrowAccount` & `EscrowLedgerEntry` | Read-only presentation, inspection countdown |
 | Seller Wallet Balance | `WalletLedgerEntry` & `Wallet` | Read-only balance cards |
 | Withdrawals | `Withdrawal` & `WalletLedgerEntry` | Form inputs, status feedback |
 | Admin Dispute Decisions | `Dispute` & Admin Audit Logs | Tri-party chat interface, status badge |
-| Admin 2FA Step-Up | RFC 6238 TOTP & Signed Grants | 6-digit authenticator prompt modal |
+| Admin 2FA Step-Up | RFC 6238 TOTP, AES-256-GCM, One-Time Grants | 6-digit authenticator prompt modal |
 | Transaction PIN | Bcrypt hash in `User.hashedPin` | PIN dots animation, numeric keypad |
 | Ephemeral UI Concerns | Client React State | Modals, tabs, filter drawers, confetti |
 
@@ -62,19 +70,19 @@ PostgreSQL Database & Immutable Audit Logs (EscrowLedgerEntry, WalletLedgerEntry
 - Server-side bcrypt PIN verification with rate limiting (5 failed attempts trigger 15-minute lock).
 - Concurrency & Lost Update Protection (`HP2-P0-05`):
   - In-transaction conditional balance decrement (`where: { activeBalance: { gte: amount } }`).
-  - Scoped request UUID idempotency keys prevent replay while allowing legitimate future withdrawals (`HP2-P1-10`).
+  - Scoped request UUID idempotency keys prevent replay while allowing legitimate future withdrawals.
 - Transparent labeling: Marked honestly as `isSimulation: true` ("Simulasi BI-FAST").
 
 ### 3.4 Dispute Mediation Subsystem (`src/domain/dispute/`)
 - Persisted dispute tickets with evidence uploads and tri-party chat messages.
 - Atomic admin resolution (`DisputeService.resolveDispute`):
   - Unfreezes escrow and executes release or refund in a single atomic database transaction.
-  - Real RFC 6238 TOTP admin step-up with 5-minute signed grants (`HP2-P0-03`).
+  - Requires single-use, resource-bound step-up grant (`AdminStepUpGrant`) verified and consumed in PostgreSQL (`HP3-P0-04`).
   - Records append-only security audit log (`AuditLog`).
 
 ---
 
-## 4. Payment Gateway Abstraction (`src/domain/payment/`)
+## 4. Payment Gateway & Environment Abstraction (`src/domain/payment/`)
 
 The application decouples payment gateway logic from business rules via the `PaymentProvider` interface:
 ```typescript
@@ -83,4 +91,5 @@ interface PaymentProvider {
   simulateWebhook(params: WebhookParams): Promise<WebhookResult>;
 }
 ```
-In local development, `DemoPaymentProvider` generates deterministic Virtual Account numbers and QRIS payload strings. In production, `ALLOW_DEMO_IN_PRODUCTION=false` ensures that demo payment endpoints fail closed unless explicitly enabled in isolated staging sandboxes.
+In local development, `DemoPaymentProvider` generates deterministic Virtual Account numbers and QRIS payload strings.
+In production (`APP_ENV=production`), all demo simulation providers are strictly forbidden at startup, and simulator endpoints (`/api/payment/simulate-webhook`) return `404 Not Found`.

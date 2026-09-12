@@ -27,20 +27,41 @@ model User {
   pinFailedAttempts Int            @default(0)
   pinLockedUntil    DateTime?
   isVerified        Boolean        @default(false)
-  totpSecret        String?        // Base32 RFC 6238 TOTP secret
+  accountStatus     String         @default("ACTIVE") // ACTIVE, SUSPENDED, DISABLED
+  totpSecret        String?        // Legacy / dev fixture secret
+  totpSecretCiphertext String?     // AES-256-GCM encrypted TOTP secret
+  totpSecretIv      String?        // Base64 12-byte initialization vector
+  totpSecretTag     String?        // Base64 16-byte authentication tag
+  totpSecretKeyVersion Int?        @default(1)
   isTotpEnrolled    Boolean        @default(false)
+  lastTotpStep      Int?           // Persisted RFC 6238 timestep for distributed replay defense
   sessionVersion    Int            @default(1) // Incremented on role/security change to revoke active sessions
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 
-  sellerProfile SellerProfile?
-  wallet        Wallet?
-  buyerOrders   Order[]        @relation("BuyerOrders")
-  sellerOrders  Order[]        @relation("SellerOrders")
-  listings      ProductListing[]
-  auditLogs     AuditLog[]
-  notifications Notification[]
-  bankAccounts  BankAccount[]
+  sellerProfile     SellerProfile?
+  wallet            Wallet?
+  buyerOrders       Order[]        @relation("BuyerOrders")
+  sellerOrders      Order[]        @relation("SellerOrders")
+  listings          ProductListing[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+  bankAccounts      BankAccount[]
+  adminStepUpGrants AdminStepUpGrant[]
+}
+
+model AdminStepUpGrant {
+  id         String    @id @default(cuid())
+  adminId    String
+  admin      User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action     String    // e.g. "DISPUTE_VERDICT"
+  resourceId String?   // Optional resource constraint, e.g. disputeId
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([adminId])
+  @@index([action, resourceId])
 }
 
 model SellerProfile {

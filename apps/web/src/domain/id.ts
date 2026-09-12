@@ -24,11 +24,12 @@ export function generateOrderNumber(year = new Date().getFullYear()): string {
 
 /**
  * Generates a public dispute reference number.
- * Format: DSP-YYYY-XXXX (e.g. DSP-2026-0042)
+ * Format: DSP-YYYY-XXXXXX (e.g. DSP-2026-8D71X2)
  */
 export function generateDisputeNumber(year = new Date().getFullYear()): string {
-  const randomNum = Math.floor(1000 + crypto.randomInt(9000));
-  return `DSP-${year}-${randomNum}`;
+  const bytes = crypto.randomBytes(3);
+  const randomHex = bytes.toString("hex").toUpperCase();
+  return `DSP-${year}-${randomHex}`;
 }
 
 /**

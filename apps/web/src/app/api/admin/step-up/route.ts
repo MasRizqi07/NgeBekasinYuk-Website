@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "@/lib/auth/session";
+import { validateAuthoritativeSession } from "@/lib/auth/authoritativeSession";
 import { prisma } from "@/server/db/prisma";
 import { AuditLogger } from "@/domain/audit/AuditLogger";
 import {
-  verifyTotpCode,
+  verifyAndRecordTotpCode,
   createStepUpGrant,
-  DEV_ADMIN_TOTP_SEED,
+  getAdminDecryptedTotpSecret,
 } from "@/lib/auth/totp";
 import { env } from "@/lib/env";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession();
+    // 1. Authoritative session validation against PostgreSQL (HP3-P0-01)
+    const session = await validateAuthoritativeSession();
     if (!session) {
       return NextResponse.json(
         { error: "UNAUTHORIZED", message: "Silakan login terlebih dahulu." },
@@ -19,6 +20,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Role check: must be active ADMIN in the database
     if (session.role !== "ADMIN") {
       await AuditLogger.log({
         userId: session.id,
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { code, action = "DISPUTE_VERDICT" } = body;
+    const { code, action = "DISPUTE_VERDICT", resourceId } = body;
 
     if (!code || typeof code !== "string" || !/^\d{6}$/.test(code)) {
       return NextResponse.json(
@@ -43,21 +45,25 @@ export async function POST(request: Request) {
       );
     }
 
-    // Retrieve admin's configured TOTP secret
+    // Retrieve admin's configured TOTP secrets (supporting encrypted format HP3-P0-03)
     const adminUser = await prisma.user.findUnique({
       where: { id: session.id },
-      select: { id: true, email: true },
+      select: {
+        id: true,
+        email: true,
+        totpSecret: true,
+        totpSecretCiphertext: true,
+        totpSecretIv: true,
+        totpSecretTag: true,
+        isTotpEnrolled: true,
+      },
     });
 
     if (!adminUser) {
       return NextResponse.json({ error: "USER_NOT_FOUND" }, { status: 404 });
     }
 
-    // Determine TOTP secret: from DB or dev fixture if not in production
-    // (In schema migration we will have totpSecret on User)
-    const secret =
-      (adminUser as { totpSecret?: string | null }).totpSecret ||
-      (env.NODE_ENV !== "production" ? DEV_ADMIN_TOTP_SEED : null);
+    const secret = getAdminDecryptedTotpSecret(adminUser);
 
     if (!secret) {
       return NextResponse.json(
@@ -69,16 +75,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const verification = verifyTotpCode({
+    // 2. Distributed, PostgreSQL-backed TOTP verification with replay prevention (HP3-P0-02)
+    const verification = await verifyAndRecordTotpCode({
+      adminId: session.id,
       secret,
       code,
-      adminId: session.id,
     });
 
     if (!verification.valid) {
       const reason =
         verification.error === "REPLAY_ATTEMPT"
-          ? "Replay attempt detected (OTP code already used)"
+          ? "Replay attempt detected (OTP code already used in this time window)"
           : "Invalid OTP code";
 
       await AuditLogger.log({
@@ -101,15 +108,20 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create signed short-lived step-up grant token
-    const grantToken = await createStepUpGrant(session.id, action);
+    // 3. Create persistent, single-use step-up grant in PostgreSQL (HP3-P0-04)
+    const grantToken = await createStepUpGrant(session.id, action, resourceId || null);
 
     await AuditLogger.log({
       userId: session.id,
       action: "ADMIN_STEP_UP",
       targetType: "User",
       targetId: session.id,
-      details: { result: "SUCCESS", action, grantExpiresInSeconds: env.ADMIN_STEP_UP_TTL_SECONDS },
+      details: {
+        result: "SUCCESS",
+        action,
+        resourceId: resourceId || null,
+        grantExpiresInSeconds: env.ADMIN_STEP_UP_TTL_SECONDS,
+      },
     });
 
     return NextResponse.json({
@@ -120,7 +132,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[Admin/StepUp] Error:", error);
     return NextResponse.json(
-      { error: "INTERNAL_SERVER_ERROR", message: "Gagal memproses otorisasi 2FA." },
+      { error: "INTERNAL_SERVER_ERROR", message: "Terjadi kesalahan internal pada verifikasi step-up." },
       { status: 500 }
     );
   }

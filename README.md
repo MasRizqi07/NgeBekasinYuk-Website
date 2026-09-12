@@ -6,8 +6,8 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-Strict_5.x-green)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.4_App_Router-black)
 ![Database](https://img.shields.io/badge/Prisma_ORM-6.4.1_PostgreSQL-indigo)
-![Tests](https://img.shields.io/badge/Vitest-75_Passed_100%25-success)
-![E2E](https://img.shields.io/badge/Playwright-13_Passed_100%25-success)
+![Tests](https://img.shields.io/badge/Vitest-108_Passed_100%25-success)
+![E2E](https://img.shields.io/badge/Playwright-16_Passed_100%25-success)
 ![ESLint](https://img.shields.io/badge/ESLint-0_Errors_0_Warnings-brightgreen)
 
 ---
@@ -22,7 +22,9 @@
 - **Integrated Price Negotiation**: Interactive offer system with real-time chat.
 - **Seller Trust & Verification**: Verified seller profiles, condition grading (`LIKE_NEW`, `VERY_GOOD`, `FAIR`), and fraud notices.
 - **Seller Wallet & Withdrawal**: Append-only wallet ledger with paired financial records, server-side PIN authentication, conditional concurrency locking, and BI-FAST simulation.
-- **Tri-Party Dispute Mediation**: Dedicated dispute resolution room with real RFC 6238 TOTP admin step-up verification and atomic escrow verdicts.
+- **Tri-Party Dispute Mediation**: Dedicated dispute resolution room with real RFC 6238 TOTP admin step-up verification, AES-256-GCM encrypted secrets, single-use resource-scoped step-up grants, and atomic escrow verdicts.
+- **Database-Authoritative Session Revocation**: Database-enforced `sessionVersion` and `accountStatus` guarantees immediate privilege revocation upon password resets, role downgrades, or administrative disablement.
+- **Distributed TOTP Replay Defense**: Persistent PostgreSQL-backed RFC 6238 timestep tracking resilient across server instances and restarts.
 
 ---
 
@@ -30,12 +32,16 @@
 
 ```text
 Frontend Framework : Next.js 16.3.4 (App Router, React 19, TypeScript 5.x)
+Routing Guard      : Next.js Proxy convention (src/proxy.ts, zero deprecation warnings)
 Styling            : Tailwind CSS v4, Framer Motion, Lucide React
 State Management   : Zustand 5.x (Client UI, optimistic interactions)
-Data Persistence   : Prisma ORM 6.4.1 (PostgreSQL 16+ with reproducible migrations)
-Validation         : Zod schemas for all mutating endpoints
-Security & Auth    : Web Crypto HMAC-SHA256 Signed HttpOnly Session Cookies, Bcrypt Password & PIN, RFC 6238 Admin TOTP
-Test Runners       : Vitest v4.1.x (75 unit, integration & concurrency tests), Playwright v1.50+ (13 browser E2E tests)
+Data Persistence   : Prisma ORM 6.4.1 (PostgreSQL 16+ with forward migrations)
+Validation         : Zod schemas for all mutating endpoints, fail-closed runtime env
+Security & Auth    : Web Crypto HMAC-SHA256 Signed HttpOnly Session Cookies, Bcrypt Password & PIN,
+                     Database-Authoritative Session Revocation, AES-256-GCM Encrypted TOTP Secrets,
+                     Persistent PostgreSQL-backed TOTP Replay Defense, Single-Use Step-Up Grants
+Test Runners       : Vitest v4.1.x (108 unit, integration & concurrency tests across 16 suites),
+                     Playwright v1.50+ (16 browser & security regression E2E tests)
 Quality Gate       : ESLint (0 errors, 0 warnings), Strict TypeScript (0 errors)
 ```
 
@@ -104,13 +110,13 @@ pnpm run lint
 # 2. Strict TypeScript Typecheck (0 errors)
 pnpm --filter web run typecheck
 
-# 3. Unit, Integration & Concurrency Test Suite (75 passing tests)
+# 3. Unit, Integration & Concurrency Test Suite (108 passing tests)
 pnpm --filter web run test
 
-# 4. Production App Router Build (27 routes generated)
+# 4. Production App Router Build (27 routes generated, 0 warnings)
 pnpm --filter web run build
 
-# 5. Playwright Browser E2E Test Suite (13 passing tests)
+# 5. Playwright Browser E2E Test Suite (16 passing tests)
 pnpm --filter web run test:e2e
 ```
 
@@ -119,7 +125,8 @@ pnpm --filter web run test:e2e
 ## 6. Engineering Documentation
 
 Detailed technical design specifications are available in `docs/engineering/`:
-- [`HARDENING_PASS_2.md`](docs/engineering/HARDENING_PASS_2.md) - **Hardening Pass #2 forensic audit report & gate evidence**
+- [`HARDENING_PASS_3_FINAL_CERTIFICATION.md`](docs/engineering/HARDENING_PASS_3_FINAL_CERTIFICATION.md) - **Hardening Pass #3 Final Production Candidate Certification Report**
+- [`HARDENING_PASS_2.md`](docs/engineering/HARDENING_PASS_2.md) - Hardening Pass #2 forensic audit report & gate evidence
 - [`ARCHITECTURE.md`](docs/engineering/ARCHITECTURE.md) - System architecture and server authority boundaries
 - [`DATA_MODEL.md`](docs/engineering/DATA_MODEL.md) - Normalized relational schema, indexes, and constraints
 - [`ORDER_STATE_MACHINE.md`](docs/engineering/ORDER_STATE_MACHINE.md) - Formal order lifecycle matrix and invariants

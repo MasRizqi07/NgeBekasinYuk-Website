@@ -1,10 +1,13 @@
-// RFC 6238 Time-Based One-Time Password (TOTP) & Admin Step-Up Authorization Service
-// Implements genuine HMAC-SHA1 rotating OTP, drift windows, replay prevention, and short-lived step-up grants.
+// RFC 6238 Time-Based One-Time Password (TOTP) & Distributed Step-Up Authorization Service
+// Implements genuine HMAC-SHA1 rotating OTP, PostgreSQL-backed distributed replay prevention (HP3-P0-02),
+// AES-256-GCM encryption-at-rest (HP3-P0-03), and single-use one-time step-up grants (HP3-P0-04).
 
 import crypto from "crypto";
 import { env } from "../env";
 import { signHmacSha256, verifyHmacSha256 } from "./crypto";
 import { base64UrlEncode, base64UrlDecode } from "./session";
+import { encryptSensitiveSecret, decryptSensitiveSecret, EncryptedPayload } from "../security/encryption";
+import { prisma } from "@/server/db/prisma";
 
 // RFC 4648 Base32 alphabet
 const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -61,25 +64,11 @@ export function base32Decode(base32: string): Buffer {
   return Buffer.from(bytes);
 }
 
-// In-memory replay tracking per admin: adminId -> lastVerifiedStepNumber
-const lastUsedSteps = new Map<string, number>();
-
 /**
- * Resets TOTP replay history for an admin (or all admins). Used primarily by tests.
+ * Deterministic seed secret for development and automated test fixtures.
+ * STRICTLY forbidden when APP_ENV === "production".
  */
-export function clearTotpReplayHistory(adminId?: string): void {
-  if (adminId) {
-    lastUsedSteps.delete(adminId);
-  } else {
-    lastUsedSteps.clear();
-  }
-}
-
-/**
- * Deterministic seed secret for development and automated integration test fixtures.
- * STRICTLY forbidden when NODE_ENV === "production".
- */
-export const DEV_ADMIN_TOTP_SEED = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP"; // Base32 for "Hello!\xde\xad\xbe\xef..."
+export const DEV_ADMIN_TOTP_SEED = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
 
 /**
  * Generates a random RFC 6238 Base32 secret (160 bits = 20 bytes).
@@ -96,13 +85,11 @@ export function generateTotpCode(secret: string, timestampMs = Date.now()): stri
   const key = base32Decode(secret);
   const step = Math.floor(timestampMs / 1000 / 30);
 
-  // Buffer for 8-byte big-endian counter
   const counterBuffer = Buffer.alloc(8);
   counterBuffer.writeBigInt64BE(BigInt(step));
 
   const hmac = crypto.createHmac("sha1", key).update(counterBuffer).digest();
 
-  // Dynamic truncation (RFC 4226)
   const offset = hmac[hmac.length - 1] & 0x0f;
   const codeInt =
     ((hmac[offset] & 0x7f) << 24) |
@@ -118,7 +105,7 @@ export interface VerifyTotpParams {
   secret: string;
   code: string;
   adminId?: string;
-  window?: number; // default +-1 step (30s before and after)
+  window?: number;
   timestampMs?: number;
 }
 
@@ -128,8 +115,29 @@ export interface VerifyTotpResult {
   error?: "INVALID_CODE" | "REPLAY_ATTEMPT" | "EXPIRED" | "MALFORMED_INPUT";
 }
 
+// In-memory sliding replay tracker for offline/unit test execution
+const inMemoryUsedSteps = new Map<string, number>();
+
 /**
- * Verifies a 6-digit TOTP code according to RFC 6238 with replay prevention.
+ * Test fixture helper to clear in-memory and database TOTP replay tracking.
+ */
+export function clearTotpReplayHistory(adminId?: string): void {
+  inMemoryUsedSteps.clear();
+  if (adminId) {
+    prisma.user.updateMany({
+      where: { id: adminId },
+      data: { lastTotpStep: null },
+    }).catch(() => {});
+  } else {
+    prisma.user.updateMany({
+      where: { role: "ADMIN" },
+      data: { lastTotpStep: null },
+    }).catch(() => {});
+  }
+}
+
+/**
+ * Verifies a 6-digit TOTP code against RFC 6238 without database writes (pure algorithmic check).
  */
 export function verifyTotpCode(params: VerifyTotpParams): VerifyTotpResult {
   const { secret, code, adminId, window = 1, timestampMs = Date.now() } = params;
@@ -140,22 +148,19 @@ export function verifyTotpCode(params: VerifyTotpParams): VerifyTotpResult {
 
   const currentStep = Math.floor(timestampMs / 1000 / 30);
 
-  // Check windows: [currentStep - window, currentStep + window]
   for (let offset = -window; offset <= window; offset++) {
     const step = currentStep + offset;
     const expectedOtp = generateTotpCode(secret, step * 30 * 1000);
 
-    // Constant time comparison
     if (crypto.timingSafeEqual(Buffer.from(code), Buffer.from(expectedOtp))) {
-      // Replay check: step must be strictly greater than last used step for this admin
+      // In-memory replay tracking when adminId is provided to this pure function
       if (adminId) {
-        const lastStep = lastUsedSteps.get(adminId);
-        if (lastStep !== undefined && step <= lastStep) {
+        const lastStep = inMemoryUsedSteps.get(adminId);
+        if (lastStep !== undefined && lastStep >= step) {
           return { valid: false, error: "REPLAY_ATTEMPT" };
         }
-        lastUsedSteps.set(adminId, step);
+        inMemoryUsedSteps.set(adminId, step);
       }
-
       return { valid: true, step };
     }
   }
@@ -163,26 +168,155 @@ export function verifyTotpCode(params: VerifyTotpParams): VerifyTotpResult {
   return { valid: false, error: "INVALID_CODE" };
 }
 
+/**
+ * Distributed, database-backed TOTP replay prevention (HP3-P0-02).
+ * Atomically records the matched step in PostgreSQL using a conditional update.
+ * If another instance or concurrent request already recorded this or a newer step, returns false.
+ */
+export async function recordTotpStepIfNew(adminId: string, matchedStep: number): Promise<boolean> {
+  const updateResult = await prisma.user.updateMany({
+    where: {
+      id: adminId,
+      accountStatus: "ACTIVE",
+      OR: [
+        { lastTotpStep: null },
+        { lastTotpStep: { lt: matchedStep } },
+      ],
+    },
+    data: {
+      lastTotpStep: matchedStep,
+    },
+  });
+
+  return updateResult.count === 1;
+}
+
+/**
+ * Verifies a 6-digit TOTP code and authoritatively records the matched step in PostgreSQL.
+ * Guarantees distributed replay defense across multiple server instances and restarts.
+ */
+export async function verifyAndRecordTotpCode(params: {
+  adminId: string;
+  secret: string;
+  code: string;
+  window?: number;
+  timestampMs?: number;
+}): Promise<VerifyTotpResult> {
+  const { adminId, secret, code, window = 1, timestampMs = Date.now() } = params;
+
+  const result = verifyTotpCode({ secret, code, window, timestampMs });
+  if (!result.valid || result.step === undefined) {
+    return result;
+  }
+
+  // Atomic database conditional update for distributed replay prevention
+  const recorded = await recordTotpStepIfNew(adminId, result.step);
+  if (!recorded) {
+    return { valid: false, error: "REPLAY_ATTEMPT" };
+  }
+
+  return result;
+}
+
+// --------------------------------------------------------
+// ENCRYPTED TOTP SECRET MANAGEMENT (HP3-P0-03)
+// --------------------------------------------------------
+
+export interface UserTotpRecord {
+  id: string;
+  totpSecret?: string | null;
+  totpSecretCiphertext?: string | null;
+  totpSecretIv?: string | null;
+  totpSecretTag?: string | null;
+  isTotpEnrolled?: boolean;
+}
+
+/**
+ * Retrieves and decrypts the admin's TOTP secret from ciphertext stored at rest.
+ * Falls back to legacy/dev seed only in development/test fixtures.
+ */
+export function getAdminDecryptedTotpSecret(user: UserTotpRecord): string | null {
+  if (user.totpSecretCiphertext && user.totpSecretIv && user.totpSecretTag) {
+    const payload: EncryptedPayload = {
+      ciphertext: user.totpSecretCiphertext,
+      iv: user.totpSecretIv,
+      tag: user.totpSecretTag,
+      keyVersion: 1,
+    };
+    return decryptSensitiveSecret(payload);
+  }
+
+  // Legacy plaintext fallback for unmigrated development fixtures
+  if (user.totpSecret) {
+    return user.totpSecret;
+  }
+
+  // Development fixture fallback
+  if (env.APP_ENV !== "production") {
+    return DEV_ADMIN_TOTP_SEED;
+  }
+
+  return null;
+}
+
+/**
+ * Encrypts and persists a new TOTP secret for an administrator.
+ */
+export async function setAdminEncryptedTotpSecret(adminId: string, plainSecret: string): Promise<void> {
+  const encrypted = encryptSensitiveSecret(plainSecret);
+
+  await prisma.user.update({
+    where: { id: adminId },
+    data: {
+      totpSecretCiphertext: encrypted.ciphertext,
+      totpSecretIv: encrypted.iv,
+      totpSecretTag: encrypted.tag,
+      totpSecretKeyVersion: encrypted.keyVersion,
+      isTotpEnrolled: true,
+      lastTotpStep: null, // Reset step history upon new secret enrollment
+    },
+  });
+}
+
+// --------------------------------------------------------
+// ONE-TIME ADMIN STEP-UP AUTHORIZATION GRANTS (HP3-P0-04)
+// --------------------------------------------------------
+
 export interface StepUpGrantPayload {
+  grantId: string;
   adminId: string;
   action: string;
+  resourceId?: string | null;
   issuedAt: number;
   expiresAt: number;
 }
 
 /**
- * Creates a signed, short-lived (default 5 minutes) step-up authorization grant token.
+ * Creates and persists a single-use step-up authorization grant in PostgreSQL (HP3-P0-04).
  */
 export async function createStepUpGrant(
   adminId: string,
-  action = "DISPUTE_VERDICT"
+  action = "DISPUTE_VERDICT",
+  resourceId?: string | null
 ): Promise<string> {
   const ttlSeconds = env.ADMIN_STEP_UP_TTL_SECONDS;
   const nowSec = Math.floor(Date.now() / 1000);
+  const expiresAt = new Date((nowSec + ttlSeconds) * 1000);
+
+  const grant = await prisma.adminStepUpGrant.create({
+    data: {
+      adminId,
+      action,
+      resourceId: resourceId || null,
+      expiresAt,
+    },
+  });
 
   const payload: StepUpGrantPayload = {
+    grantId: grant.id,
     adminId,
     action,
+    resourceId: resourceId || null,
     issuedAt: nowSec,
     expiresAt: nowSec + ttlSeconds,
   };
@@ -195,12 +329,85 @@ export async function createStepUpGrant(
 }
 
 /**
- * Validates a step-up grant token for sensitive administrative actions.
+ * Authoritatively consumes a one-time step-up grant in PostgreSQL (HP3-P0-04).
+ * Rejects consumed, expired, or resource-mismatched grants.
+ */
+export async function consumeStepUpGrant(params: {
+  grantToken: string;
+  expectedAdminId: string;
+  expectedAction?: string;
+  expectedResourceId?: string | null;
+}): Promise<{ valid: boolean; reason?: string }> {
+  const {
+    grantToken,
+    expectedAdminId,
+    expectedAction = "DISPUTE_VERDICT",
+    expectedResourceId,
+  } = params;
+
+  try {
+    const parts = grantToken.split(".");
+    if (parts.length !== 2) return { valid: false, reason: "Malformed token" };
+
+    const [base64, signature] = parts;
+    const isValid = await verifyHmacSha256(base64, signature, env.ADMIN_STEP_UP_SECRET);
+    if (!isValid) return { valid: false, reason: "Invalid signature" };
+
+    const json = base64UrlDecode(base64);
+    const payload = JSON.parse(json) as StepUpGrantPayload;
+
+    if (payload.expiresAt < Math.floor(Date.now() / 1000)) {
+      return { valid: false, reason: "Step-up grant expired" };
+    }
+
+    if (payload.adminId !== expectedAdminId) {
+      return { valid: false, reason: "Step-up grant belongs to a different admin" };
+    }
+
+    if (payload.action !== expectedAction) {
+      return { valid: false, reason: "Action scope mismatch" };
+    }
+
+    if (payload.resourceId && expectedResourceId && payload.resourceId !== expectedResourceId) {
+      return { valid: false, reason: "Resource scope mismatch: grant not valid for this resource" };
+    }
+
+    // Atomic one-time consumption in PostgreSQL
+    const updateResult = await prisma.adminStepUpGrant.updateMany({
+      where: {
+        id: payload.grantId,
+        adminId: expectedAdminId,
+        action: expectedAction,
+        consumedAt: null,
+        expiresAt: { gt: new Date() },
+        OR: [
+          { resourceId: null },
+          { resourceId: expectedResourceId || null },
+        ],
+      },
+      data: {
+        consumedAt: new Date(),
+      },
+    });
+
+    if (updateResult.count === 0) {
+      return { valid: false, reason: "Step-up grant has already been consumed or is invalid" };
+    }
+
+    return { valid: true };
+  } catch {
+    return { valid: false, reason: "Failed to parse grant token" };
+  }
+}
+
+/**
+ * Verifies a step-up grant cryptographically and structurally without consuming it (read-only verification).
  */
 export async function verifyStepUpGrant(
   grantToken: string,
   expectedAdminId: string,
-  expectedAction = "DISPUTE_VERDICT"
+  expectedAction = "DISPUTE_VERDICT",
+  expectedResourceId?: string | null
 ): Promise<{ valid: boolean; reason?: string }> {
   try {
     const parts = grantToken.split(".");
@@ -223,6 +430,10 @@ export async function verifyStepUpGrant(
 
     if (payload.action !== expectedAction) {
       return { valid: false, reason: "Action scope mismatch" };
+    }
+
+    if (payload.resourceId && expectedResourceId && payload.resourceId !== expectedResourceId) {
+      return { valid: false, reason: "Resource scope mismatch: grant not valid for this resource" };
     }
 
     return { valid: true };
