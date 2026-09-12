@@ -170,8 +170,10 @@ export class DisputeService {
   static async resolveDispute(params: ResolveDisputeParams) {
     const { disputeId, adminId, verdict, adminNotes, customIdempotencyKey } = params;
 
-    const dispute = await prisma.dispute.findUnique({
-      where: { id: disputeId },
+    const dispute = await prisma.dispute.findFirst({
+      where: {
+        OR: [{ id: disputeId }, { disputeNumber: disputeId }],
+      },
       include: {
         order: {
           include: {

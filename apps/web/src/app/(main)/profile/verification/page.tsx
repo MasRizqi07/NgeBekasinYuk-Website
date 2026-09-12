@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -9,12 +8,10 @@ import {
   CheckCircle2,
   Lock,
   Camera,
-  RotateCcw,
   Sparkles,
   Zap,
   Star,
   Store,
-  Wallet,
   Eye,
   EyeOff,
   Check,

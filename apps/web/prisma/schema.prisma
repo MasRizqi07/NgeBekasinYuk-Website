@@ -1,12 +1,13 @@
 // NgeBekasinYuk Production Database Schema
 // Optimized for C2C Secondhand Tech Marketplace with Escrow & Wallet Ledger
+// Target: PostgreSQL 16+
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -15,19 +16,22 @@ datasource db {
 // --------------------------------------------------------
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String
-  phone         String?
-  avatar        String?
-  role          String    @default("BUYER") // BUYER, SELLER, ADMIN
-  hashedPassword String
-  hashedPin     String?   // Bcrypt hashed 6-digit transaction PIN
-  pinFailedAttempts Int   @default(0)
+  id                String         @id @default(cuid())
+  email             String         @unique
+  name              String
+  phone             String?
+  avatar            String?
+  role              String         @default("BUYER") // BUYER, SELLER, ADMIN
+  hashedPassword    String
+  hashedPin         String?        // Bcrypt hashed 6-digit transaction PIN
+  pinFailedAttempts Int            @default(0)
   pinLockedUntil    DateTime?
-  isVerified    Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  isVerified        Boolean        @default(false)
+  totpSecret        String?        // Base32 RFC 6238 TOTP secret
+  isTotpEnrolled    Boolean        @default(false)
+  sessionVersion    Int            @default(1) // Incremented on role/security change to revoke active sessions
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   sellerProfile SellerProfile?
   wallet        Wallet?
@@ -55,19 +59,19 @@ model SellerProfile {
 }
 
 model KycVerification {
-  id             String    @id @default(cuid())
-  userId         String    @unique
-  idCardNumber   String    // KTP/NIK
-  fullName       String
-  birthDate      String
-  idCardImage    String    // Secure storage URL
-  selfieImage    String    // Liveness selfie URL
-  status         String    @default("PENDING") // PENDING, VERIFIED, REJECTED
-  verifiedAt     DateTime?
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  idCardNumber    String    // KTP/NIK
+  fullName        String
+  birthDate       String
+  idCardImage     String    // Secure storage URL
+  selfieImage     String    // Liveness selfie URL
+  status          String    @default("PENDING") // PENDING, VERIFIED, REJECTED
+  verifiedAt      DateTime?
   rejectionReason String?
-  providerName   String    @default("DemoKycProvider") // Explicitly marked as demo/sandbox
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  providerName    String    @default("DemoKycProvider") // Explicitly marked as demo/sandbox
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model BankAccount {
@@ -110,6 +114,9 @@ model ProductListing {
   favoritesCount  Int            @default(0)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+
+  @@index([sellerId])
+  @@index([status])
 }
 
 model ListingImage {
@@ -210,6 +217,10 @@ model Order {
   escrowAccount        EscrowAccount?
   dispute              Dispute?
   paymentAttempts      PaymentAttempt[]
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
 }
 
 model OrderStatusHistory {
@@ -222,10 +233,12 @@ model OrderStatusHistory {
   actorRole  String
   reason     String?
   createdAt  DateTime @default(now())
+
+  @@index([orderId])
 }
 
 // --------------------------------------------------------
-// ESCROW LEDGER (Immutable Double-Entry / Append-Only)
+// ESCROW LEDGER (Append-Only Immutable Ledger)
 // --------------------------------------------------------
 
 model EscrowAccount {
@@ -261,6 +274,8 @@ model EscrowLedgerEntry {
   idempotencyKey  String        @unique
   notes           String?
   createdAt       DateTime      @default(now())
+
+  @@index([escrowAccountId])
 }
 
 // --------------------------------------------------------
@@ -293,25 +308,27 @@ model WalletLedgerEntry {
   idempotencyKey  String   @unique
   description     String
   createdAt       DateTime @default(now())
+
+  @@index([walletId])
 }
 
 model Withdrawal {
-  id              String    @id @default(cuid())
-  withdrawalNumber String   @unique // WDR-2026-XXXXXX
-  walletId        String
-  wallet          Wallet    @relation(fields: [walletId], references: [id])
-  amount          Int
-  fee             Int       @default(0)
-  bankName        String
-  accountNumber   String
-  accountHolder   String
-  status          String    @default("PROCESSING") // REQUESTED, PROCESSING, SUCCESS, FAILED
-  providerRef     String?   // Simulation reference: SIM-BOD-XXXXXX
-  isSimulation    Boolean   @default(true) // Explicit honest labeling
-  completedAt     DateTime?
-  idempotencyKey  String    @unique
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  withdrawalNumber String    @unique // WDR-2026-XXXXXX
+  walletId         String
+  wallet           Wallet    @relation(fields: [walletId], references: [id])
+  amount           Int
+  fee              Int       @default(0)
+  bankName         String
+  accountNumber    String
+  accountHolder    String
+  status           String    @default("PROCESSING") // REQUESTED, PROCESSING, SUCCESS, FAILED
+  providerRef      String?   // Simulation reference: SIM-BOD-XXXXXX
+  isSimulation     Boolean   @default(true) // Explicit honest labeling
+  completedAt      DateTime?
+  idempotencyKey   String    @unique
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 // --------------------------------------------------------
@@ -334,6 +351,8 @@ model PaymentAttempt {
   idempotencyKey String    @unique
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+
+  @@index([orderId])
 }
 
 // --------------------------------------------------------
@@ -341,36 +360,38 @@ model PaymentAttempt {
 // --------------------------------------------------------
 
 model Dispute {
-  id              String            @id @default(cuid())
-  disputeNumber   String            @unique // DSP-2026-XXXXXX
-  orderId         String            @unique
-  order           Order             @relation(fields: [orderId], references: [id])
-  reason          String            // NOT_AS_DESCRIBED, DAMAGED_IN_TRANSIT, FAKE_ITEM, MISSING_ACCESSORIES
-  description     String
-  status          String            @default("OPEN") 
+  id               String            @id @default(cuid())
+  disputeNumber    String            @unique // DSP-2026-XXXXXX
+  orderId          String            @unique
+  order            Order             @relation(fields: [orderId], references: [id])
+  reason           String            // NOT_AS_DESCRIBED, DAMAGED_IN_TRANSIT, FAKE_ITEM, MISSING_ACCESSORIES
+  description      String
+  status           String            @default("OPEN") 
   // OPEN -> AWAITING_SELLER -> UNDER_REVIEW -> INVESTIGATING -> RESOLVED_BUYER / RESOLVED_SELLER / CLOSED
-  verdict         String?           // REFUND_BUYER, RELEASE_SELLER, PARTIAL_REFUND
-  adminNotes      String?
+  verdict          String?           // REFUND_BUYER, RELEASE_SELLER, PARTIAL_REFUND
+  adminNotes       String?
   decidedByAdminId String?
-  decidedAt       DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  decidedAt        DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   evidences       DisputeEvidence[]
   messages        DisputeMessage[]
+
+  @@index([status])
 }
 
 model DisputeEvidence {
-  id          String   @id @default(cuid())
-  disputeId   String
-  dispute     Dispute  @relation(fields: [disputeId], references: [id], onDelete: Cascade)
-  uploadedBy  String   // BUYER or SELLER user ID
-  uploaderRole String  // BUYER or SELLER
-  fileUrl     String
-  fileType    String   // image/jpeg, image/png, video/mp4
-  fileSize    Int      // bytes
-  description String?
-  createdAt   DateTime @default(now())
+  id           String   @id @default(cuid())
+  disputeId    String
+  dispute      Dispute  @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  uploadedBy   String   // BUYER or SELLER user ID
+  uploaderRole String   // BUYER or SELLER
+  fileUrl      String
+  fileType     String   // image/jpeg, image/png, video/mp4
+  fileSize     Int      // bytes
+  description  String?
+  createdAt    DateTime @default(now())
 }
 
 model DisputeMessage {
@@ -397,8 +418,11 @@ model AuditLog {
   targetId   String
   ipAddress  String?
   userAgent  String?
-  details    String   // JSON string of operation details
+  details    String   // JSON string of sanitized operation details
   createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Notification {
@@ -411,6 +435,8 @@ model Notification {
   linkUrl   String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model IdempotencyKey {

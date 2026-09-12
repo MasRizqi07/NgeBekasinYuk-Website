@@ -3,6 +3,9 @@ import { getServerSession } from "@/lib/auth/session";
 import { AdminVerdictSchema } from "@/lib/validations";
 import { DisputeService, DisputeDomainError } from "@/domain/dispute/DisputeService";
 import { AuditLogger } from "@/domain/audit/AuditLogger";
+import { verifyTotpCode, verifyStepUpGrant, DEV_ADMIN_TOTP_SEED } from "@/lib/auth/totp";
+import { prisma } from "@/server/db/prisma";
+import { env } from "@/lib/env";
 
 export async function POST(
   request: Request,
@@ -42,20 +45,48 @@ export async function POST(
 
     const { verdict, adminNotes, stepUpCode } = validated.data;
 
-    // Server-side step-up 2FA verification (P0-05 fix)
-    // In demo/development sandbox, the step-up verification accepts the standard admin OTP "882910" or "123456"
-    // and explicitly rejects invalid OTP attempts with an audit record.
-    const validOtpCodes = ["882910", "123456"];
-    if (!validOtpCodes.includes(stepUpCode)) {
+    // Genuine RFC 6238 TOTP or Step-Up Grant verification (HP2-P0-03)
+    let isAuthorized = false;
+
+    if (stepUpCode.includes(".")) {
+      // 1. Validate signed short-lived step-up grant token
+      const grantResult = await verifyStepUpGrant(stepUpCode, session.id, "DISPUTE_VERDICT");
+      if (grantResult.valid) {
+        isAuthorized = true;
+      }
+    } else if (/^\d{6}$/.test(stepUpCode)) {
+      // 2. Validate rotating 6-digit TOTP code
+      const adminUser = await prisma.user.findUnique({
+        where: { id: session.id },
+        select: { id: true, totpSecret: true, isTotpEnrolled: true },
+      });
+
+      const secret =
+        adminUser?.totpSecret ||
+        (env.NODE_ENV !== "production" ? DEV_ADMIN_TOTP_SEED : null);
+
+      if (secret) {
+        const totpCheck = verifyTotpCode({
+          secret,
+          code: stepUpCode,
+          adminId: session.id,
+        });
+        if (totpCheck.valid) {
+          isAuthorized = true;
+        }
+      }
+    }
+
+    if (!isAuthorized) {
       await AuditLogger.log({
         userId: session.id,
         action: "ADMIN_STEP_UP",
         targetType: "Dispute",
         targetId: disputeId,
-        details: { result: "FAILED", attemptedCode: "[REDACTED]" },
+        details: { result: "FAILED", reason: "Invalid, expired, or replayed TOTP authorization", attemptedCode: "[REDACTED]" },
       });
       return NextResponse.json(
-        { error: "INVALID_STEP_UP_CODE", message: "Kode otorisasi 2FA salah atau kedaluwarsa." },
+        { error: "INVALID_STEP_UP_CODE", message: "Kode otorisasi 2FA salah, telah digunakan (replay), atau kedaluwarsa." },
         { status: 401 }
       );
     }
@@ -65,6 +96,14 @@ export async function POST(
       adminId: session.id,
       verdict,
       adminNotes,
+    });
+
+    await AuditLogger.log({
+      userId: session.id,
+      action: "ADMIN_VERDICT",
+      targetType: "Dispute",
+      targetId: disputeId,
+      details: { verdict, result: "SUCCESS" },
     });
 
     return NextResponse.json(result);

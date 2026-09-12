@@ -15,7 +15,6 @@ import {
   ArrowRight,
   ShieldCheck,
   Sparkles,
-  SlidersHorizontal,
 } from "lucide-react";
 import { useListingStore } from "@/stores/useListingStore";
 import { EscrowBanner } from "@/components/shared/EscrowBanner";

@@ -16,18 +16,52 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email) {
-      showToast("Harap lengkapi nama dan email", "error");
+    setErrorMessage("");
+    if (!name || !email || !password) {
+      setErrorMessage("Harap lengkapi nama, email, dan kata sandi");
+      showToast("Harap lengkapi nama, email, dan kata sandi", "error");
       return;
     }
 
-    updateProfile({ name, email, phone });
-    login(email);
-    showToast("Akun berhasil dibuat! Silakan lakukan verifikasi e-KYC", "success");
-    router.push("/profile/verification");
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          phone: phone || undefined,
+          role: "BUYER",
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data.message || "Gagal mendaftarkan akun.";
+        setErrorMessage(msg);
+        showToast(msg, "error");
+        setIsLoading(false);
+        return;
+      }
+
+      updateProfile({ name, email, phone });
+      login(email);
+      showToast("Akun berhasil dibuat! Silakan lakukan verifikasi e-KYC", "success");
+      router.push("/profile/verification");
+    } catch {
+      const msg = "Terjadi kendala jaringan saat pendaftaran.";
+      setErrorMessage(msg);
+      showToast(msg, "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -38,6 +72,12 @@ export default function RegisterPage() {
           Mulai jual beli gadget secondhand aman dengan proteksi rekber escrow
         </p>
       </div>
+
+      {errorMessage && (
+        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-semibold">
+          {errorMessage}
+        </div>
+      )}
 
       <form onSubmit={handleRegister} className="space-y-3">
         <div className="space-y-1">
@@ -108,9 +148,10 @@ export default function RegisterPage() {
 
         <button
           type="submit"
-          className="w-full py-3 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-xs hover:bg-primary/90 transition-all flex items-center justify-center gap-2 mt-2"
+          disabled={isLoading}
+          className="w-full py-3 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-xs hover:bg-primary/90 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-75"
         >
-          <span>Daftar Sekarang</span>
+          <span>{isLoading ? "Memproses..." : "Daftar Sekarang"}</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </form>

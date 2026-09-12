@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCheck,
-  CreditCard,
   Truck,
 } from "lucide-react";
 import { useNotificationStore } from "@/stores/useNotificationStore";

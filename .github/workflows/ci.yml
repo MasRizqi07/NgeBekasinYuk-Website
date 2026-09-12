@@ -2,14 +2,40 @@ name: NgeBekasinYuk Production Verification CI
 
 on:
   push:
-    branches: [main, master, "feat/*", "fix/*", "chore/*"]
+    branches: [main, master, "antigravity/*", "feat/*", "fix/*", "chore/*"]
   pull_request:
     branches: [main, master]
 
 jobs:
   verify:
-    name: Lint, Typecheck, Test, and Build
+    name: Complete Hardening Verification Gates (PostgreSQL 16)
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: ngebekasinyuk_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: "postgresql://postgres:postgrespassword@localhost:5432/ngebekasinyuk_ci?schema=public"
+      AUTH_SECRET: "ci-auth-secret-min-32-characters-test-key-prod"
+      ADMIN_STEP_UP_SECRET: "ci-admin-step-up-secret-min-32-chars-test"
+      ALLOW_DEMO_IN_PRODUCTION: "true"
+      DEMO_PAYMENT_PROVIDER: "true"
+      DEMO_KYC_PROVIDER: "true"
+      DEMO_WITHDRAWAL_PROVIDER: "true"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      CI: "true"
 
     steps:
       - name: Checkout Repository
@@ -39,25 +65,36 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Install Dependencies
+      - name: Gate 1 - Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma Client & Sync Dev DB
+      - name: Gate 2 - Prisma Validate & Generate Client
         run: |
-          pnpm --filter web exec prisma generate
-          pnpm --filter web exec prisma db push
+          pnpm --filter web exec prisma validate
+          pnpm --filter web run prisma:generate
 
-      - name: Seed Database
+      - name: Gate 3 - Deploy Fresh PostgreSQL Migrations
+        run: |
+          pnpm --filter web exec prisma migrate deploy
+          pnpm --filter web exec prisma migrate status
+
+      - name: Gate 4 - Seed Test Database Fixtures
         run: pnpm --filter web run db:seed
 
-      - name: Gate 1 - Code Quality & Linting
-        run: pnpm --filter web run lint
+      - name: Gate 5 - Code Quality & Strict Linting (0 Warnings)
+        run: pnpm run lint
 
-      - name: Gate 2 - Strict TypeScript Typecheck
+      - name: Gate 6 - Strict TypeScript Typecheck
         run: pnpm --filter web run typecheck
 
-      - name: Gate 3 - Unit & Integration Test Suite
+      - name: Gate 7 - Unit, Integration & Concurrency Test Suite
         run: pnpm --filter web run test
 
-      - name: Gate 4 - Production App Router Bundle Build
+      - name: Gate 8 - Production App Router Bundle Build
         run: pnpm --filter web run build
+
+      - name: Install Playwright Chromium with OS Dependencies
+        run: pnpm --filter web exec playwright install --with-deps chromium
+
+      - name: Gate 9 - Playwright Browser E2E Test Suite
+        run: pnpm --filter web run test:e2e

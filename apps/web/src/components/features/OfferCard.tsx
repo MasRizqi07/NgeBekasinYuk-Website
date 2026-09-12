@@ -6,7 +6,6 @@ import Image from "next/image";
 import {
   Tag,
   Clock,
-  CheckCircle2,
   XCircle,
   ArrowRight,
   Lock,
@@ -40,7 +39,6 @@ export function OfferCard({ offer, listing, convoId }: OfferCardProps) {
 
   const isAccepted = offer.status === "ACCEPTED";
   const isRejected = offer.status === "REJECTED";
-  const isCountered = offer.status === "COUNTERED";
   const isPending = offer.status === "PENDING";
 
   return (

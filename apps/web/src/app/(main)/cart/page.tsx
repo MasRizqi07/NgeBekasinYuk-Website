@@ -9,7 +9,7 @@ import { formatRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 
 export default function CartPage() {
-  const { items, removeItem, getSubtotal, getEscrowFee, getTotalAmount } =
+  const { items, removeItem, getSubtotal, getTotalAmount } =
     useCartStore();
 
   if (items.length === 0) {

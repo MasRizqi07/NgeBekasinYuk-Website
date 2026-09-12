@@ -1,44 +1,99 @@
 # NgeBekasinYuk Application Security & Defense-in-Depth Specification
 
-## 1. Security Architecture Summary
+## 1. Threat Model & Security Architecture
 
-This document details the security controls implemented to harden NgeBekasinYuk against common web and financial application vulnerabilities (OWASP Top 10).
+NgeBekasinYuk is a C2C tech marketplace handling high-value gadget transactions with an escrow mechanism. The primary threats addressed in Hardening Pass #2 include:
+1. **Privilege Escalation via Session Tampering**: Attackers modifying client-side session cookies to claim `role: ADMIN` (`HP2-P0-01`).
+2. **Production Startup with Insecure Defaults**: Deployments inadvertently booting with hardcoded development secrets (`HP2-P0-02`).
+3. **Admin Verdict Impersonation**: Unauthorized execution of high-risk dispute resolutions via static OTPs (`HP2-P0-03`).
+4. **Financial Double-Spend & Concurrency Races**: Parallel requests executing simultaneous escrow releases or overdrafting wallet balances (`HP2-P0-04`, `HP2-P0-05`).
+5. **Insecure Direct Object Reference (IDOR)**: Malicious users manipulating order, listing, or dispute IDs to view or mutate records belonging to other users.
+6. **Cross-Site Request Forgery (CSRF)**: Unauthorized state changes executed via forged cross-origin requests.
 
 ---
 
-## 2. Implemented Protections
+## 2. Authentication & Session Architecture
 
-### 2.1 Server-Side Authentication & Session Hardening
-- **HMAC-SHA256 Signed Sessions**: Session tokens are cryptographically signed using a server-side secret (`AUTH_SECRET`).
-- **Constant-Time Verification**: Uses `crypto.timingSafeEqual` to prevent timing side-channel attacks on signature checks.
-- **HttpOnly & SameSite=Lax**: Session cookies are inaccessible to JavaScript (`document.cookie`), mitigating XSS token theft.
-- **Strict Expiration**: Sessions expire after 7 days and tokens are rejected upon expiration.
+### 2.1 Cryptographic Session Verification in Middleware (`HP2-P0-01`)
+- **Web Crypto HMAC-SHA256**: All session tokens (`payload.signature`) are signed using SHA-256 HMAC.
+- **Fail-Closed Verification**: The Next.js Edge-compatible middleware verifies the cryptographic signature *before* inspecting payload claims or roles. Forged tokens with altered roles, user IDs, or expiration timestamps fail cryptographic verification and are immediately discarded.
+- **Constant-Time Comparison**: Signature verification runs in constant time (`crypto.timingSafeEqual` in Node.js, bitwise XOR accumulator in Web Crypto) to eliminate timing side-channel attacks.
+- **Session Revocation Strategy**: Tokens include `sessionVersion`. When critical security events occur (password reset, account suspension, role change), the database `user.sessionVersion` is incremented, invalidating older tokens during server-side verification.
 
-### 2.2 Broken Access Control (BAC) & IDOR Mitigation
-- **Next.js Middleware**: Guards all `/admin/:path*` routes at the server boundary, rejecting unauthenticated or non-admin requests before pages render.
-- **Resource Ownership Validation**: All mutations verify that `buyerId` or `sellerId` matches the authenticated session user, rather than trusting client-provided IDs.
+### 2.2 Production Secret Enforcement (`HP2-P0-02`)
+A centralized environment validation module (`src/lib/env.ts`) evaluates all configuration at startup:
+- In `NODE_ENV === "production"`, `AUTH_SECRET` and `ADMIN_STEP_UP_SECRET` must be non-fallback strings of at least 32 characters. If missing or detected as known development defaults, the application crashes immediately.
+- `DATABASE_URL` must specify a valid PostgreSQL connection string (`postgresql://` or `postgres://`). SQLite is rejected.
+- Demo provider flags (`DEMO_PAYMENT_PROVIDER`, `DEMO_KYC_PROVIDER`, `DEMO_WITHDRAWAL_PROVIDER`) are strictly prohibited in production unless `ALLOW_DEMO_IN_PRODUCTION=true` is explicitly configured for non-live staging sandboxes.
 
-### 2.3 Transaction PIN Hardening (P0-04 Fix)
-- **Bcrypt Hashing**: PINs are never stored in plaintext. Hashed using Bcrypt with 10 salt rounds.
-- **Rate-Limiting & Lockout**: Tracks failed attempts in database. 5 consecutive incorrect entries trigger an automatic 15-minute lockout (`pinLockedUntil`).
-- **No Hardcoded Bypass**: Eliminated the prototype's `pin !== "123456" && pin.length !== 6` bug.
+---
 
-### 2.4 Admin 2FA Step-Up Verification (P0-05 Fix)
-- Sensitive dispute verdicts require server-side step-up code verification (`stepUpCode`).
-- Invalid OTP attempts generate high-severity audit log entries.
-- Production architecture is designed to integrate standard TOTP / WebAuthn.
+## 3. Real Admin RFC 6238 TOTP Step-Up (`HP2-P0-03`)
 
-### 2.5 Injection & Input Sanitization
-- **Zod Schema Validation**: Every API route validates input types, lengths, string formats, and enum choices before domain processing.
-- **Prisma Parameterized Queries**: Protects against SQL injection by using parameterized queries under the hood.
-- **No Arbitrary HTML**: React JSX escaping is preserved everywhere; zero `dangerouslySetInnerHTML` usage.
+### 3.1 Per-Admin TOTP Specification
+- **Standard**: Conforms to RFC 6238 Time-Based One-Time Password algorithm with HMAC-SHA1 and standard 30-second time steps.
+- **Dynamic Truncation**: Validates rotating 6-digit numeric codes generated by authenticator apps (e.g. Google Authenticator, 1Password).
+- **Time Drift Windows**: Supports a ±1 step drift window (current, previous, next 30s step) to accommodate minor client clock discrepancies.
+- **Replay Protection**: Replay cache records `{ adminId, timeStep }` upon successful verification. Any attempt to reuse the exact same OTP within the validity window is rejected.
+- **Short-Lived Step-Up Grants**: Successful challenge grants a signed step-up token valid for exactly 5 minutes (`ADMIN_STEP_UP_TTL_SECONDS = 300`). Dispute verdicts verify this signed grant before executing financial mutations.
 
-### 2.6 Defense-in-Depth Security Headers
-Configured via `src/middleware.ts` for all requests:
-- `X-Frame-Options: DENY`: Prevents clickjacking.
-- `X-Content-Type-Options: nosniff`: Prevents MIME-type sniffing.
+---
+
+## 4. Financial Concurrency & Idempotency Controls
+
+### 4.1 Atomic Database Invariants (`HP2-P0-04`, `HP2-P0-05`)
+- **Escrow Mutation**: Escrow release and refund operations execute database-native conditional updates (`updateMany` with `where: { isReleased: false, isRefunded: false }`). If the row count returned is 0, the operation aborts, preventing concurrent releases or release-versus-refund races.
+- **Wallet Decrement**: Wallet withdrawals execute conditional decrements (`where: { activeBalance: { gte: amount } }`). Overdrafts and simultaneous withdrawal races fail safely.
+
+### 4.2 Idempotency Semantics (`HP2-P1-10`)
+- **Escrow Operations**: Scoped deterministically to order and action (`ESCROW_RELEASE:order-1:SELLER_PAYOUT`). Retries return the previous success state without altering balances.
+- **Withdrawals**: Scoped to unique operation/request UUIDs. Retrying the same network request returns the cached result, while future legitimate withdrawals of the exact same amount on subsequent days succeed normally.
+
+---
+
+## 5. Authorization Matrix & IDOR Defenses
+
+- **Strict RBAC**: Routes under `/admin/*` and API routes under `/api/admin/*` require `role === "ADMIN"`.
+- **Object-Level Ownership**:
+  - Orders: Mutation endpoints verify `order.buyerId === session.userId` or `order.sellerId === session.userId`.
+  - Listings: Mutation endpoints verify `listing.sellerId === session.userId`.
+  - Disputes: Creation requires `order.buyerId === session.userId`; verdicts require verified admin session and step-up grant.
+  - Chat: Access requires membership as buyer or seller of the conversation.
+
+---
+
+## 6. CSRF & Security Headers
+
+### 6.1 CSRF Protections (`HP2-P1-07`)
+- **Cookie SameSite**: All authentication cookies enforce `SameSite=Lax`, preventing browser transmission during cross-site subresource requests.
+- **Origin / Referer Validation**: State-changing API routes (`POST`, `PUT`, `DELETE`) validate incoming `Origin` and `Referer` headers against `NEXT_PUBLIC_APP_URL`.
+
+### 6.2 Defense-in-Depth Security Headers
+Configured via `src/middleware.ts`:
+- `Content-Security-Policy`: Modern CSP restricting `default-src 'self'`, `script-src 'self' 'unsafe-eval' 'unsafe-inline'`, `style-src 'self' 'unsafe-inline'`, `img-src 'self' data: https:`, and `frame-ancestors 'none'`.
+- `X-Frame-Options: DENY`: Complete clickjacking mitigation.
+- `X-Content-Type-Options: nosniff`: Prevents MIME-type confusion attacks.
 - `Referrer-Policy: strict-origin-when-cross-origin`: Controls referrer leakage.
-- `Permissions-Policy: camera=(), microphone=(), geolocation=()`: Restricts sensitive browser APIs.
+- `Permissions-Policy`: Restricts unneeded camera, microphone, and geolocation APIs.
 
-### 2.7 Sensitive Logging Elimination
-- `AuditLogger.sanitizeDetails` automatically redacts passwords, PINs, tokens, secrets, card numbers, and authorization headers before persisting audit records.
+---
+
+## 7. Audit Logging & Sensitive Data Protection
+
+### 7.1 Append-Only Audit Integrity (`HP2-P1-09`)
+- `AuditLog` records are strictly append-only. There are no application APIs that update or delete audit records.
+- Records capture `userId`, `action`, `resourceId`, `correlationId`, `ipAddress`, and `userAgent`.
+
+### 7.2 Automatic Redaction & PII Handling
+- Sensitive credentials (`password`, `pin`, `AUTH_SECRET`, `totpSecret`, `stepUpCode`) are automatically scrubbed by `AuditLogger.sanitizeDetails`.
+- Bank account numbers in API responses are masked (`**** **** 1234`) except in authorized high-privilege contexts.
+- Synthetic demo data is used for test fixtures; no real personal data (NIK / KTP) is processed.
+
+---
+
+## 8. Known Staging Limitations
+
+The application is classified as a **Production Candidate**. The following external production dependencies remain simulated via clean provider abstractions:
+- `DemoPaymentProvider`: Simulates QRIS/VA settlement callbacks. Production requires live integration with Midtrans/Xendit.
+- `DemoWithdrawalProvider`: Simulates BI-FAST bank disbursements. Production requires an approved corporate banking disbursement API.
+- `DemoKycProvider`: Simulates Dukcapil identity verification. Production requires certified government identity verification APIs.

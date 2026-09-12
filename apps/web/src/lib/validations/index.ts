@@ -12,7 +12,7 @@ export const RegisterSchema = z.object({
   name: z.string().min(2, "Nama minimal 2 karakter").max(100).trim(),
   email: z.string().email("Format email tidak valid").toLowerCase().trim(),
   password: z.string().min(8, "Password minimal 8 karakter"),
-  phone: z.string().regex(/^(\+62|62|0)8[1-9][0-9]{6,10}$/, "Format nomor HP tidak valid").optional(),
+  phone: z.string().regex(/^(\+62|62|0)8[1-9][0-9]{6,10}$/, "Format nomor HP tidak valid").optional().or(z.literal("")),
   role: z.enum(["BUYER", "SELLER"]).default("BUYER"),
 });
 
@@ -65,7 +65,7 @@ export const OpenDisputeSchema = z.object({
 export const AdminVerdictSchema = z.object({
   verdict: z.enum(["RELEASE_SELLER", "REFUND_BUYER"]),
   adminNotes: z.string().min(5, "Catatan putusan minimal 5 karakter").max(1000),
-  stepUpCode: z.string().length(6, "Kode otorisasi 6 digit wajib diisi"),
+  stepUpCode: z.string().min(6, "Kode otorisasi 6 digit atau token grant wajib diisi").max(500),
 });
 
 export const WebhookSimulationSchema = z.object({

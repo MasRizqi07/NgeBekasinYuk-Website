@@ -4,20 +4,11 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Package,
   Plus,
   Eye,
   Heart,
-  TrendingUp,
-  Store,
-  CheckCircle2,
-  Clock,
-  MoreVertical,
   Edit,
-  Trash2,
   ExternalLink,
-  ShieldCheck,
-  Tag,
 } from "lucide-react";
 import { useListingStore } from "@/stores/useListingStore";
 import { formatRupiah } from "@/lib/utils";
