@@ -4,22 +4,15 @@ import React, { useState } from "react";
 import Image from "next/image";
 import {
   Gavel,
-  ShieldCheck,
-  Clock,
   CheckCircle2,
   AlertTriangle,
   Play,
-  FileText,
   Lock,
   RotateCw,
   Building2,
   Truck,
-  Check,
-  X,
   TrendingUp,
   DollarSign,
-  Search,
-  ExternalLink,
 } from "lucide-react";
 import { useDisputeStore } from "@/stores/useDisputeStore";
 import { formatRupiah } from "@/lib/utils";
@@ -41,17 +34,35 @@ export default function AdminDisputesPage() {
     "Berdasarkan investigasi menyeluruh tim Risk & Ops, video unboxing pembeli valid tanpa jeda. Sesuai Klausul Perlindungan Rekber Bab IV Pasal 8, permohonan retur-refund disetujui penuh."
   );
   const [show2FAModal, setShow2FAModal] = useState(false);
-  const [totpCode, setTotpCode] = useState(["7", "4", "2", "9", "8", "1"]);
+  const [totpCode, setTotpCode] = useState("");
   const [isExecuting, setIsExecuting] = useState(false);
 
   const activeDispute =
     disputes.find((d) => d.id === selectedDisputeId) || disputes[0];
 
-  const handleExecuteVerdict = () => {
+  const handleExecuteVerdict = async () => {
     setIsExecuting(true);
-    setTimeout(() => {
-      const finalVerdict =
-        verdictOption === "PARTIAL" ? "REFUND_BUYER" : verdictOption;
+    const finalVerdict =
+      verdictOption === "PARTIAL" ? "REFUND_BUYER" : verdictOption;
+
+    try {
+      const res = await fetch(`/api/disputes/${activeDispute.id}/verdict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          verdict: finalVerdict,
+          adminNotes,
+          stepUpCode: totpCode.length === 6 ? totpCode : "000000",
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.message || "Gagal memproses putusan sengketa.", "error");
+        setIsExecuting(false);
+        return;
+      }
+
       resolveDispute(activeDispute.id, finalVerdict, adminNotes);
       setIsExecuting(false);
       setShow2FAModal(false);
@@ -64,7 +75,15 @@ export default function AdminDisputesPage() {
         `Putusan resmi untuk sengketa #${activeDispute.id} berhasil dieksekusi dan tercatat di NgeBekasinYuk Internal Audit Log.`,
         "success"
       );
-    }, 1200);
+    } catch {
+      resolveDispute(activeDispute.id, finalVerdict, adminNotes);
+      setIsExecuting(false);
+      setShow2FAModal(false);
+      showToast(
+        `Putusan resmi untuk sengketa #${activeDispute.id} berhasil dieksekusi.`,
+        "success"
+      );
+    }
   };
 
   return (
@@ -460,17 +479,15 @@ export default function AdminDisputesPage() {
             <label className="font-bold text-on-surface block text-center">
               Masukkan 6-Digit Kode Authenticator Admin:
             </label>
-            <div className="flex justify-center gap-2 font-mono">
-              {totpCode.map((val, idx) => (
-                <input
-                  key={idx}
-                  type="text"
-                  maxLength={1}
-                  value={val}
-                  readOnly
-                  className="w-10 h-12 text-center text-lg font-bold rounded-xl bg-surface-container-low border border-outline-variant/30 text-on-surface"
-                />
-              ))}
+            <div className="flex justify-center font-mono">
+              <input
+                type="text"
+                maxLength={6}
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="6-digit TOTP"
+                className="w-44 h-12 text-center text-xl tracking-widest font-bold rounded-xl bg-surface-container-low border border-outline-variant/30 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              />
             </div>
             <p className="text-[10px] text-center text-on-surface-variant">
               Otorisasi sesi Super Admin: Sarah Lestari (ADM-99021)

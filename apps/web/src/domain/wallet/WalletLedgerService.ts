@@ -1,5 +1,5 @@
 // NgeBekasinYuk Wallet Ledger Service
-// Authoritative balance calculations, PIN rate-limiting, and withdrawal workflows.
+// Authoritative balance calculations, PIN rate-limiting, and withdrawal workflows with concurrency protection (HP2-P0-05).
 
 import { prisma } from "@/server/db/prisma";
 import bcrypt from "bcryptjs";
@@ -42,7 +42,7 @@ export interface WithdrawalRequestResult {
 export class WalletLedgerService {
   /**
    * Verifies the user's 6-digit transaction PIN server-side.
-   * Enforces rate-limiting and temporary account lockout (P0-04 fix).
+   * Enforces rate-limiting and temporary account lockout.
    */
   static async verifyPin(userId: string, plainPin: string): Promise<PinVerificationResult> {
     const user = await prisma.user.findUnique({
@@ -154,7 +154,8 @@ export class WalletLedgerService {
 
   /**
    * Requests a withdrawal from seller active balance to registered bank account.
-   * Atomically checks balance, verifies PIN, deducts active balance, and records ledger entry.
+   * Enforces transactional conditional decrement to prevent race conditions and lost updates.
+   * Unique operation idempotency ensures future legitimate withdrawals are not blocked.
    */
   static async requestWithdrawal(params: {
     userId: string;
@@ -198,6 +199,7 @@ export class WalletLedgerService {
       throw new WalletDomainError("WALLET_NOT_FOUND", "Dompet pengguna belum terdaftar");
     }
 
+    // Fast preliminary check before transaction
     if (wallet.activeBalance < amount) {
       throw new WalletDomainError(
         "INSUFFICIENT_BALANCE",
@@ -205,37 +207,65 @@ export class WalletLedgerService {
       );
     }
 
+    // Request-scoped or operation-specific idempotency key (HP2-P1-10)
+    // Ensures retries of the SAME request are deduplicated without blocking future distinct requests
+    const withdrawalNumber = generateWithdrawalNumber();
     const idempotencyKey =
       customIdempotencyKey ||
-      buildIdempotencyKey("WITHDRAWAL", wallet.id, `${amount}:${accountNumber}`);
+      buildIdempotencyKey("WITHDRAWAL", wallet.id, withdrawalNumber);
 
-    // Idempotency check: prevent duplicate withdrawal deduction
-    const existingWithdrawal = await prisma.withdrawal.findUnique({
-      where: { idempotencyKey },
-    });
-
-    if (existingWithdrawal) {
-      return {
-        success: true,
-        isDuplicate: true,
-        withdrawalId: existingWithdrawal.id,
-        withdrawalNumber: existingWithdrawal.withdrawalNumber,
-        amount: existingWithdrawal.amount,
-        fee: existingWithdrawal.fee,
-        newActiveBalance: wallet.activeBalance,
-        status: existingWithdrawal.status,
-        isSimulation: existingWithdrawal.isSimulation,
-        idempotencyKey,
-      };
-    }
-
-    const withdrawalNumber = generateWithdrawalNumber();
     const fee = 0; // Rp 0 BI-FAST launch promo
-    const newActiveBalance = wallet.activeBalance - amount;
 
-    // ATOMIC TRANSACTION
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Create withdrawal record (honestly marked as simulation)
+    // ATOMIC DATABASE TRANSACTION WITH CONCURRENCY BALANCE PROTECTION
+    return await prisma.$transaction(async (tx) => {
+      // 1. Idempotency check: if this exact request ID was already processed, return cached outcome
+      const existingWithdrawal = await tx.withdrawal.findUnique({
+        where: { idempotencyKey },
+      });
+
+      if (existingWithdrawal) {
+        const currentWallet = await tx.wallet.findUnique({ where: { id: wallet.id } });
+        return {
+          success: true,
+          isDuplicate: true,
+          withdrawalId: existingWithdrawal.id,
+          withdrawalNumber: existingWithdrawal.withdrawalNumber,
+          amount: existingWithdrawal.amount,
+          fee: existingWithdrawal.fee,
+          newActiveBalance: currentWallet ? currentWallet.activeBalance : 0,
+          status: existingWithdrawal.status,
+          isSimulation: existingWithdrawal.isSimulation,
+          idempotencyKey,
+        };
+      }
+
+      // 2. Atomic conditional decrement: guarantees that balance >= amount at the moment of decrement
+      const decrementResult = await tx.wallet.updateMany({
+        where: {
+          id: wallet.id,
+          activeBalance: { gte: amount },
+        },
+        data: {
+          activeBalance: { decrement: amount },
+        },
+      });
+
+      if (decrementResult.count === 0) {
+        throw new WalletDomainError(
+          "INSUFFICIENT_BALANCE",
+          "Saldo aktif tidak mencukupi untuk memproses penarikan ini."
+        );
+      }
+
+      // Read current balance after atomic decrement
+      const currentWallet = await tx.wallet.findUniqueOrThrow({
+        where: { id: wallet.id },
+        select: { activeBalance: true },
+      });
+
+      const newActiveBalance = currentWallet.activeBalance;
+
+      // 3. Create withdrawal record (honestly marked as simulation)
       const withdrawal = await tx.withdrawal.create({
         data: {
           withdrawalNumber,
@@ -253,15 +283,7 @@ export class WalletLedgerService {
         },
       });
 
-      // 2. Deduct active balance
-      await tx.wallet.update({
-        where: { id: wallet.id },
-        data: {
-          activeBalance: newActiveBalance,
-        },
-      });
-
-      // 3. Write immutable Wallet Ledger Entry (DEBIT)
+      // 4. Write immutable Wallet Ledger Entry (DEBIT)
       await tx.walletLedgerEntry.create({
         data: {
           walletId: wallet.id,
@@ -276,7 +298,7 @@ export class WalletLedgerService {
         },
       });
 
-      // 4. Append audit log
+      // 5. Append audit log
       await tx.auditLog.create({
         data: {
           userId,
@@ -294,20 +316,18 @@ export class WalletLedgerService {
         },
       });
 
-      return withdrawal;
+      return {
+        success: true,
+        isDuplicate: false,
+        withdrawalId: withdrawal.id,
+        withdrawalNumber: withdrawal.withdrawalNumber,
+        amount: withdrawal.amount,
+        fee: withdrawal.fee,
+        newActiveBalance,
+        status: withdrawal.status,
+        isSimulation: withdrawal.isSimulation,
+        idempotencyKey,
+      };
     });
-
-    return {
-      success: true,
-      isDuplicate: false,
-      withdrawalId: result.id,
-      withdrawalNumber: result.withdrawalNumber,
-      amount: result.amount,
-      fee: result.fee,
-      newActiveBalance,
-      status: result.status,
-      isSimulation: result.isSimulation,
-      idempotencyKey,
-    };
   }
 }

@@ -9,10 +9,6 @@ import {
   ShieldCheck,
   TrendingUp,
   ArrowRight,
-  Clock,
-  CheckCircle2,
-  Users,
-  Package,
 } from "lucide-react";
 import { useOrderStore } from "@/stores/useOrderStore";
 import { useDisputeStore } from "@/stores/useDisputeStore";

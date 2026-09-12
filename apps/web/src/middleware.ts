@@ -1,8 +1,9 @@
 // NgeBekasinYuk Server Route Guard & Security Headers Middleware
-// Enforces server boundary access controls for /admin routes and sets defense-in-depth headers.
+// Enforces cryptographic server boundary access controls for /admin routes and sets defense-in-depth headers.
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { verifySession } from "@/lib/auth/session";
 
 const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "ngebekasinyuk_session";
 
@@ -15,8 +16,19 @@ export async function middleware(request: NextRequest) {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  response.headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';"
+  );
 
-  // 2. Protect /admin/* routes
+  if (process.env.NODE_ENV === "production") {
+    response.headers.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains; preload"
+    );
+  }
+
+  // 2. Protect /admin/* routes with Cryptographic Signature Verification (HP2-P0-01)
   if (pathname.startsWith("/admin")) {
     const sessionCookie = request.cookies.get(COOKIE_NAME);
 
@@ -27,31 +39,20 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    try {
-      const parts = sessionCookie.value.split(".");
-      if (parts.length !== 2) {
-        const loginUrl = new URL("/login", request.url);
-        return NextResponse.redirect(loginUrl);
-      }
+    // Cryptographically verify HMAC signature before trusting session contents
+    const session = await verifySession(sessionCookie.value);
 
-      // Decode payload
-      const json = atob(parts[0].replace(/-/g, "+").replace(/_/g, "/"));
-      const session = JSON.parse(json);
-
-      // Check expiration
-      if (session.expiresAt && session.expiresAt < Math.floor(Date.now() / 1000)) {
-        const loginUrl = new URL("/login", request.url);
-        return NextResponse.redirect(loginUrl);
-      }
-
-      // Check role: must be ADMIN
-      if (session.role !== "ADMIN") {
-        // Forbidden: regular buyers or sellers cannot access /admin
-        return NextResponse.redirect(new URL("/", request.url));
-      }
-    } catch {
+    if (!session) {
+      // Invalid signature, tampered payload, or expired session -> reject
       const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
+    }
+
+    // Check role: must be ADMIN
+    if (session.role !== "ADMIN") {
+      // Forbidden: regular buyers or sellers cannot access /admin
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 

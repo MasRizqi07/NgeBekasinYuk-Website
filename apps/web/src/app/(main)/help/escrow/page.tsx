@@ -9,17 +9,11 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
-  ArrowDown,
-  ArrowRight,
   Search,
   ChevronDown,
   XCircle,
-  HelpCircle,
   Gavel,
   Building2,
-  TrendingDown,
-  Star,
-  Users,
 } from "lucide-react";
 
 export default function EscrowEducationPage() {

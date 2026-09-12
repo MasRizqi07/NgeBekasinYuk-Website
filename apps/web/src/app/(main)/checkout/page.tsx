@@ -4,17 +4,13 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
-  ShieldCheck,
   MapPin,
   Truck,
   CreditCard,
   Lock,
   CheckCircle2,
-  ChevronRight,
-  ArrowRight,
-  Sparkles,
 } from "lucide-react";
-import { useCartStore, AVAILABLE_COURIERS, CourierService } from "@/stores/useCartStore";
+import { useCartStore, AVAILABLE_COURIERS } from "@/stores/useCartStore";
 import { useUserStore } from "@/stores/useUserStore";
 import { useOrderStore } from "@/stores/useOrderStore";
 import { useListingStore } from "@/stores/useListingStore";

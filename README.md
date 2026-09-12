@@ -5,8 +5,10 @@
 ![Maturity](https://img.shields.io/badge/Maturity-Production_Candidate-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Strict_5.x-green)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.4_App_Router-black)
-![Database](https://img.shields.io/badge/Prisma_ORM-6.4.1-indigo)
-![Tests](https://img.shields.io/badge/Vitest-47_Passed_100%25-success)
+![Database](https://img.shields.io/badge/Prisma_ORM-6.4.1_PostgreSQL-indigo)
+![Tests](https://img.shields.io/badge/Vitest-75_Passed_100%25-success)
+![E2E](https://img.shields.io/badge/Playwright-13_Passed_100%25-success)
+![ESLint](https://img.shields.io/badge/ESLint-0_Errors_0_Warnings-brightgreen)
 
 ---
 
@@ -19,8 +21,8 @@
 - **Buyer 2x24-Hour Inspection Period**: A countdown timer starts when the courier delivers the package, during which the buyer tests device condition.
 - **Integrated Price Negotiation**: Interactive offer system with real-time chat.
 - **Seller Trust & Verification**: Verified seller profiles, condition grading (`LIKE_NEW`, `VERY_GOOD`, `FAIR`), and fraud notices.
-- **Seller Wallet & Withdrawal**: Double-entry ledger with server-side PIN authentication and BI-FAST simulation.
-- **Tri-Party Dispute Mediation**: Dedicated dispute resolution room with admin step-up verification and atomic escrow verdicts.
+- **Seller Wallet & Withdrawal**: Append-only wallet ledger with paired financial records, server-side PIN authentication, conditional concurrency locking, and BI-FAST simulation.
+- **Tri-Party Dispute Mediation**: Dedicated dispute resolution room with real RFC 6238 TOTP admin step-up verification and atomic escrow verdicts.
 
 ---
 
@@ -30,10 +32,11 @@
 Frontend Framework : Next.js 16.3.4 (App Router, React 19, TypeScript 5.x)
 Styling            : Tailwind CSS v4, Framer Motion, Lucide React
 State Management   : Zustand 5.x (Client UI, optimistic interactions)
-Data Persistence   : Prisma ORM 6.4.1 (SQLite for local dev, PostgreSQL for production)
-Validation         : Zod
-Security & Auth    : HMAC-SHA256 Signed HttpOnly Session Cookies, Bcrypt Password & PIN Hashing
-Test Runner        : Vitest v4.1.x (47 unit and integration tests)
+Data Persistence   : Prisma ORM 6.4.1 (PostgreSQL 16+ with reproducible migrations)
+Validation         : Zod schemas for all mutating endpoints
+Security & Auth    : Web Crypto HMAC-SHA256 Signed HttpOnly Session Cookies, Bcrypt Password & PIN, RFC 6238 Admin TOTP
+Test Runners       : Vitest v4.1.x (75 unit, integration & concurrency tests), Playwright v1.50+ (13 browser E2E tests)
+Quality Gate       : ESLint (0 errors, 0 warnings), Strict TypeScript (0 errors)
 ```
 
 ---
@@ -43,24 +46,25 @@ Test Runner        : Vitest v4.1.x (47 unit and integration tests)
 ### Prerequisites:
 - Node.js >= 20.x
 - pnpm >= 9.x
+- PostgreSQL 16+ (Docker or local instance)
 
 ### Step-by-Step Setup:
 
 1. **Clone and Install Dependencies**:
    ```bash
-   pnpm install
+   pnpm install --frozen-lockfile
    ```
 
 2. **Setup Environment Variables**:
-   Copy `.env.example` in `apps/web`:
+   Copy `.env.example` to `.env` and `apps/web/.env`:
    ```bash
    cp apps/web/.env.example apps/web/.env
    ```
 
-3. **Initialize Database Schema & Client**:
+3. **Deploy Migrations & Generate Prisma Client**:
    ```bash
-   pnpm --filter web exec prisma generate
-   pnpm --filter web exec prisma db push
+   pnpm --filter web exec prisma migrate deploy
+   pnpm --filter web run prisma:generate
    ```
 
 4. **Seed Deterministic Data**:
@@ -78,13 +82,14 @@ Test Runner        : Vitest v4.1.x (47 unit and integration tests)
 
 ## 4. Demo Accounts & Credentials
 
-The seed script creates three default development roles:
+The seed script creates deterministic development test fixtures:
 
-| Role | Email | Password | Transaction PIN | Purpose |
-|---|---|---|---|---|
-| **Buyer** | `buyer@ngebekasinyuk.id` | `Password123!` | `123456` | Browse, negotiate, checkout, inspect unit, confirm receipt, or dispute |
-| **Seller** | `seller@ngebekasinyuk.id` | `Password123!` | `123456` | List products, accept offers, ship orders, withdraw wallet balance |
-| **Admin** | `admin@ngebekasinyuk.id` | `AdminSecret2026!` | N/A (2FA: `882910`) | Access `/admin/dashboard`, review disputes, execute escrow verdicts |
+| Role | Email | Password | Transaction PIN | 2FA / TOTP | Purpose |
+|---|---|---|---|---|---|
+| **Buyer** | `buyer@ngebekasinyuk.id` | `Password123!` | `123456` | N/A | Browse, negotiate, checkout, inspect unit, confirm receipt, or dispute |
+| **Seller** | `seller@ngebekasinyuk.id` | `Password123!` | `123456` | N/A | List products, accept offers, ship orders, withdraw wallet balance |
+| **Admin** | `admin@ngebekasinyuk.id` | `AdminSecret2026!` | N/A | RFC 6238 TOTP (`JBSWY3DPEHPK3PXP`) | Access `/admin/dashboard`, review disputes, execute escrow verdicts |
+| **Admin (Sarah)** | `admin.sarah@ngebekasinyuk.id` | `AdminSecret2026!` | N/A | RFC 6238 TOTP (`JBSWY3DPEHPK3PXP`) | Secondary admin fixture for independent verdict testing |
 
 ---
 
@@ -93,17 +98,20 @@ The seed script creates three default development roles:
 Run the full suite of verification commands:
 
 ```bash
-# 1. Run ESLint (0 errors)
-pnpm --filter web run lint
+# 1. Code Quality & Strict Linting (0 errors, 0 warnings)
+pnpm run lint
 
 # 2. Strict TypeScript Typecheck (0 errors)
 pnpm --filter web run typecheck
 
-# 3. Automated Unit & Integration Tests (47 passing tests)
+# 3. Unit, Integration & Concurrency Test Suite (75 passing tests)
 pnpm --filter web run test
 
-# 4. Production App Router Build (26 routes generated)
+# 4. Production App Router Build (27 routes generated)
 pnpm --filter web run build
+
+# 5. Playwright Browser E2E Test Suite (13 passing tests)
+pnpm --filter web run test:e2e
 ```
 
 ---
@@ -111,12 +119,13 @@ pnpm --filter web run build
 ## 6. Engineering Documentation
 
 Detailed technical design specifications are available in `docs/engineering/`:
+- [`HARDENING_PASS_2.md`](docs/engineering/HARDENING_PASS_2.md) - **Hardening Pass #2 forensic audit report & gate evidence**
 - [`ARCHITECTURE.md`](docs/engineering/ARCHITECTURE.md) - System architecture and server authority boundaries
-- [`DATA_MODEL.md`](docs/engineering/DATA_MODEL.md) - Normalized relational schema and constraints
+- [`DATA_MODEL.md`](docs/engineering/DATA_MODEL.md) - Normalized relational schema, indexes, and constraints
 - [`ORDER_STATE_MACHINE.md`](docs/engineering/ORDER_STATE_MACHINE.md) - Formal order lifecycle matrix and invariants
-- [`ESCROW_LEDGER.md`](docs/engineering/ESCROW_LEDGER.md) - Double-entry ledger and idempotency model
-- [`AUTHORIZATION_MATRIX.md`](docs/engineering/AUTHORIZATION_MATRIX.md) - Server-enforced RBAC and resource ownership
-- [`SECURITY.md`](docs/engineering/SECURITY.md) - Application security audit and OWASP defenses
-- [`TEST_STRATEGY.md`](docs/engineering/TEST_STRATEGY.md) - Test suites, coverage, and execution
-- [`DEPLOYMENT.md`](docs/engineering/DEPLOYMENT.md) - Docker staging and production runbook
+- [`ESCROW_LEDGER.md`](docs/engineering/ESCROW_LEDGER.md) - Append-only escrow & wallet ledger with paired financial records
+- [`AUTHORIZATION_MATRIX.md`](docs/engineering/AUTHORIZATION_MATRIX.md) - Server-enforced RBAC, signed middleware verification, and resource ownership
+- [`SECURITY.md`](docs/engineering/SECURITY.md) - Application security audit, RFC 6238 TOTP step-up, and OWASP defenses
+- [`TEST_STRATEGY.md`](docs/engineering/TEST_STRATEGY.md) - Test suites, concurrency testing, and Playwright E2E execution
+- [`DEPLOYMENT.md`](docs/engineering/DEPLOYMENT.md) - PostgreSQL migration strategy, Docker staging, and production runbook
 - [`FINAL_AUDIT.md`](docs/engineering/FINAL_AUDIT.md) - Complete forensic audit and release readiness assessment

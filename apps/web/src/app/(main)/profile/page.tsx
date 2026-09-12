@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  User,
   ShieldCheck,
   Star,
   MapPin,
@@ -12,22 +11,12 @@ import {
   Lock,
   Smartphone,
   Mail,
-  ChevronRight,
   Package,
   Wallet,
-  Settings,
-  LogOut,
-  Edit,
-  Tag,
-  Share2,
-  Heart,
-  TrendingUp,
   Clock,
-  Award,
 } from "lucide-react";
 import { useUserStore } from "@/stores/useUserStore";
 import { useListingStore } from "@/stores/useListingStore";
-import { formatRupiah } from "@/lib/utils";
 import ListingCard from "@/components/features/ListingCard";
 
 type ProfileTab = "LISTINGS" | "REVIEWS" | "ABOUT";

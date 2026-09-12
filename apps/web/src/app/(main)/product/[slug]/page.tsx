@@ -7,7 +7,6 @@ import Link from "next/link";
 import {
   ShieldCheck,
   CheckCircle2,
-  MapPin,
   Star,
   Clock,
   Eye,
@@ -17,10 +16,7 @@ import {
   ChevronLeft,
   Share2,
   Heart,
-  HelpCircle,
   Tag,
-  ArrowRight,
-  Store,
 } from "lucide-react";
 import { useListingStore } from "@/stores/useListingStore";
 import { useCartStore } from "@/stores/useCartStore";

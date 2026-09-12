@@ -1,8 +1,9 @@
 // NgeBekasinYuk Server-Authoritative Session Management
-// HMAC-SHA256 signed session cookie compatible with Next.js App Router and Edge Middleware.
+// Cryptographically verified HMAC-SHA256 session cookie compatible with Edge Middleware and Node.js.
 
-import crypto from "crypto";
 import { cookies } from "next/headers";
+import { signHmacSha256, verifyHmacSha256 } from "./crypto";
+import { env } from "../env";
 
 export interface SessionUser {
   id: string;
@@ -11,60 +12,92 @@ export interface SessionUser {
   role: "BUYER" | "SELLER" | "ADMIN";
   isVerified: boolean;
   avatar?: string | null;
+  sessionVersion?: number;
 }
 
 export interface SessionPayload extends SessionUser {
   expiresAt: number;
 }
 
-const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "ngebekasinyuk_session";
-const AUTH_SECRET = process.env.AUTH_SECRET || "dev-secret-change-in-production-min-32-chars-key";
+const COOKIE_NAME = env.SESSION_COOKIE_NAME;
 const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
 
 /**
- * Creates an HMAC-SHA256 signature for the session data.
+ * Universal Base64URL encoding (Node & Edge compatible)
  */
-function signData(data: string, secret: string): string {
-  return crypto.createHmac("sha256", secret).update(data).digest("hex");
+export function base64UrlEncode(str: string): string {
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(str, "utf-8").toString("base64url");
+  }
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 /**
- * Serializes and signs a session payload.
+ * Universal Base64URL decoding (Node & Edge compatible)
  */
-export function signSession(user: SessionUser): string {
+export function base64UrlDecode(base64url: string): string {
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(base64url, "base64url").toString("utf-8");
+  }
+  const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = base64.length % 4 === 0 ? "" : "=".repeat(4 - (base64.length % 4));
+  const binary = atob(base64 + pad);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+/**
+ * Serializes and signs a session payload using Web Crypto HMAC-SHA256.
+ */
+export async function signSession(user: SessionUser): Promise<string> {
   const payload: SessionPayload = {
     ...user,
+    sessionVersion: user.sessionVersion ?? 1,
     expiresAt: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
   };
   const json = JSON.stringify(payload);
-  const base64 = Buffer.from(json).toString("base64url");
-  const signature = signData(base64, AUTH_SECRET);
+  const base64 = base64UrlEncode(json);
+  const signature = await signHmacSha256(base64, env.AUTH_SECRET);
   return `${base64}.${signature}`;
 }
 
 /**
  * Verifies and parses a signed session cookie string.
+ * Cryptographically validates the HMAC signature before trusting any payload fields.
  */
-export function verifySession(token: string): SessionPayload | null {
+export async function verifySession(token: string): Promise<SessionPayload | null> {
   try {
     const parts = token.split(".");
     if (parts.length !== 2) return null;
 
     const [base64, signature] = parts;
-    const expectedSignature = signData(base64, AUTH_SECRET);
+    if (!base64 || !signature) return null;
 
-    // Constant-time signature comparison to prevent timing attacks
-    const sigBuffer = Buffer.from(signature, "hex");
-    const expBuffer = Buffer.from(expectedSignature, "hex");
-    if (sigBuffer.length !== expBuffer.length || !crypto.timingSafeEqual(sigBuffer, expBuffer)) {
+    // Cryptographic signature check
+    const isValid = await verifyHmacSha256(base64, signature, env.AUTH_SECRET);
+    if (!isValid) {
       return null;
     }
 
-    const json = Buffer.from(base64, "base64url").toString("utf-8");
+    // Decode and parse payload only after signature verification succeeds
+    const json = base64UrlDecode(base64);
     const payload = JSON.parse(json) as SessionPayload;
 
     // Expiration check
-    if (payload.expiresAt < Math.floor(Date.now() / 1000)) {
+    if (!payload.expiresAt || payload.expiresAt < Math.floor(Date.now() / 1000)) {
+      return null;
+    }
+
+    // Role and identity structure check
+    if (!payload.id || !payload.role) {
       return null;
     }
 
@@ -78,11 +111,11 @@ export function verifySession(token: string): SessionPayload | null {
  * Sets the httpOnly session cookie on the current response context.
  */
 export async function setServerSessionCookie(user: SessionUser): Promise<void> {
-  const token = signSession(user);
+  const token = await signSession(user);
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_TTL_SECONDS,
@@ -106,7 +139,7 @@ export async function getServerSession(): Promise<SessionUser | null> {
     const cookie = cookieStore.get(COOKIE_NAME);
     if (!cookie?.value) return null;
 
-    const payload = verifySession(cookie.value);
+    const payload = await verifySession(cookie.value);
     if (!payload) return null;
 
     return {
@@ -116,6 +149,7 @@ export async function getServerSession(): Promise<SessionUser | null> {
       role: payload.role,
       isVerified: payload.isVerified,
       avatar: payload.avatar,
+      sessionVersion: payload.sessionVersion,
     };
   } catch {
     return null;

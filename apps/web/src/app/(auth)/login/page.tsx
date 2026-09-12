@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, ArrowRight, ShieldCheck } from "lucide-react";
+import { Lock, Mail, ArrowRight } from "lucide-react";
 import { useUserStore } from "@/stores/useUserStore";
 import { useToast } from "@/components/ui/Toast";
 
@@ -12,14 +12,41 @@ export default function LoginPage() {
   const { login } = useUserStore();
   const { showToast } = useToast();
 
-  const [email, setEmail] = useState("budi.pratama@gmail.com");
-  const [password, setPassword] = useState("••••••••");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(email);
-    showToast("Selamat datang kembali di NgeBekasinYuk!", "success");
-    router.push("/");
+    setErrorMessage("");
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data.message || "Email atau kata sandi tidak cocok.";
+        setErrorMessage(msg);
+        showToast(msg, "error");
+        setIsLoading(false);
+        return;
+      }
+
+      login(data.user?.email || email);
+      showToast("Selamat datang kembali di NgeBekasinYuk!", "success");
+      router.push("/");
+    } catch {
+      const msg = "Terjadi kendala jaringan saat masuk.";
+      setErrorMessage(msg);
+      showToast(msg, "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -30,6 +57,12 @@ export default function LoginPage() {
           Jual beli gadget secondhand dengan garansi rekening bersama 100% aman
         </p>
       </div>
+
+      {errorMessage && (
+        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-semibold">
+          {errorMessage}
+        </div>
+      )}
 
       {/* Google OAuth Button */}
       <button
@@ -74,9 +107,11 @@ export default function LoginPage() {
           <div className="relative flex items-center">
             <Mail className="w-4 h-4 text-on-surface-variant absolute left-3" />
             <input
-              type="text"
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="nama@email.com"
+              required
               className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-surface-container-low text-on-surface font-medium focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
             />
           </div>
@@ -102,9 +137,10 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          className="w-full py-3 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-xs hover:bg-primary/90 transition-all flex items-center justify-center gap-2 mt-2"
+          disabled={isLoading}
+          className="w-full py-3 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-xs hover:bg-primary/90 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-75"
         >
-          <span>Masuk ke Akun</span>
+          <span>{isLoading ? "Memproses..." : "Masuk ke Akun"}</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </form>

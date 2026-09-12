@@ -1,5 +1,5 @@
 // NgeBekasinYuk Escrow Ledger Service
-// Enforces server-authoritative financial invariants and double-entry immutable ledger entries.
+// Enforces server-authoritative financial invariants with database-level concurrency protection (HP2-P0-04).
 
 import { prisma } from "@/server/db/prisma";
 import { assertValidMoney, Money } from "@/domain/money";
@@ -34,8 +34,8 @@ export interface EscrowRefundResult {
 
 export class EscrowLedgerService {
   /**
-   * Idempotently releases escrow funds to the seller's wallet.
-   * Atomically debits the escrow account, marks isReleased = true, credits seller wallet, and records immutable ledger entries.
+   * Idempotently releases escrow funds to the seller's wallet with concurrency protection.
+   * Uses conditional database mutations inside an atomic transaction to prevent race conditions.
    */
   static async releaseEscrow(params: {
     orderId: string;
@@ -50,7 +50,7 @@ export class EscrowLedgerService {
       customIdempotencyKey ||
       buildIdempotencyKey("ESCROW_RELEASE", orderId, "SELLER_PAYOUT");
 
-    // Fetch order with escrow account and seller wallet
+    // Fetch initial order and escrow records
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -72,56 +72,23 @@ export class EscrowLedgerService {
       throw new EscrowDomainError("ESCROW_NOT_FOUND", `Escrow account for order ${orderId} not found`);
     }
 
-    // INVARIANT 1: Cannot release escrow if already refunded
-    if (escrow.isRefunded) {
-      throw new EscrowDomainError(
-        "ESCROW_ALREADY_REFUNDED",
-        `Cannot release escrow: funds were already refunded to buyer`
-      );
-    }
-
-    // INVARIANT 2: Idempotency check - if already released with this idempotency key, return safely without double payout
-    if (escrow.isReleased) {
-      const existingLedger = await prisma.escrowLedgerEntry.findUnique({
-        where: { idempotencyKey },
-      });
-
-      if (existingLedger) {
-        const wallet = order.seller.wallet;
-        return {
-          success: true,
-          isDuplicate: true,
-          escrowAccountId: escrow.id,
-          releasedAmount: escrow.amount,
-          sellerWalletId: wallet ? wallet.id : "",
-          sellerNewBalance: wallet ? wallet.activeBalance : 0,
-          idempotencyKey,
-        };
-      }
-
-      throw new EscrowDomainError(
-        "ESCROW_ALREADY_RELEASED",
-        `Escrow has already been released under a different transaction`
-      );
-    }
-
-    // INVARIANT 3: Dispute freeze protection
-    if (escrow.status === "FROZEN_DISPUTE" && !overrideDispute) {
-      throw new EscrowDomainError(
-        "ESCROW_FROZEN_DISPUTE",
-        `Cannot release escrow: funds are currently frozen pending dispute resolution`
-      );
-    }
-
-    // INVARIANT 4: Seller cannot release their own escrow
+    // Role check: seller cannot release their own escrow
     if (actorRole !== "ADMIN" && actorRole !== "SYSTEM" && actorId === order.sellerId) {
       throw new EscrowDomainError(
         "FORBIDDEN_SELF_RELEASE",
-        `Seller is forbidden from releasing their own escrow funds`
+        "Seller is forbidden from releasing their own escrow funds"
       );
     }
 
-    // Ensure seller has a wallet
+    // Dispute check
+    if (escrow.status === "FROZEN_DISPUTE" && !overrideDispute) {
+      throw new EscrowDomainError(
+        "ESCROW_FROZEN_DISPUTE",
+        "Cannot release escrow: funds are currently frozen pending dispute resolution"
+      );
+    }
+
+    // Ensure seller has a wallet record
     let sellerWallet = order.seller.wallet;
     if (!sellerWallet) {
       sellerWallet = await prisma.wallet.create({
@@ -133,14 +100,18 @@ export class EscrowLedgerService {
       });
     }
 
-    const releaseAmount = order.itemPrice; // Seller receives canonical item price
+    const releaseAmount = order.itemPrice;
     assertValidMoney(releaseAmount, "releaseAmount");
 
-    // ATOMIC DATABASE TRANSACTION
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Mark escrow account as released
-      const updatedEscrow = await tx.escrowAccount.update({
-        where: { id: escrow.id },
+    // ATOMIC DATABASE TRANSACTION WITH CONCURRENCY CLAIM
+    return await prisma.$transaction(async (tx) => {
+      // 1. Decisive Invariant Check & Claim: Conditionally mark as released only if not already released or refunded
+      const claim = await tx.escrowAccount.updateMany({
+        where: {
+          id: escrow.id,
+          isReleased: false,
+          isRefunded: false,
+        },
         data: {
           isReleased: true,
           status: "RELEASED",
@@ -149,48 +120,94 @@ export class EscrowLedgerService {
         },
       });
 
+      if (claim.count === 0) {
+        // Concurrently claimed or already processed. Re-read inside transaction to ascertain reason.
+        const current = await tx.escrowAccount.findUnique({ where: { id: escrow.id } });
+
+        if (current?.isRefunded) {
+          throw new EscrowDomainError(
+            "ESCROW_ALREADY_REFUNDED",
+            "Cannot release escrow: funds were already refunded to buyer"
+          );
+        }
+
+        if (current?.isReleased) {
+          // Check if this is an idempotent duplicate call with the same idempotency key
+          const existingLedger = await tx.escrowLedgerEntry.findUnique({
+            where: { idempotencyKey },
+          });
+
+          if (existingLedger) {
+            const w = await tx.wallet.findUnique({ where: { id: sellerWallet.id } });
+            return {
+              success: true,
+              isDuplicate: true,
+              escrowAccountId: escrow.id,
+              releasedAmount: releaseAmount,
+              sellerWalletId: sellerWallet.id,
+              sellerNewBalance: w ? w.activeBalance : 0,
+              idempotencyKey,
+            };
+          }
+
+          throw new EscrowDomainError(
+            "ESCROW_ALREADY_RELEASED",
+            "Escrow has already been released under a different transaction"
+          );
+        }
+
+        throw new EscrowDomainError("CONCURRENT_MODIFICATION", "Escrow account was modified concurrently");
+      }
+
       // 2. Write immutable Escrow Ledger Entry (DEBIT)
-      await tx.escrowLedgerEntry.create({
-        data: {
-          escrowAccountId: escrow.id,
-          type: "RELEASE_SELLER",
-          direction: "DEBIT",
-          amount: releaseAmount,
-          previousBalance: escrow.amount,
-          newBalance: Math.max(0, escrow.amount - releaseAmount),
-          referenceId: order.orderNumber,
-          idempotencyKey,
-          notes: `Escrow released to seller wallet by actor ${actorId} (${actorRole})`,
-        },
+      const existingReleaseLedger = await tx.escrowLedgerEntry.findUnique({
+        where: { idempotencyKey },
       });
+      if (!existingReleaseLedger) {
+        await tx.escrowLedgerEntry.create({
+          data: {
+            escrowAccountId: escrow.id,
+            type: "RELEASE_SELLER",
+            direction: "DEBIT",
+            amount: releaseAmount,
+            previousBalance: escrow.amount,
+            newBalance: Math.max(0, escrow.amount - releaseAmount),
+            referenceId: order.orderNumber,
+            idempotencyKey,
+            notes: `Escrow released to seller wallet by actor ${actorId} (${actorRole})`,
+          },
+        });
+      }
 
-      // 3. Update seller Wallet active balance and deduct from held balance
-      const newActive = sellerWallet.activeBalance + releaseAmount;
-      const newHeld = Math.max(0, sellerWallet.heldBalance - releaseAmount);
-
+      // 3. Atomically increment seller active balance and decrement held balance
       const updatedWallet = await tx.wallet.update({
         where: { id: sellerWallet.id },
         data: {
-          activeBalance: newActive,
-          heldBalance: newHeld,
+          activeBalance: { increment: releaseAmount },
+          heldBalance: { decrement: releaseAmount },
         },
       });
 
       // 4. Write immutable Wallet Ledger Entry (CREDIT)
       const walletLedgerKey = `WLE-${idempotencyKey}`;
-      await tx.walletLedgerEntry.create({
-        data: {
-          walletId: sellerWallet.id,
-          type: "ESCROW_RELEASE",
-          direction: "CREDIT",
-          amount: releaseAmount,
-          balanceAfter: newActive,
-          referenceType: "ORDER",
-          referenceId: order.id,
-          idempotencyKey: walletLedgerKey,
-          description: `Pelepasan dana penjualan order #${order.orderNumber}`,
-        },
+      const existingWalletLedger = await tx.walletLedgerEntry.findUnique({
+        where: { idempotencyKey: walletLedgerKey },
       });
+      if (!existingWalletLedger) {
+        await tx.walletLedgerEntry.create({
+          data: {
+            walletId: sellerWallet.id,
+            type: "ESCROW_RELEASE",
+            direction: "CREDIT",
+            amount: releaseAmount,
+            balanceAfter: updatedWallet.activeBalance,
+            referenceType: "ORDER",
+            referenceId: order.id,
+            idempotencyKey: walletLedgerKey,
+            description: `Pelepasan dana penjualan order #${order.orderNumber}`,
+          },
+        });
+      }
 
       // 5. Update Order status to COMPLETED if not already
       if (order.status !== "COMPLETED") {
@@ -234,25 +251,20 @@ export class EscrowLedgerService {
       });
 
       return {
-        updatedEscrow,
-        updatedWallet,
+        success: true,
+        isDuplicate: false,
+        escrowAccountId: escrow.id,
+        releasedAmount: releaseAmount,
+        sellerWalletId: updatedWallet.id,
+        sellerNewBalance: updatedWallet.activeBalance,
+        idempotencyKey,
       };
     });
-
-    return {
-      success: true,
-      isDuplicate: false,
-      escrowAccountId: escrow.id,
-      releasedAmount: releaseAmount,
-      sellerWalletId: result.updatedWallet.id,
-      sellerNewBalance: result.updatedWallet.activeBalance,
-      idempotencyKey,
-    };
   }
 
   /**
-   * Idempotently refunds escrow funds to the buyer.
-   * Ensures mutual exclusion: cannot refund if already released.
+   * Idempotently refunds escrow funds to the buyer with database-level concurrency protection.
+   * Guarantees mutual exclusion: cannot refund if already released.
    */
   static async refundEscrow(params: {
     orderId: string;
@@ -284,44 +296,18 @@ export class EscrowLedgerService {
       throw new EscrowDomainError("ESCROW_NOT_FOUND", `Escrow account for order ${orderId} not found`);
     }
 
-    // INVARIANT: Cannot refund if already released
-    if (escrow.isReleased) {
-      throw new EscrowDomainError(
-        "ESCROW_ALREADY_RELEASED",
-        `Cannot refund escrow: funds have already been released to the seller`
-      );
-    }
-
-    // Idempotency check
-    if (escrow.isRefunded) {
-      const existingLedger = await prisma.escrowLedgerEntry.findUnique({
-        where: { idempotencyKey },
-      });
-
-      if (existingLedger) {
-        return {
-          success: true,
-          isDuplicate: true,
-          escrowAccountId: escrow.id,
-          refundedAmount: escrow.amount,
-          idempotencyKey,
-        };
-      }
-
-      throw new EscrowDomainError(
-        "ESCROW_ALREADY_REFUNDED",
-        `Escrow has already been refunded under a different transaction`
-      );
-    }
-
     const refundAmount = escrow.amount;
     assertValidMoney(refundAmount, "refundAmount");
 
-    // ATOMIC TRANSACTION
-    await prisma.$transaction(async (tx) => {
-      // 1. Mark escrow account as refunded
-      await tx.escrowAccount.update({
-        where: { id: escrow.id },
+    // ATOMIC DATABASE TRANSACTION WITH CONCURRENCY CLAIM
+    return await prisma.$transaction(async (tx) => {
+      // 1. Decisive Invariant Claim: Mark as refunded only if not already released or refunded
+      const claim = await tx.escrowAccount.updateMany({
+        where: {
+          id: escrow.id,
+          isReleased: false,
+          isRefunded: false,
+        },
         data: {
           isRefunded: true,
           status: "REFUNDED",
@@ -330,27 +316,67 @@ export class EscrowLedgerService {
         },
       });
 
+      if (claim.count === 0) {
+        // Concurrently claimed or already processed
+        const current = await tx.escrowAccount.findUnique({ where: { id: escrow.id } });
+
+        if (current?.isReleased) {
+          throw new EscrowDomainError(
+            "ESCROW_ALREADY_RELEASED",
+            "Cannot refund escrow: funds have already been released to the seller"
+          );
+        }
+
+        if (current?.isRefunded) {
+          const existingLedger = await tx.escrowLedgerEntry.findUnique({
+            where: { idempotencyKey },
+          });
+
+          if (existingLedger) {
+            return {
+              success: true,
+              isDuplicate: true,
+              escrowAccountId: escrow.id,
+              refundedAmount: refundAmount,
+              idempotencyKey,
+            };
+          }
+
+          throw new EscrowDomainError(
+            "ESCROW_ALREADY_REFUNDED",
+            "Escrow has already been refunded under a different transaction"
+          );
+        }
+
+        throw new EscrowDomainError("CONCURRENT_MODIFICATION", "Escrow account was modified concurrently");
+      }
+
       // 2. Write immutable Escrow Ledger Entry (DEBIT)
-      await tx.escrowLedgerEntry.create({
-        data: {
-          escrowAccountId: escrow.id,
-          type: "REFUND_BUYER",
-          direction: "DEBIT",
-          amount: refundAmount,
-          previousBalance: escrow.amount,
-          newBalance: 0,
-          referenceId: order.orderNumber,
-          idempotencyKey,
-          notes: `Escrow refunded to buyer: ${reason}`,
-        },
+      const existingRefundLedger = await tx.escrowLedgerEntry.findUnique({
+        where: { idempotencyKey },
       });
+      if (!existingRefundLedger) {
+        await tx.escrowLedgerEntry.create({
+          data: {
+            escrowAccountId: escrow.id,
+            type: "REFUND_BUYER",
+            direction: "DEBIT",
+            amount: refundAmount,
+            previousBalance: escrow.amount,
+            newBalance: 0,
+            referenceId: order.orderNumber,
+            idempotencyKey,
+            notes: `Escrow refunded to buyer: ${reason}`,
+          },
+        });
+      }
 
       // 3. Clear seller held balance if allocated
       if (order.seller.wallet && order.seller.wallet.heldBalance > 0) {
         await tx.wallet.update({
           where: { id: order.seller.wallet.id },
           data: {
-            heldBalance: Math.max(0, order.seller.wallet.heldBalance - order.itemPrice),
+            heldBalance: { decrement: Math.min(order.seller.wallet.heldBalance, order.itemPrice) },
           },
         });
       }
@@ -393,14 +419,14 @@ export class EscrowLedgerService {
           }),
         },
       });
-    });
 
-    return {
-      success: true,
-      isDuplicate: false,
-      escrowAccountId: escrow.id,
-      refundedAmount: refundAmount,
-      idempotencyKey,
-    };
+      return {
+        success: true,
+        isDuplicate: false,
+        escrowAccountId: escrow.id,
+        refundedAmount: refundAmount,
+        idempotencyKey,
+      };
+    });
   }
 }

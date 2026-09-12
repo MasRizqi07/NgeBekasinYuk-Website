@@ -7,7 +7,6 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ShieldCheck,
-  MoreVertical,
   Clock,
   Copy,
   Check,
@@ -18,11 +17,9 @@ import {
   MessageSquare,
   Send,
   Headphones,
-  FileText,
   UserCheck,
   Shield,
   HelpCircle,
-  ExternalLink,
 } from "lucide-react";
 import { useDisputeStore } from "@/stores/useDisputeStore";
 import { formatRupiah, copyTextToClipboard } from "@/lib/utils";

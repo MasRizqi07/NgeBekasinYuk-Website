@@ -10,13 +10,11 @@ import {
   MessageSquare,
   Plus,
   ShieldCheck,
-  User,
   Wallet,
   Package,
   FileText,
   Settings,
   Shield,
-  LogOut,
   ChevronDown,
 } from "lucide-react";
 import { useListingStore } from "@/stores/useListingStore";

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { ClientErrorHandler } from "@/components/shared/ClientErrorHandler";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,25 +30,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${inter.variable} h-full antialiased`}>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if (typeof window !== 'undefined') {
-                window.addEventListener('error', function(e) {
-                  if (e.message && e.message.indexOf("reading 'startTime'") !== -1) {
-                    e.stopImmediatePropagation();
-                    e.preventDefault();
-                    return true;
-                  }
-                }, true);
-              }
-            `,
-          }}
-        />
-      </head>
-      <body className="min-h-full flex flex-col bg-surface font-sans text-on-surface">
+    <html lang="id" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-surface font-sans text-on-surface" suppressHydrationWarning>
+        <ClientErrorHandler />
         {children}
       </body>
     </html>

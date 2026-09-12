@@ -111,6 +111,24 @@ async function main() {
       role: "ADMIN",
       hashedPassword: hashedAdminPw,
       isVerified: true,
+      totpSecret: "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
+      isTotpEnrolled: true,
+      sessionVersion: 1,
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      id: "usr-admin-sarah",
+      email: "sarah.admin@ngebekasinyuk.id",
+      name: "Sarah Lestari",
+      phone: "+6281199887766",
+      role: "ADMIN",
+      hashedPassword: hashedAdminPw,
+      isVerified: true,
+      totpSecret: "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
+      isTotpEnrolled: true,
+      sessionVersion: 1,
     },
   });
 
@@ -396,8 +414,8 @@ async function main() {
       },
       dispute: {
         create: {
-          id: "dsp-iphone-13",
-          disputeNumber: "DSP-2026-0042",
+          id: "DSP-2026-88421",
+          disputeNumber: "DSP-2026-88421",
           reason: "DAMAGED_IN_TRANSIT",
           description: "Layar retak halus di pojok kanan atas saat unboxing, tidak sesuai deskripsi mulus no minus.",
           status: "UNDER_REVIEW",

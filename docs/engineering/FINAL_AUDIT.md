@@ -4,7 +4,9 @@
 
 NgeBekasinYuk is an Indonesian Consumer-to-Consumer (C2C) secondhand tech marketplace featuring escrow (Rekening Bersama), buyer 2x24-hour inspection period, integrated price negotiation, seller verification, and dispute resolution.
 
-This hardening engineering cycle audited, repaired, restructured, and verified the entire application. The system has successfully transitioned from a **high-fidelity client simulation** toward a **secure, server-authoritative, relational database-backed, audit-logged Production Candidate architecture** while preserving all 20 existing marketplace routes and visual/motion excellence.
+This hardening engineering cycle audited, repaired, restructured, and verified the entire application across Hardening Pass #1 and Hardening Pass #2. The system has successfully transitioned from a **high-fidelity client simulation** toward a **secure, server-authoritative, relational database-backed, audit-logged Production Candidate architecture** while preserving all 20 existing marketplace routes and visual/motion excellence.
+
+For the definitive Pass #2 forensic audit report, see [`HARDENING_PASS_2.md`](./HARDENING_PASS_2.md).
 
 ---
 

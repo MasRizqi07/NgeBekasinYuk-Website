@@ -1,5 +1,5 @@
 import React from "react";
-import { ShieldCheck, CheckCircle2, Star, ShieldAlert } from "lucide-react";
+import { ShieldCheck, CheckCircle2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TrustBadgeProps {

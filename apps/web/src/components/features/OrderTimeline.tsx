@@ -6,13 +6,10 @@ import {
   CreditCard,
   Lock,
   Truck,
-  PackageCheck,
   CheckCircle2,
   AlertTriangle,
   Clock,
-  Send,
   HelpCircle,
-  FileCheck,
 } from "lucide-react";
 import { Order } from "@/types";
 import { useOrderStore } from "@/stores/useOrderStore";
@@ -201,9 +198,6 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
           {stages.map((stage, idx) => {
             const isPassed = currentStageIndex > idx;
             const isCurrent = currentStageIndex === idx && order.status !== "DISPUTED";
-            const isFuture = currentStageIndex < idx;
-
-            const Icon = stage.icon;
 
             return (
               <div key={stage.key} className="relative flex items-start gap-3.5">
