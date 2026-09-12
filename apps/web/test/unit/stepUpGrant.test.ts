@@ -152,4 +152,71 @@ describe("One-Time Admin Step-Up Authorization Grants (HP3-P0-04)", () => {
     expect(result.valid).toBe(false);
     expect(result.reason).toMatch(/signature/i);
   });
+
+  it("strictly throws an error when creating DISPUTE_VERDICT grant without resourceId (AP4-P0-03)", async () => {
+    await expect(createStepUpGrant(adminIdA, "DISPUTE_VERDICT")).rejects.toThrow(
+      /resourceId is strictly required for DISPUTE_VERDICT/i
+    );
+    await expect(createStepUpGrant(adminIdA, "DISPUTE_VERDICT", "")).rejects.toThrow(
+      /resourceId is strictly required for DISPUTE_VERDICT/i
+    );
+    await expect(createStepUpGrant(adminIdA, "DISPUTE_VERDICT", "   ")).rejects.toThrow(
+      /resourceId is strictly required for DISPUTE_VERDICT/i
+    );
+  });
+
+  it("strictly forbids wildcard (resourceId: null) grant from consuming a resource-scoped verdict (AP4-P0-03)", async () => {
+    // Manually persist a grant without resourceId to simulate a non-scoped / wildcard grant
+    const grant = await prisma.adminStepUpGrant.create({
+      data: {
+        adminId: adminIdA,
+        action: "DISPUTE_VERDICT",
+        resourceId: null, // wildcard
+        expiresAt: new Date(Date.now() + 300_000),
+      },
+    });
+
+    const payload = {
+      grantId: grant.id,
+      adminId: adminIdA,
+      action: "DISPUTE_VERDICT",
+      resourceId: null,
+      issuedAt: Math.floor(Date.now() / 1000),
+      expiresAt: Math.floor(Date.now() / 1000) + 300,
+    };
+    const base64 = base64UrlEncode(JSON.stringify(payload));
+    const { signHmacSha256 } = await import("../../src/lib/auth/crypto");
+    const { env } = await import("../../src/lib/env");
+    const signature = await signHmacSha256(base64, env.ADMIN_STEP_UP_SECRET);
+    const wildcardToken = `${base64}.${signature}`;
+
+    // Attempt to consume against a specific resource -> MUST BE REJECTED
+    const result = await consumeStepUpGrant({
+      grantToken: wildcardToken,
+      expectedAdminId: adminIdA,
+      expectedAction: "DISPUTE_VERDICT",
+      expectedResourceId: disputeA,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.reason).toMatch(/Resource scope mismatch: grant is not bound to the required resource/i);
+
+    // Verify DB grant was NOT consumed
+    const checkGrant = await prisma.adminStepUpGrant.findUnique({ where: { id: grant.id } });
+    expect(checkGrant?.consumedAt).toBeNull();
+  });
+
+  it("strictly forbids resource-scoped grant from being consumed by general un-scoped action", async () => {
+    const grantToken = await createStepUpGrant(adminIdA, "DISPUTE_VERDICT", disputeA);
+
+    const result = await consumeStepUpGrant({
+      grantToken,
+      expectedAdminId: adminIdA,
+      expectedAction: "DISPUTE_VERDICT",
+      expectedResourceId: null, // Attempting un-scoped consumption
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.reason).toMatch(/scoped grant cannot be used for general action/i);
+  });
 });

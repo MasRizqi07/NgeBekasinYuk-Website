@@ -45,16 +45,30 @@ export async function POST(request: Request) {
       );
     }
 
-    // Retrieve admin's configured TOTP secrets (supporting encrypted format HP3-P0-03)
+    // Sensitive actions strictly require an explicit, non-empty resourceId (AP4-P0-03)
+    if (
+      action === "DISPUTE_VERDICT" &&
+      (!resourceId || typeof resourceId !== "string" || !resourceId.trim())
+    ) {
+      return NextResponse.json(
+        {
+          error: "RESOURCE_ID_REQUIRED",
+          message: "resourceId (disputeId) wajib disertakan untuk otorisasi DISPUTE_VERDICT.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Retrieve admin's configured TOTP encrypted envelope (HP3-P0-03, AP4-P0-01)
     const adminUser = await prisma.user.findUnique({
       where: { id: session.id },
       select: {
         id: true,
         email: true,
-        totpSecret: true,
         totpSecretCiphertext: true,
         totpSecretIv: true,
         totpSecretTag: true,
+        totpSecretKeyVersion: true,
         isTotpEnrolled: true,
       },
     });
@@ -108,8 +122,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Create persistent, single-use step-up grant in PostgreSQL (HP3-P0-04)
-    const grantToken = await createStepUpGrant(session.id, action, resourceId || null);
+    // 3. Create persistent, single-use step-up grant in PostgreSQL (HP3-P0-04, AP4-P0-03)
+    const cleanResourceId = resourceId && typeof resourceId === "string" ? resourceId.trim() : null;
+    const grantToken = await createStepUpGrant(session.id, action, cleanResourceId);
 
     await AuditLogger.log({
       userId: session.id,
@@ -119,7 +134,7 @@ export async function POST(request: Request) {
       details: {
         result: "SUCCESS",
         action,
-        resourceId: resourceId || null,
+        resourceId: cleanResourceId,
         grantExpiresInSeconds: env.ADMIN_STEP_UP_TTL_SECONDS,
       },
     });

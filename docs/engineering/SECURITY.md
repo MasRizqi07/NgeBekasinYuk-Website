@@ -69,7 +69,7 @@ Every revocation increments `user.sessionVersion` in PostgreSQL and records an i
 ### 4.1 AEAD Cryptography (AES-256-GCM)
 Administrative TOTP secrets are reversible credentials and cannot be hashed. They are encrypted at rest using AES-256-GCM:
 - **Module**: `src/lib/security/encryption.ts` using native Node.js `crypto`.
-- **Cipher**: `aes-256-gcm` with 256-bit key entropy, 96-bit (12-byte) unique random IV per encryption, and 128-bit (16-byte) authentication tag.
+- **Cipher**: `aes-256-gcm` with 256-bit key width (AES-256 key material derived via SHA-256 from a minimum 32-byte secret; production mandates 32 cryptographically secure random bytes generated via CSPRNG), 96-bit (12-byte) unique random IV per encryption, and 128-bit (16-byte) authentication tag.
 - **Database Schema**:
   ```prisma
   totpSecretCiphertext String?
@@ -77,17 +77,19 @@ Administrative TOTP secrets are reversible credentials and cannot be hashed. The
   totpSecretTag        String?
   totpSecretKeyVersion Int?    @default(1)
   ```
+- **Plaintext Elimination (`AP4-P0-01`, `AP4-P0-02`)**: Legacy plaintext `totpSecret` column has been dropped from the database schema and dropped via Prisma migration `20260913020000_drop_plaintext_totp_secret`. In production (`APP_ENV === "production"`), the credential resolver strictly fails closed (`null`) if an encrypted envelope is missing or corrupted.
 - **Integrity**: Any modification to ciphertext or authentication tag fails decryption immediately.
 - **Key Rotation Architecture**: Envelope includes `keyVersion`. Supports phased key rotation by retaining previous key version while re-encrypting records upon access. In cloud production, integration with AWS KMS or Google Cloud KMS is recommended.
 
 ---
 
-## 5. Single-Use Admin Step-Up Authorization Grants (`HP3-P0-04`)
+## 5. Single-Use Admin Step-Up Authorization Grants (`HP3-P0-04`, `AP4-P0-03`, `AP4-P0-04`)
 
-### 5.1 One-Time Grant Persistence
+### 5.1 One-Time Grant Persistence & Strict Resource Scoping
 - **Model**: `AdminStepUpGrant` in PostgreSQL stores `id`, `adminId`, `action`, `resourceId`, `expiresAt`, `consumedAt`.
 - **Grant Token**: Contains `{ grantId, adminId, action, resourceId, expiresAt }` signed with `ADMIN_STEP_UP_SECRET`.
-- **Atomic Consumption**:
+- **Mandatory Resource Binding (`AP4-P0-03`)**: For `DISPUTE_VERDICT`, `resourceId` is strictly required upon issuance. Wildcard grants (`resourceId: null`) are completely eliminated for financial verdict actions.
+- **Atomic Consumption Without Wildcard Fallback**:
   ```prisma
   await prisma.adminStepUpGrant.updateMany({
     where: {
@@ -96,13 +98,14 @@ Administrative TOTP secrets are reversible credentials and cannot be hashed. The
       action: expectedAction,
       consumedAt: null,
       expiresAt: { gt: new Date() },
-      OR: [{ resourceId: null }, { resourceId: expectedResourceId }]
+      resourceId: expectedResourceId
     },
     data: { consumedAt: new Date() }
   })
   ```
 - **Single-Use Invariant**: Exactly one execution is permitted per challenge grant. Subsequent attempts with the same token are rejected (`INVALID_STEP_UP_CODE`).
-- **Resource Scope Binding**: A grant issued for `DISPUTE_VERDICT:DSP-001` cannot be presented to resolve `DSP-002`.
+- **Enforced Single-Path Flow (`AP4-P0-04`)**: Raw 6-digit TOTP codes are strictly rejected on `/api/disputes/[id]/verdict`. All dispute resolutions must follow the canonical two-stage flow:
+  `POST /api/admin/step-up (TOTP + resourceId)` ➔ `scoped one-time grantToken` ➔ `POST /api/disputes/[id]/verdict (grantToken)`.
 
 ---
 
@@ -126,6 +129,7 @@ The application defines distinct deployment environments via `APP_ENV`:
 
 - **Escrow Mutation**: Escrow release and refund operations execute conditional database updates (`where: { isReleased: false, isRefunded: false }`). If row count is 0, transaction aborts.
 - **Wallet Overdraft Defense**: Wallet withdrawals execute conditional decrements (`where: { activeBalance: { gte: amount } }`).
+- **Append-Only Paired Financial Ledgers**: Both escrow transactions and wallet balance changes are recorded via immutable paired append-only ledgers (`EscrowLedgerEntry` and `WalletLedgerEntry`).
 - **Idempotency Keys**: Financial operations generate deterministic idempotency keys (`SHA-256(action:resourceId:scope)`), preventing duplicate payouts or webhook replays.
 
 ---
@@ -138,6 +142,28 @@ Configured natively via Next.js Proxy (`src/proxy.ts`):
 - `X-Content-Type-Options: nosniff`: Prevents MIME-type confusion attacks.
 - `Referrer-Policy: strict-origin-when-cross-origin`: Controls referrer leakage.
 - `Permissions-Policy`: Restricts unneeded device capabilities (camera, microphone, geolocation).
+
+---
+
+## 9. Dependency Vulnerability Audit & Formal Triage (`AP4-P1-03`)
+
+A formal triage of the 12 `HIGH` severity advisories identified by `pnpm audit` was conducted. All 12 findings reside exclusively within unused or unbundled development sub-packages in `apps/api` (an unbuilt, undeployed backend scaffold). The production application (`apps/web`) contains **zero** high or critical vulnerabilities in its runtime bundle.
+
+| ID | Package | Advisory / CVE | Severity / CVSS | Dependency Path | Runtime Reachability | Risk Disposition & Mitigation |
+|---|---|---|---|---|---|---|
+| 1 | `hono` | GHSA-q5qw-h33p-qvwr<br>(CVE-2026-29045) | High (7.5) | `apps/api > prisma@8.0.0-rc.13 > @prisma/composer-cli > @hono/node-server > hono` | **Unreachable** (`apps/web` uses Next.js and Prisma 6.4.1 client; `apps/api` is not deployed) | **Accepted Risk** (Transitive devDependency of unbuilt CLI scaffold) |
+| 2 | `@hono/node-server` | GHSA-wc8c-qw6v-h7f6<br>(CVE-2026-29087) | High (7.5) | `apps/api > prisma@8.0.0-rc.13 > ... > @hono/node-server@1.19.9` | **Unreachable** | **Accepted Risk** (Unbuilt preview CLI dependency) |
+| 3 | `hono` | GHSA-88fw-hqm2-52qc<br>(CVE-2026-54290) | High (7.5) | `apps/api > prisma@8.0.0-rc.13 > ... > hono@4.11.4` | **Unreachable** | **Accepted Risk** (Unbuilt preview CLI dependency) |
+| 4 | `lodash` | GHSA-r5fr-rjxr-66jc<br>(CVE-2026-4800) | High (7.4) | `apps/api > prisma@8.0.0-rc.13 > ... > chevrotain > lodash@4.17.21` | **Unreachable** (AST generation during Prisma preview CLI) | **Accepted Risk** (Build-time code generation only) |
+| 5 | `tmp` | GHSA-ph9p-34f9-6g65<br>(CVE-2026-44705) | High (7.5) | `apps/api > @nestjs/mau@0.2.6 > inquirer > external-editor > tmp@0.0.33` | **Unreachable** (Interactive CLI terminal prompt) | **Accepted Risk** (Dev CLI dependency) |
+| 6 | `undici` | GHSA-f269-vfmq-vjvj<br>(CVE-2026-1528) | High (7.5) | `apps/api > @nestjs/mau@0.2.6 > undici@6.20.1` | **Unreachable** (NestJS dev utility WebSocket client) | **Accepted Risk** (No WebSocket client in production runtime) |
+| 7 | `undici` | GHSA-vrm6-8vpv-qv8q<br>(CVE-2026-1526) | High (7.5) | `apps/api > @nestjs/mau@0.2.6 > undici@6.20.1` | **Unreachable** | **Accepted Risk** |
+| 8 | `undici` | GHSA-v9p9-hfj2-hcw8<br>(CVE-2026-2229) | High (7.5) | `apps/api > @nestjs/mau@0.2.6 > undici@6.20.1` | **Unreachable** | **Accepted Risk** |
+| 9 | `undici` | GHSA-vxpw-j846-p89q<br>(CVE-2026-12151) | High (7.5) | `apps/api > @nestjs/mau@0.2.6 > undici@6.20.1` | **Unreachable** | **Accepted Risk** |
+| 10 | `multer` | GHSA-wc9g-mqfw-jrwm<br>(CVE-2026-77078) | High (7.5) | `apps/api > @nestjs/platform-express@12.0.1 > multer@2.2.0` | **Unreachable** (`apps/web` uses Next.js Route Handlers / Turbopack; Express is not deployed) | **Accepted Risk** (`apps/api` Express scaffold is not packaged or deployed) |
+| 11 | `multer` | GHSA-qfvm-cv95-jqjf<br>(CVE-2026-77037) | High (7.5) | `apps/api > @nestjs/platform-express@12.0.1 > multer@2.2.0` | **Unreachable** | **Accepted Risk** |
+| 12 | `multer` | GHSA-535w-7cp7-47q4<br>(CVE-2026-82333) | High (7.5) | `apps/api > @nestjs/platform-express@12.0.1 > multer@2.2.0` | **Unreachable** | **Accepted Risk** |
+
 
 ---
 

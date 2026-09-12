@@ -224,16 +224,17 @@ export async function verifyAndRecordTotpCode(params: {
 
 export interface UserTotpRecord {
   id: string;
-  totpSecret?: string | null;
   totpSecretCiphertext?: string | null;
   totpSecretIv?: string | null;
   totpSecretTag?: string | null;
+  totpSecretKeyVersion?: number | null;
   isTotpEnrolled?: boolean;
 }
 
 /**
- * Retrieves and decrypts the admin's TOTP secret from ciphertext stored at rest.
- * Falls back to legacy/dev seed only in development/test fixtures.
+ * Retrieves and decrypts the admin's TOTP secret from ciphertext stored at rest (AP4-P0-01).
+ * In production (APP_ENV === "production"), strictly fails closed if encrypted envelope is absent.
+ * Falls back to test fixture seed strictly in non-production environments.
  */
 export function getAdminDecryptedTotpSecret(user: UserTotpRecord): string | null {
   if (user.totpSecretCiphertext && user.totpSecretIv && user.totpSecretTag) {
@@ -241,22 +242,18 @@ export function getAdminDecryptedTotpSecret(user: UserTotpRecord): string | null
       ciphertext: user.totpSecretCiphertext,
       iv: user.totpSecretIv,
       tag: user.totpSecretTag,
-      keyVersion: 1,
+      keyVersion: user.totpSecretKeyVersion ?? 1,
     };
     return decryptSensitiveSecret(payload);
   }
 
-  // Legacy plaintext fallback for unmigrated development fixtures
-  if (user.totpSecret) {
-    return user.totpSecret;
+  // Fail closed in production: no plaintext fallbacks permitted under any circumstances
+  if (env.APP_ENV === "production") {
+    return null;
   }
 
-  // Development fixture fallback
-  if (env.APP_ENV !== "production") {
-    return DEV_ADMIN_TOTP_SEED;
-  }
-
-  return null;
+  // Development/test fixture fallback strictly when non-production
+  return DEV_ADMIN_TOTP_SEED;
 }
 
 /**
@@ -299,6 +296,14 @@ export async function createStepUpGrant(
   action = "DISPUTE_VERDICT",
   resourceId?: string | null
 ): Promise<string> {
+  const cleanResourceId =
+    resourceId && typeof resourceId === "string" && resourceId.trim() ? resourceId.trim() : null;
+
+  // Sensitive financial actions require a strictly bound resource identifier (AP4-P0-03)
+  if (action === "DISPUTE_VERDICT" && !cleanResourceId) {
+    throw new Error("resourceId is strictly required for DISPUTE_VERDICT step-up grant");
+  }
+
   const ttlSeconds = env.ADMIN_STEP_UP_TTL_SECONDS;
   const nowSec = Math.floor(Date.now() / 1000);
   const expiresAt = new Date((nowSec + ttlSeconds) * 1000);
@@ -307,7 +312,7 @@ export async function createStepUpGrant(
     data: {
       adminId,
       action,
-      resourceId: resourceId || null,
+      resourceId: cleanResourceId,
       expiresAt,
     },
   });
@@ -316,7 +321,7 @@ export async function createStepUpGrant(
     grantId: grant.id,
     adminId,
     action,
-    resourceId: resourceId || null,
+    resourceId: cleanResourceId,
     issuedAt: nowSec,
     expiresAt: nowSec + ttlSeconds,
   };
@@ -331,6 +336,7 @@ export async function createStepUpGrant(
 /**
  * Authoritatively consumes a one-time step-up grant in PostgreSQL (HP3-P0-04).
  * Rejects consumed, expired, or resource-mismatched grants.
+ * Wildcard grants (resourceId: null) are strictly prohibited from consuming targeted resources (AP4-P0-03).
  */
 export async function consumeStepUpGrant(params: {
   grantToken: string;
@@ -368,11 +374,17 @@ export async function consumeStepUpGrant(params: {
       return { valid: false, reason: "Action scope mismatch" };
     }
 
-    if (payload.resourceId && expectedResourceId && payload.resourceId !== expectedResourceId) {
-      return { valid: false, reason: "Resource scope mismatch: grant not valid for this resource" };
+    // Strict resource scoping (AP4-P0-03): Wildcard (resourceId: null) grants are strictly forbidden
+    // from consuming targeted resource operations.
+    if (expectedResourceId) {
+      if (!payload.resourceId || payload.resourceId !== expectedResourceId) {
+        return { valid: false, reason: "Resource scope mismatch: grant is not bound to the required resource" };
+      }
+    } else if (payload.resourceId) {
+      return { valid: false, reason: "Resource scope mismatch: scoped grant cannot be used for general action" };
     }
 
-    // Atomic one-time consumption in PostgreSQL
+    // Atomic one-time consumption in PostgreSQL without wildcard fallback
     const updateResult = await prisma.adminStepUpGrant.updateMany({
       where: {
         id: payload.grantId,
@@ -380,10 +392,7 @@ export async function consumeStepUpGrant(params: {
         action: expectedAction,
         consumedAt: null,
         expiresAt: { gt: new Date() },
-        OR: [
-          { resourceId: null },
-          { resourceId: expectedResourceId || null },
-        ],
+        resourceId: expectedResourceId || null,
       },
       data: {
         consumedAt: new Date(),
@@ -432,8 +441,13 @@ export async function verifyStepUpGrant(
       return { valid: false, reason: "Action scope mismatch" };
     }
 
-    if (payload.resourceId && expectedResourceId && payload.resourceId !== expectedResourceId) {
-      return { valid: false, reason: "Resource scope mismatch: grant not valid for this resource" };
+    // Strict resource scoping (AP4-P0-03)
+    if (expectedResourceId) {
+      if (!payload.resourceId || payload.resourceId !== expectedResourceId) {
+        return { valid: false, reason: "Resource scope mismatch: grant is not bound to the required resource" };
+      }
+    } else if (payload.resourceId) {
+      return { valid: false, reason: "Resource scope mismatch: scoped grant cannot be used for general action" };
     }
 
     return { valid: true };

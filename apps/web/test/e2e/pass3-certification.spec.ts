@@ -195,6 +195,103 @@ test.describe("Hardening Pass #3 Final Certification E2E Suites", () => {
     expect(secondBody.message).toMatch(/already consumed|invalid/i);
   });
 
+  test("STEP-UP GRANT API: requesting DISPUTE_VERDICT without resourceId is rejected with 400 (AP4-P0-03)", async ({
+    request,
+  }) => {
+    const adminToken = await signSession({
+      id: "usr-admin-ngebekasin",
+      email: "admin@ngebekasinyuk.id",
+      name: "Admin NgeBekasinYuk",
+      role: "ADMIN",
+      isVerified: true,
+      sessionVersion: 1,
+    });
+
+    const totpCode = generateTotpCode(DEV_ADMIN_TOTP_SEED, Date.now() + 180_000);
+    const res = await request.post("/api/admin/step-up", {
+      headers: {
+        Cookie: `ngebekasinyuk_session=${adminToken}`,
+        "Content-Type": "application/json",
+      },
+      data: {
+        code: totpCode,
+        action: "DISPUTE_VERDICT",
+        // missing resourceId
+      },
+    });
+
+    expect(res.status()).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("RESOURCE_ID_REQUIRED");
+    expect(body.message).toMatch(/resourceId/i);
+  });
+
+  test("VERDICT API: raw 6-digit TOTP bypass attempt is strictly rejected with 401 (AP4-P0-04)", async ({
+    request,
+  }) => {
+    const adminToken = await signSession({
+      id: "usr-admin-ngebekasin",
+      email: "admin@ngebekasinyuk.id",
+      name: "Admin NgeBekasinYuk",
+      role: "ADMIN",
+      isVerified: true,
+      sessionVersion: 1,
+    });
+
+    const res = await request.post("/api/disputes/DSP-2026-88421/verdict", {
+      headers: {
+        Cookie: `ngebekasinyuk_session=${adminToken}`,
+        "Content-Type": "application/json",
+      },
+      data: {
+        verdict: "REFUND_BUYER",
+        adminNotes: "Attempting verdict using raw TOTP bypass",
+        stepUpCode: "882910",
+      },
+    });
+
+    expect(res.status()).toBe(401);
+    const body = await res.json();
+    expect(body.error).toBe("INVALID_STEP_UP_CODE");
+    expect(body.message).toMatch(/grant token/i);
+  });
+
+  test("VERDICT API: grant scoped to Dispute A cannot resolve Dispute B (AP4-P0-03)", async ({
+    request,
+  }) => {
+    const adminToken = await signSession({
+      id: "usr-admin-ngebekasin",
+      email: "admin@ngebekasinyuk.id",
+      name: "Admin NgeBekasinYuk",
+      role: "ADMIN",
+      isVerified: true,
+      sessionVersion: 1,
+    });
+
+    const grantOther = await createStepUpGrant(
+      "usr-admin-ngebekasin",
+      "DISPUTE_VERDICT",
+      "DSP-2026-DIFFERENT-RESOURCE"
+    );
+
+    const res = await request.post("/api/disputes/DSP-2026-88421/verdict", {
+      headers: {
+        Cookie: `ngebekasinyuk_session=${adminToken}`,
+        "Content-Type": "application/json",
+      },
+      data: {
+        verdict: "REFUND_BUYER",
+        adminNotes: "Cross-resource grant injection attempt",
+        stepUpCode: grantOther,
+      },
+    });
+
+    expect(res.status()).toBe(401);
+    const body = await res.json();
+    expect(body.error).toBe("INVALID_STEP_UP_CODE");
+    expect(body.message).toMatch(/Resource scope mismatch|not bound/i);
+  });
+
   // SECTION 61: PRODUCTION DEMO BLOCK
   test("PRODUCTION SAFETY: demo payment webhook endpoint responds appropriately across runtime environments", async ({
     request,
