@@ -11,7 +11,7 @@ describe("Dispute Resolution Integration Test", () => {
   let escrowId: string;
 
   beforeEach(async () => {
-    const ts = Date.now().toString().slice(-6);
+    const ts = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const hashed = await bcrypt.hash("Password123!", 10);
 
     const buyer = await prisma.user.create({

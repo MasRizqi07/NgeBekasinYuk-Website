@@ -3,12 +3,7 @@ import { validateAuthoritativeSession } from "@/lib/auth/authoritativeSession";
 import { AdminVerdictSchema } from "@/lib/validations";
 import { DisputeService, DisputeDomainError } from "@/domain/dispute/DisputeService";
 import { AuditLogger } from "@/domain/audit/AuditLogger";
-import {
-  consumeStepUpGrant,
-  verifyAndRecordTotpCode,
-  getAdminDecryptedTotpSecret,
-} from "@/lib/auth/totp";
-import { prisma } from "@/server/db/prisma";
+import { consumeStepUpGrant } from "@/lib/auth/totp";
 
 export async function POST(
   request: Request,
@@ -49,11 +44,12 @@ export async function POST(
 
     const { verdict, adminNotes, stepUpCode } = validated.data;
 
-    // 2. Authoritative Step-Up Verification & One-Time Grant Consumption (HP3-P0-04, HP3-P0-02)
+    // 2. Authoritative Step-Up Verification & One-Time Grant Consumption (HP3-P0-04, AP4-P0-04)
+    // Raw TOTP bypass is eliminated: financial verdicts strictly require a pre-issued, scoped grant token.
     let isAuthorized = false;
     let authFailureReason = "Invalid or expired authorization";
 
-    if (stepUpCode.includes(".")) {
+    if (stepUpCode && stepUpCode.includes(".")) {
       // Consume single-use step-up grant token in PostgreSQL
       const grantResult = await consumeStepUpGrant({
         grantToken: stepUpCode,
@@ -67,38 +63,9 @@ export async function POST(
       } else {
         authFailureReason = grantResult.reason || "Step-up grant invalid or already consumed";
       }
-    } else if (/^\d{6}$/.test(stepUpCode)) {
-      // Validate rotating 6-digit TOTP code directly with persistent distributed replay protection
-      const adminUser = await prisma.user.findUnique({
-        where: { id: session.id },
-        select: {
-          id: true,
-          totpSecret: true,
-          totpSecretCiphertext: true,
-          totpSecretIv: true,
-          totpSecretTag: true,
-          isTotpEnrolled: true,
-        },
-      });
-
-      const secret = adminUser ? getAdminDecryptedTotpSecret(adminUser) : null;
-
-      if (secret) {
-        const totpCheck = await verifyAndRecordTotpCode({
-          adminId: session.id,
-          secret,
-          code: stepUpCode,
-        });
-
-        if (totpCheck.valid) {
-          isAuthorized = true;
-        } else {
-          authFailureReason =
-            totpCheck.error === "REPLAY_ATTEMPT"
-              ? "Kode TOTP sudah pernah digunakan (replay)"
-              : "Kode TOTP salah atau kedaluwarsa";
-        }
-      }
+    } else {
+      authFailureReason =
+        "Otorisasi putusan sengketa memerlukan one-time scoped step-up grant token yang valid dari /api/admin/step-up. Raw TOTP tidak diizinkan.";
     }
 
     if (!isAuthorized) {

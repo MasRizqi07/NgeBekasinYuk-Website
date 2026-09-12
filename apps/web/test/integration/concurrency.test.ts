@@ -4,6 +4,7 @@ import { prisma } from "@/server/db/prisma";
 import { EscrowLedgerService } from "@/domain/escrow/EscrowLedgerService";
 import { WalletLedgerService } from "@/domain/wallet/WalletLedgerService";
 import { DisputeService } from "@/domain/dispute/DisputeService";
+import { encryptSensitiveSecret } from "../../src/lib/security/encryption";
 import bcrypt from "bcryptjs";
 
 describe("Financial Concurrency & Mutation Atomicity Tests (PostgreSQL)", () => {
@@ -47,6 +48,7 @@ describe("Financial Concurrency & Mutation Atomicity Tests (PostgreSQL)", () => 
     });
     sellerId = seller.id;
 
+    const encryptedTotp = encryptSensitiveSecret("JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP");
     const admin = await prisma.user.create({
       data: {
         email: `admin-conc-${randomSuffix}@test.id`,
@@ -55,7 +57,10 @@ describe("Financial Concurrency & Mutation Atomicity Tests (PostgreSQL)", () => 
         hashedPassword: hashedPw,
         hashedPin,
         isTotpEnrolled: true,
-        totpSecret: "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
+        totpSecretCiphertext: encryptedTotp.ciphertext,
+        totpSecretIv: encryptedTotp.iv,
+        totpSecretTag: encryptedTotp.tag,
+        totpSecretKeyVersion: encryptedTotp.keyVersion,
       },
     });
     adminId = admin.id;

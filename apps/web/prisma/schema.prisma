@@ -28,7 +28,6 @@ model User {
   pinLockedUntil    DateTime?
   isVerified        Boolean        @default(false)
   accountStatus     String         @default("ACTIVE") // ACTIVE, SUSPENDED, DISABLED
-  totpSecret        String?        // Legacy / dev fixture secret
   totpSecretCiphertext String?     // AES-256-GCM encrypted TOTP secret
   totpSecretIv      String?        // Base64 12-byte initialization vector
   totpSecretTag     String?        // Base64 16-byte authentication tag

@@ -26,7 +26,7 @@ The centralized validation module (`src/lib/env.ts`) evaluates configuration at 
 | `AUTH_SECRET` | 32+ chars, non-fallback | Cryptographic HMAC-SHA256 session signing key |
 | `ADMIN_STEP_UP_SECRET` | 32+ chars, non-fallback | Signing key for single-use step-up authorization grants |
 | `ADMIN_STEP_UP_TTL_SECONDS` | Number (default `300`) | Validity window for admin challenge grants |
-| `TOTP_ENCRYPTION_KEY` | 32+ chars (256-bit entropy) | Application-layer AES-256-GCM encryption key for TOTP secrets |
+| `TOTP_ENCRYPTION_KEY` | Min 32 bytes (CSPRNG Base64 recommended) | Derives 256-bit AES-256-GCM encryption key material via SHA-256 |
 | `SESSION_COOKIE_NAME` | String | Cookie identifier (e.g. `ngebekasinyuk_session`) |
 | `DEMO_PAYMENT_PROVIDER` | Boolean | Must be `false` in `APP_ENV=production` |
 | `DEMO_KYC_PROVIDER` | Boolean | Must be `false` in `APP_ENV=production` |
@@ -43,6 +43,7 @@ All database changes are managed through forward Prisma migrations:
 ### Migration History:
 1. `20260912073944_init`: Base PostgreSQL relational schema (users, orders, escrow, wallet, disputes, audit log).
 2. `20260912083315_pass_3_security_hardening`: Added `accountStatus`, `lastTotpStep`, encrypted TOTP secret fields (`totpSecretCiphertext`, `totpSecretIv`, `totpSecretTag`, `totpSecretKeyVersion`), and `AdminStepUpGrant` table.
+3. `20260913020000_drop_plaintext_totp_secret`: Dropped legacy plaintext `totpSecret` column to strictly enforce zero plaintext credentials at rest (`AP4-P0-01`, `AP4-P0-02`).
 
 ### Deploying to Production:
 ```bash
@@ -64,7 +65,7 @@ pnpm --filter web exec prisma migrate status
 ## 4. Key Management & Key Rotation Architecture
 
 ### 4.1 Candidate Stage Architecture
-In candidate stage, `TOTP_ENCRYPTION_KEY` is loaded from a secure environment variable (fail-closed, 32+ characters, no development fallback in production).
+In candidate stage, `TOTP_ENCRYPTION_KEY` is loaded from a secure environment variable (fail-closed, minimum 32 bytes, no development fallback in production). AES-256 key material is derived via SHA-256 to guarantee a 256-bit key width. For production, generating 32 cryptographically secure random bytes (e.g. `crypto.randomBytes(32).toString('base64')`) is mandated.
 
 ### 4.2 Production Key Rotation Strategy
 Every encrypted payload persists `totpSecretKeyVersion Int? @default(1)`.

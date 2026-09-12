@@ -46,13 +46,34 @@ export default function AdminDisputesPage() {
       verdictOption === "PARTIAL" ? "REFUND_BUYER" : verdictOption;
 
     try {
+      // Stage 1: Request scoped one-time step-up grant token from /api/admin/step-up (AP4-P0-04)
+      const stepUpRes = await fetch("/api/admin/step-up", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: totpCode,
+          action: "DISPUTE_VERDICT",
+          resourceId: activeDispute.id,
+        }),
+      });
+
+      if (!stepUpRes.ok) {
+        const stepUpData = await stepUpRes.json().catch(() => ({}));
+        showToast(stepUpData.message || "Verifikasi 2FA TOTP gagal. Pastikan kode 6 digit benar.", "error");
+        setIsExecuting(false);
+        return;
+      }
+
+      const { grantToken } = await stepUpRes.json();
+
+      // Stage 2: Authoritatively execute verdict using the single-use scoped grant token
       const res = await fetch(`/api/disputes/${activeDispute.id}/verdict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           verdict: finalVerdict,
           adminNotes,
-          stepUpCode: totpCode.length === 6 ? totpCode : "000000",
+          stepUpCode: grantToken,
         }),
       });
 
@@ -76,13 +97,8 @@ export default function AdminDisputesPage() {
         "success"
       );
     } catch {
-      resolveDispute(activeDispute.id, finalVerdict, adminNotes);
+      showToast("Terjadi kesalahan jaringan saat memproses putusan sengketa.", "error");
       setIsExecuting(false);
-      setShow2FAModal(false);
-      showToast(
-        `Putusan resmi untuk sengketa #${activeDispute.id} berhasil dieksekusi.`,
-        "success"
-      );
     }
   };
 

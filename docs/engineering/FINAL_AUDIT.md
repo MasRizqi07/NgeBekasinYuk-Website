@@ -18,7 +18,7 @@ For the final Pass #3 Production Candidate certification report, see [`HARDENING
 | **Authority** | Browser `localStorage` via Zustand | Server-side App Router Route Handlers & Prisma ORM |
 | **Persistence** | In-memory / Browser storage | Relational Database (Prisma ORM with SQLite dev / Postgres prod) |
 | **Order Lifecycle** | Arbitrary status mutations | Strict state machine (`OrderStateMachine.canTransition`) |
-| **Escrow Integrity** | Unchecked client increments | Double-entry append-only ledger with idempotency keys (`P0-03`) |
+| **Escrow Integrity** | Unchecked client increments | Append-only escrow ledger with idempotency keys (`P0-03`) |
 | **Transaction PIN** | Broken logic allowing invalid 6-digit PINs | Bcrypt-hashed PIN with 5-attempt rate-limiting lockout (`P0-04`) |
 | **Admin Protection** | Client-only route rendering | Next.js Middleware route guard + server step-up 2FA (`P0-05/P0-10`) |
 | **Cross-Store State** | Direct `orderStore.orders = ...` mutations | Atomic database transactions with rollback on failure (`P0-06/P0-07`) |
@@ -40,7 +40,7 @@ For the final Pass #3 Production Candidate certification report, see [`HARDENING
 | **P0-05** | Fake Admin 2FA | Client-side hardcoded TOTP display without backend validation | Implemented server-side step-up code verification and append-only audit logging | **RESOLVED** |
 | **P0-06** | Direct Zustand Mutation | Code in `useDisputeStore.ts` directly mutated `orderStore.orders` array | Replaced with server API calls and encapsulated Zustand state setters | **RESOLVED** |
 | **P0-07** | Cross-Store Race Conditions | Multi-store mutations had no transaction boundaries | Consolidated all financial multi-entity workflows into ACID database transactions | **RESOLVED** |
-| **P0-08** | Scalar Balance Mutation | Wallet balances were stored only as incremented numbers | Replaced with immutable double-entry ledger entries (`WalletLedgerEntry`) | **RESOLVED** |
+| **P0-08** | Scalar Balance Mutation | Wallet balances were stored only as incremented numbers | Replaced with immutable append-only ledger entries (`WalletLedgerEntry`) | **RESOLVED** |
 | **P0-09** | Simulated Authentication | Login/Register were in-memory simulations | Implemented HMAC-SHA256 signed `httpOnly` sessions with timing-safe verification | **RESOLVED** |
 | **P0-10** | Unprotected Admin Routes | `/admin/dashboard` and `/admin/disputes` were accessible to any browser | Protected via Next.js Middleware checking authenticated `ADMIN` session role | **RESOLVED** |
 

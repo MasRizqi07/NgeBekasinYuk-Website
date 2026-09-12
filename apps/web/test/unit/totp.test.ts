@@ -94,24 +94,24 @@ describe("RFC 6238 TOTP & Step-Up Grant Unit Tests", () => {
   });
 
   it("creates and verifies a valid short-lived step-up grant", async () => {
-    const grant = await createStepUpGrant(adminId, "DISPUTE_VERDICT");
+    const grant = await createStepUpGrant(adminId, "DISPUTE_VERDICT", "dsp-test-123");
     expect(typeof grant).toBe("string");
     expect(grant).toContain(".");
 
-    const result = await verifyStepUpGrant(grant, adminId, "DISPUTE_VERDICT");
+    const result = await verifyStepUpGrant(grant, adminId, "DISPUTE_VERDICT", "dsp-test-123");
     expect(result.valid).toBe(true);
   });
 
   it("rejects a step-up grant when presented by a different admin (binding defense)", async () => {
-    const grant = await createStepUpGrant(adminId, "DISPUTE_VERDICT");
-    const result = await verifyStepUpGrant(grant, "attacker-admin-id", "DISPUTE_VERDICT");
+    const grant = await createStepUpGrant(adminId, "DISPUTE_VERDICT", "dsp-test-123");
+    const result = await verifyStepUpGrant(grant, "attacker-admin-id", "DISPUTE_VERDICT", "dsp-test-123");
     expect(result.valid).toBe(false);
     expect(result.reason).toContain("different admin");
   });
 
   it("rejects a step-up grant when action scope does not match", async () => {
-    const grant = await createStepUpGrant(adminId, "DISPUTE_VERDICT");
-    const result = await verifyStepUpGrant(grant, adminId, "WITHDRAWAL_OVERRIDE");
+    const grant = await createStepUpGrant(adminId, "DISPUTE_VERDICT", "dsp-test-123");
+    const result = await verifyStepUpGrant(grant, adminId, "WITHDRAWAL_OVERRIDE", "dsp-test-123");
     expect(result.valid).toBe(false);
     expect(result.reason).toContain("Action scope mismatch");
   });
