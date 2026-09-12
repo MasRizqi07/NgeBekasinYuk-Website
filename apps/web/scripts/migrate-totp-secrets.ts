@@ -7,18 +7,38 @@
 import { prisma } from "../src/server/db/prisma";
 import { encryptSensitiveSecret } from "../src/lib/security/encryption";
 
+export async function hasLegacyTotpColumn(): Promise<boolean> {
+  try {
+    const res = await prisma.$queryRawUnsafe<Array<{ exists: boolean }>>(
+      `SELECT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name = 'User' AND column_name = 'totpSecret'
+      ) as exists;`
+    );
+    return Boolean(res[0]?.exists);
+  } catch {
+    return false;
+  }
+}
+
 export async function migrateLegacyTotpSecrets(): Promise<{ migrated: number; errors: number }> {
   console.log("[Migration] Starting legacy TOTP encryption check...");
-  
-  // Query raw in case schema has already removed totpSecret column
+
+  const columnExists = await hasLegacyTotpColumn();
+  if (!columnExists) {
+    console.log("[Migration] Column 'totpSecret' does not exist in 'User' table (already dropped or fresh installation).");
+    return { migrated: 0, errors: 0 };
+  }
+
   let legacyUsers: Array<{ id: string; totpSecret?: string | null }> = [];
   try {
     legacyUsers = await prisma.$queryRawUnsafe<Array<{ id: string; totpSecret?: string | null }>>(
       `SELECT id, "totpSecret" FROM "User" WHERE "totpSecret" IS NOT NULL AND "totpSecretCiphertext" IS NULL;`
     );
-  } catch {
-    console.log("[Migration] Column 'totpSecret' does not exist or already migrated.");
-    return { migrated: 0, errors: 0 };
+  } catch (err) {
+    console.error("[Migration] Failed to query legacy TOTP secrets:", err);
+    return { migrated: 0, errors: 1 };
   }
 
   let migrated = 0;
@@ -52,9 +72,18 @@ export async function migrateLegacyTotpSecrets(): Promise<{ migrated: number; er
 
 if (require.main === module) {
   migrateLegacyTotpSecrets()
-    .then(() => process.exit(0))
+    .then((result) => {
+      if (result.errors > 0) {
+        console.error(`[Migration] FAILED: ${result.errors} error(s) occurred during legacy TOTP encryption.`);
+        process.exit(1);
+      }
+      process.exit(0);
+    })
     .catch((err) => {
       console.error("[Migration] Fatal error:", err);
       process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
     });
 }
