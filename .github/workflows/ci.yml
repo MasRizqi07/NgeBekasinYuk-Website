@@ -1,0 +1,63 @@
+name: NgeBekasinYuk Production Verification CI
+
+on:
+  push:
+    branches: [main, master, "feat/*", "fix/*", "chore/*"]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  verify:
+    name: Lint, Typecheck, Test, and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client & Sync Dev DB
+        run: |
+          pnpm --filter web exec prisma generate
+          pnpm --filter web exec prisma db push
+
+      - name: Seed Database
+        run: pnpm --filter web run db:seed
+
+      - name: Gate 1 - Code Quality & Linting
+        run: pnpm --filter web run lint
+
+      - name: Gate 2 - Strict TypeScript Typecheck
+        run: pnpm --filter web run typecheck
+
+      - name: Gate 3 - Unit & Integration Test Suite
+        run: pnpm --filter web run test
+
+      - name: Gate 4 - Production App Router Bundle Build
+        run: pnpm --filter web run build

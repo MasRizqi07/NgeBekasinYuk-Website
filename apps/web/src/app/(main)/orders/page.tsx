@@ -10,14 +10,13 @@ import {
   Truck,
   CheckCircle2,
   AlertTriangle,
-  RotateCcw,
   Copy,
   Check,
   Star,
   ExternalLink,
 } from "lucide-react";
 import { useOrderStore } from "@/stores/useOrderStore";
-import { OrderStatus } from "@/types";
+import { Order, OrderStatus } from "@/types";
 import { formatRupiah, copyTextToClipboard } from "@/lib/utils";
 import { useToast } from "@/components/ui/Toast";
 import ReviewModal from "@/components/features/ReviewModal";
@@ -28,7 +27,7 @@ export default function OrdersPage() {
   const { orders } = useOrderStore();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabFilter>("ALL");
-  const [reviewOrder, setReviewOrder] = useState<any | null>(null);
+  const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const filteredOrders = orders.filter((order) => {

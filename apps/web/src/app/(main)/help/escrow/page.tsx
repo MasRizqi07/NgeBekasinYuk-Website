@@ -251,7 +251,7 @@ export default function EscrowEducationPage() {
           </div>
           <p className="text-on-surface-variant leading-relaxed">
             Dilarang keras bertransaksi atau transfer langsung di luar sistem NgeBekasinYuk! Tim kami{" "}
-            <strong className="text-red-700 underline">TIDAK DAPAT melindungi uangmu</strong> jika terjadi transaksi lewat rekening pribadi penjual. Tolak ajakan "DP duluan via WA".
+            <strong className="text-red-700 underline">TIDAK DAPAT melindungi uangmu</strong> jika terjadi transaksi lewat rekening pribadi penjual. Tolak ajakan &ldquo;DP duluan via WA&rdquo;.
           </p>
           <div className="space-y-1 pt-1 text-[11px] font-semibold text-red-800">
             <div>• Jangan transfer DP ke rekening bank pribadi seller</div>

@@ -6,17 +6,14 @@ import Image from "next/image";
 import {
   MessageSquare,
   ShieldCheck,
-  Search,
-  CheckCircle2,
-  Clock,
   ArrowRight,
-  Tag,
 } from "lucide-react";
 import { useChatStore } from "@/stores/useChatStore";
-import { formatRupiah, timeAgo } from "@/lib/utils";
+import { formatRupiah, timeAgo, useIsMounted } from "@/lib/utils";
 
 export default function ChatInboxPage() {
   const { conversations } = useChatStore();
+  const mounted = useIsMounted();
 
   return (
     <div className="min-h-screen bg-surface pb-28 pt-4">
@@ -102,7 +99,7 @@ export default function ChatInboxPage() {
                         )}
                       </div>
                       <span className="text-[11px] text-on-surface-variant shrink-0">
-                        {timeAgo(convo.lastTimestamp)}
+                        {mounted ? timeAgo(convo.lastTimestamp) : ""}
                       </span>
                     </div>
 

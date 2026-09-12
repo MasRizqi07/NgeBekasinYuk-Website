@@ -13,12 +13,8 @@ import {
   Clock,
   ArrowDownLeft,
   ArrowUpRight,
-  ChevronDown,
-  Download,
   KeyRound,
-  Sparkles,
   Info,
-  HelpCircle,
 } from "lucide-react";
 import { useWalletStore } from "@/stores/useWalletStore";
 import { formatRupiah } from "@/lib/utils";
@@ -43,12 +39,12 @@ export default function WalletPage() {
     setWithdrawAmount(val);
   };
 
-  const handleWithdraw = (e: React.FormEvent) => {
+  const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
 
-    setTimeout(() => {
-      const res = withdrawFunds(withdrawAmount, selectedBankId, pin);
+    try {
+      const res = await withdrawFunds(withdrawAmount, selectedBankId, pin);
       setIsProcessing(false);
 
       if (res.success) {
@@ -61,7 +57,10 @@ export default function WalletPage() {
       } else {
         showToast(res.message, "error");
       }
-    }, 1000);
+    } catch {
+      setIsProcessing(false);
+      showToast("Terjadi kesalahan saat memproses penarikan.", "error");
+    }
   };
 
   const filteredTransactions = transactions.filter((t) => {
@@ -251,16 +250,20 @@ export default function WalletPage() {
             {/* Destination Bank Account */}
             <div className="space-y-1.5">
               <label className="font-bold text-on-surface">Rekening Tujuan</label>
-              <div className="p-3 bg-surface-container-low rounded-xl border border-outline-variant/30 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-primary" />
-                  <span className="font-semibold text-on-surface">BCA - 8271 •••• 9102</span>
-                </div>
-                <span className="text-[10px] text-secondary font-bold">Gratis Admin</span>
-              </div>
+              <select
+                value={selectedBankId}
+                onChange={(e) => setSelectedBankId(e.target.value)}
+                className="w-full p-3 bg-surface-container-low rounded-xl border border-outline-variant/30 text-on-surface font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                {bankAccounts.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.bankName} - {b.accountNumber} ({b.accountHolder})
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Security PIN Dots Simulation */}
+            {/* Security PIN Input */}
             <div className="p-3 bg-surface-container-low rounded-xl text-center space-y-1.5 border border-outline-variant/30">
               <div className="flex items-center justify-center gap-1 text-on-surface-variant font-medium">
                 <KeyRound className="w-3.5 h-3.5" />
@@ -276,6 +279,14 @@ export default function WalletPage() {
                   ></div>
                 ))}
               </div>
+              <input
+                type="password"
+                maxLength={6}
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="Masukkan 6 digit PIN"
+                className="w-40 mx-auto text-center font-mono tracking-widest text-xs py-1.5 px-3 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+              />
               <p className="text-[10px] text-on-surface-variant">Default simulator PIN: 123456</p>
             </div>
 

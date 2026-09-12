@@ -1,0 +1,424 @@
+// NgeBekasinYuk Production Database Schema
+// Optimized for C2C Secondhand Tech Marketplace with Escrow & Wallet Ledger
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// --------------------------------------------------------
+// USER & IDENTITY
+// --------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  phone         String?
+  avatar        String?
+  role          String    @default("BUYER") // BUYER, SELLER, ADMIN
+  hashedPassword String
+  hashedPin     String?   // Bcrypt hashed 6-digit transaction PIN
+  pinFailedAttempts Int   @default(0)
+  pinLockedUntil    DateTime?
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sellerProfile SellerProfile?
+  wallet        Wallet?
+  buyerOrders   Order[]        @relation("BuyerOrders")
+  sellerOrders  Order[]        @relation("SellerOrders")
+  listings      ProductListing[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+  bankAccounts  BankAccount[]
+}
+
+model SellerProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeName       String
+  storeSlug       String   @unique
+  city            String
+  rating          Float    @default(5.0)
+  totalSales      Int      @default(0)
+  reputationBadge String   @default("TOP_RATED")
+  bio             String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model KycVerification {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  idCardNumber   String    // KTP/NIK
+  fullName       String
+  birthDate      String
+  idCardImage    String    // Secure storage URL
+  selfieImage    String    // Liveness selfie URL
+  status         String    @default("PENDING") // PENDING, VERIFIED, REJECTED
+  verifiedAt     DateTime?
+  rejectionReason String?
+  providerName   String    @default("DemoKycProvider") // Explicitly marked as demo/sandbox
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model BankAccount {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankCode      String   // BCA, MANDIRI, BRI, BNI
+  bankName      String
+  accountNumber String
+  accountHolder String
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+// --------------------------------------------------------
+// LISTINGS & CATALOG
+// --------------------------------------------------------
+
+model ProductListing {
+  id              String         @id @default(cuid())
+  slug            String         @unique
+  title           String
+  description     String
+  price           Int            // In IDR (safe integer)
+  originalPrice   Int?
+  category        String         // smartphone, laptop, audio, console, pc-gaming, camera, accessories
+  categoryLabel   String
+  brand           String
+  model           String
+  condition       String         // BRAND_NEW, LIKE_NEW, VERY_GOOD, FAIR
+  canNego         Boolean        @default(true)
+  minNegoPrice    Int?
+  status          String         @default("ACTIVE") // ACTIVE, RESERVED, SOLD, ARCHIVED
+  sellerId        String
+  seller          User           @relation(fields: [sellerId], references: [id])
+  images          ListingImage[]
+  orders          Order[]
+  conversations   Conversation[]
+  viewsCount      Int            @default(0)
+  favoritesCount  Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model ListingImage {
+  id         String         @id @default(cuid())
+  listingId  String
+  listing    ProductListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url        String
+  isPrimary  Boolean        @default(false)
+  sortOrder  Int            @default(0)
+  createdAt  DateTime       @default(now())
+}
+
+// --------------------------------------------------------
+// NEGOTIATION & CHAT
+// --------------------------------------------------------
+
+model Conversation {
+  id            String         @id @default(cuid())
+  listingId     String
+  listing       ProductListing @relation(fields: [listingId], references: [id])
+  buyerId       String
+  sellerId      String
+  lastMessage   String?
+  lastTimestamp DateTime       @default(now())
+  messages      ChatMessage[]
+  offers        PriceOffer[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model ChatMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  senderName     String
+  text           String
+  imageUrl       String?
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+}
+
+model PriceOffer {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  offerPrice     Int          // In IDR
+  status         String       @default("PENDING") // PENDING, ACCEPTED, REJECTED, COUNTERED, EXPIRED
+  counterPrice   Int?
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+// --------------------------------------------------------
+// ORDERS & ESCROW LIFECYCLE
+// --------------------------------------------------------
+
+model Order {
+  id                   String              @id @default(cuid())
+  orderNumber          String              @unique // Public reference: ORD-2026-XXXXXX
+  buyerId              String
+  buyer                User                @relation("BuyerOrders", fields: [buyerId], references: [id])
+  sellerId             String
+  seller               User                @relation("SellerOrders", fields: [sellerId], references: [id])
+  listingId            String
+  listing              ProductListing      @relation(fields: [listingId], references: [id])
+  
+  // Financial breakdown (all in IDR safe integers)
+  itemPrice            Int
+  shippingFee          Int
+  escrowFee            Int                 @default(0)
+  totalAmount          Int
+
+  // Order state machine
+  status               String              @default("PENDING_PAYMENT") 
+  // PENDING_PAYMENT -> FUNDED -> PROCESSING -> SHIPPED -> DELIVERED -> INSPECTING -> COMPLETED / DISPUTED
+  // or CANCELLED, REFUNDED
+
+  shippingCourier      String?
+  shippingService      String?
+  shippingAirwayBill   String?             // Nomor Resi
+  shippingAddress      String
+
+  paidAt               DateTime?
+  shippedAt            DateTime?
+  deliveredAt          DateTime?
+  inspectionStartedAt  DateTime?
+  inspectionExpiresAt  DateTime?           // 2x24 hours after delivery
+  completedAt          DateTime?
+  cancelledAt          DateTime?
+
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  statusHistory        OrderStatusHistory[]
+  escrowAccount        EscrowAccount?
+  dispute              Dispute?
+  paymentAttempts      PaymentAttempt[]
+}
+
+model OrderStatusHistory {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromStatus String
+  toStatus   String
+  actorId    String
+  actorRole  String
+  reason     String?
+  createdAt  DateTime @default(now())
+}
+
+// --------------------------------------------------------
+// ESCROW LEDGER (Immutable Double-Entry / Append-Only)
+// --------------------------------------------------------
+
+model EscrowAccount {
+  id              String              @id @default(cuid())
+  orderId         String              @unique
+  order           Order               @relation(fields: [orderId], references: [id])
+  amount          Int                 // Canonical total funded amount
+  status          String              @default("PENDING") 
+  // PENDING -> FUNDED -> HELD -> RELEASED / REFUNDED / FROZEN_DISPUTE
+  
+  isReleased      Boolean             @default(false)
+  isRefunded      Boolean             @default(false)
+  releasedAt      DateTime?
+  refundedAt      DateTime?
+  
+  idempotencyKey  String?             @unique
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  ledgerEntries   EscrowLedgerEntry[]
+}
+
+model EscrowLedgerEntry {
+  id              String        @id @default(cuid())
+  escrowAccountId String
+  escrowAccount   EscrowAccount @relation(fields: [escrowAccountId], references: [id], onDelete: Cascade)
+  type            String        // DEPOSIT, HOLD, RELEASE_SELLER, REFUND_BUYER, FEE_DEDUCT
+  direction       String        // CREDIT (+), DEBIT (-)
+  amount          Int
+  previousBalance Int
+  newBalance      Int
+  referenceId     String        // e.g. Payment ID or Dispute ID
+  idempotencyKey  String        @unique
+  notes           String?
+  createdAt       DateTime      @default(now())
+}
+
+// --------------------------------------------------------
+// WALLET & LEDGER
+// --------------------------------------------------------
+
+model Wallet {
+  id              String              @id @default(cuid())
+  userId          String              @unique
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeBalance   Int                 @default(0) // Saldo aktif (dapat ditarik)
+  heldBalance     Int                 @default(0) // Saldo tertahan (escrow berjalan)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  ledgerEntries   WalletLedgerEntry[]
+  withdrawals     Withdrawal[]
+}
+
+model WalletLedgerEntry {
+  id              String   @id @default(cuid())
+  walletId        String
+  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type            String   // ESCROW_RELEASE, WITHDRAWAL, REFUND, TOPUP_DEMO, ADMIN_ADJUSTMENT
+  direction       String   // CREDIT (+), DEBIT (-)
+  amount          Int
+  balanceAfter    Int
+  referenceType   String   // ORDER, WITHDRAWAL, DISPUTE
+  referenceId     String
+  idempotencyKey  String   @unique
+  description     String
+  createdAt       DateTime @default(now())
+}
+
+model Withdrawal {
+  id              String    @id @default(cuid())
+  withdrawalNumber String   @unique // WDR-2026-XXXXXX
+  walletId        String
+  wallet          Wallet    @relation(fields: [walletId], references: [id])
+  amount          Int
+  fee             Int       @default(0)
+  bankName        String
+  accountNumber   String
+  accountHolder   String
+  status          String    @default("PROCESSING") // REQUESTED, PROCESSING, SUCCESS, FAILED
+  providerRef     String?   // Simulation reference: SIM-BOD-XXXXXX
+  isSimulation    Boolean   @default(true) // Explicit honest labeling
+  completedAt     DateTime?
+  idempotencyKey  String    @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// --------------------------------------------------------
+// PAYMENTS
+// --------------------------------------------------------
+
+model PaymentAttempt {
+  id             String    @id @default(cuid())
+  orderId        String
+  order          Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  paymentMethod  String    // BCA_VA, MANDIRI_VA, BRI_VA, QRIS
+  amount         Int
+  status         String    @default("PENDING") // PENDING, SETTLED, EXPIRED, FAILED
+  vaNumber       String?
+  qrString       String?
+  expiresAt      DateTime
+  settledAt      DateTime?
+  providerName   String    @default("DemoPaymentProvider")
+  isSimulation   Boolean   @default(true)
+  idempotencyKey String    @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// --------------------------------------------------------
+// DISPUTES & RESOLUTION
+// --------------------------------------------------------
+
+model Dispute {
+  id              String            @id @default(cuid())
+  disputeNumber   String            @unique // DSP-2026-XXXXXX
+  orderId         String            @unique
+  order           Order             @relation(fields: [orderId], references: [id])
+  reason          String            // NOT_AS_DESCRIBED, DAMAGED_IN_TRANSIT, FAKE_ITEM, MISSING_ACCESSORIES
+  description     String
+  status          String            @default("OPEN") 
+  // OPEN -> AWAITING_SELLER -> UNDER_REVIEW -> INVESTIGATING -> RESOLVED_BUYER / RESOLVED_SELLER / CLOSED
+  verdict         String?           // REFUND_BUYER, RELEASE_SELLER, PARTIAL_REFUND
+  adminNotes      String?
+  decidedByAdminId String?
+  decidedAt       DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  evidences       DisputeEvidence[]
+  messages        DisputeMessage[]
+}
+
+model DisputeEvidence {
+  id          String   @id @default(cuid())
+  disputeId   String
+  dispute     Dispute  @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  uploadedBy  String   // BUYER or SELLER user ID
+  uploaderRole String  // BUYER or SELLER
+  fileUrl     String
+  fileType    String   // image/jpeg, image/png, video/mp4
+  fileSize    Int      // bytes
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model DisputeMessage {
+  id          String   @id @default(cuid())
+  disputeId   String
+  dispute     Dispute  @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  senderId    String
+  senderName  String
+  senderRole  String   // BUYER, SELLER, ADMIN
+  message     String
+  createdAt   DateTime @default(now())
+}
+
+// --------------------------------------------------------
+// AUDIT LOG & SECURITY
+// --------------------------------------------------------
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String   // ADMIN_VERDICT, ESCROW_RELEASE, ESCROW_REFUND, WITHDRAW_REQUEST, PIN_CHANGE, LOGIN_FAIL
+  targetType String   // Order, EscrowAccount, Wallet, Dispute, User
+  targetId   String
+  ipAddress  String?
+  userAgent  String?
+  details    String   // JSON string of operation details
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // ORDER, PAYMENT, ESCROW, CHAT, DISPUTE, PROMO
+  linkUrl   String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model IdempotencyKey {
+  key        String   @id
+  resource   String
+  resourceId String
+  action     String
+  result     String   // Cached result JSON string
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+}

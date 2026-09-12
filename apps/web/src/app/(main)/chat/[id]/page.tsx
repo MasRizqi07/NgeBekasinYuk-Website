@@ -7,24 +7,21 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ShieldCheck,
-  MoreVertical,
   Star,
   ExternalLink,
   Tag,
   Send,
-  Image as ImageIcon,
   CheckCircle2,
   Lock,
   Clock,
   Check,
   X,
-  Repeat,
   ShoppingBag,
   Sparkles,
-  HelpCircle,
 } from "lucide-react";
 import { useChatStore } from "@/stores/useChatStore";
 import { useCartStore } from "@/stores/useCartStore";
+import { SEED_LISTINGS } from "@/lib/seedData";
 import { formatRupiah } from "@/lib/utils";
 import { useToast } from "@/components/ui/Toast";
 import Modal from "@/components/ui/Modal";
@@ -53,6 +50,7 @@ export default function ChatDetailPage() {
 
   const conversation = getConversationById(convoId) || {
     id: convoId,
+    listingId: (SEED_LISTINGS[1] || SEED_LISTINGS[0]).id,
     counterpart: {
       id: "usr-dimas",
       name: "Dimas Aditya",
@@ -62,22 +60,7 @@ export default function ChatDetailPage() {
       isVerified: true,
       city: "Jakarta Barat",
     },
-    listing: {
-      id: "seed-ipad-air-5",
-      slug: "ipad-air-5-64gb-wifi-starlight",
-      title: "iPad Air 5 64GB WiFi Starlight - Garansi iBox On",
-      price: 7500000,
-      images: [
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuCjgviysQIAwDZiQ0XoEZvodqrHaDDPNayXxcGbwgx608LfwIXqUxS_WII7yj6enbMiQmCzrkAxvmRfSGkB8CDpuk_U716Nz41oHEWJJWsW-w_cnfNJZcuKmrtGQLQRZvR8edDK3huf4AZHPk4xaRAzUdRJI5OgTpKTXRZPPYqtiSVQz8cEztEGIteVkgS0qPcesQhpA-2Tv_29kxSrXpn1ZH4EJrO-I5jfZuiS1afjn1rSH8mPis_c",
-      ],
-      seller: {
-        id: "usr-dimas",
-        name: "Dimas Aditya",
-        city: "Jakarta Barat",
-        isVerified: true,
-      },
-      condition: "LIKE_NEW",
-    },
+    listing: SEED_LISTINGS[1] || SEED_LISTINGS[0],
     lastMessage: "Harga penawarannya sudah saya acc ya kak!",
     lastTimestamp: new Date().toISOString(),
     unreadCount: 0,
@@ -113,11 +96,7 @@ export default function ChatDetailPage() {
   };
 
   const handleCheckoutAgreedPrice = (price: number) => {
-    const customItem = {
-      ...conversation.listing,
-      price: price, // lock discount price
-    };
-    addToCart(customItem as any);
+    addToCart(conversation.listing, price);
     showToast("Harga negosiasi berhasil diterapkan ke keranjang!", "success");
     router.push("/checkout");
   };

@@ -5,15 +5,11 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Camera,
-  Upload,
   X,
   CheckCircle2,
   ShieldCheck,
-  Tag,
   ArrowRight,
-  ArrowLeft,
   Sparkles,
-  Info,
   Lightbulb,
 } from "lucide-react";
 import { useListingStore } from "@/stores/useListingStore";
@@ -299,18 +295,20 @@ export default function SellPage() {
               Kategori:
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {[
-                { id: "smartphone", label: "Smartphone" },
-                { id: "laptop", label: "Laptop / Mac" },
-                { id: "camera", label: "Kamera & Lensa" },
-                { id: "audio", label: "Audio / TWS" },
-                { id: "console", label: "Konsol Gaming" },
-                { id: "pc-gaming", label: "PC Gaming / GPU" },
-              ].map((c) => (
+              {(
+                [
+                  { id: "smartphone", label: "Smartphone" },
+                  { id: "laptop", label: "Laptop / Mac" },
+                  { id: "camera", label: "Kamera & Lensa" },
+                  { id: "audio", label: "Audio / TWS" },
+                  { id: "console", label: "Konsol Gaming" },
+                  { id: "pc-gaming", label: "PC Gaming / GPU" },
+                ] as const
+              ).map((c) => (
                 <button
                   key={c.id}
                   type="button"
-                  onClick={() => setCategory(c.id as any)}
+                  onClick={() => setCategory(c.id)}
                   className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
                     category === c.id
                       ? "bg-brand-primary text-white border-brand-primary shadow-xs"

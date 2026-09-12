@@ -61,7 +61,7 @@ export default function AdminDisputesPage() {
         origin: { y: 0.6 },
       });
       showToast(
-        `Putusan resmi untuk sengketa #${activeDispute.id} berhasil dieksekusi dan tercatat di OJK Audit Log.`,
+        `Putusan resmi untuk sengketa #${activeDispute.id} berhasil dieksekusi dan tercatat di NgeBekasinYuk Internal Audit Log.`,
         "success"
       );
     }, 1200);
@@ -284,7 +284,7 @@ export default function AdminDisputesPage() {
               <div className="bg-surface-container-low p-3 rounded-xl space-y-1 text-[11px]">
                 <span className="font-bold text-on-surface uppercase">Keterangan Penggugat:</span>
                 <p className="text-on-surface-variant leading-relaxed">
-                  "{activeDispute.description}"
+                  &ldquo;{activeDispute.description}&rdquo;
                 </p>
               </div>
             </div>
@@ -331,7 +331,7 @@ export default function AdminDisputesPage() {
               <div className="bg-surface-container-low p-3 rounded-xl space-y-1 text-[11px]">
                 <span className="font-bold text-on-surface uppercase">Keterangan Tergugat:</span>
                 <p className="text-on-surface-variant leading-relaxed">
-                  "Unit 100% normal saat pengetesan dan packing di drop point J&amp;T. Ada kemungkinan benturan handling saat sortir ekspedisi."
+                  &ldquo;Unit 100% normal saat pengetesan dan packing di drop point J&amp;T. Ada kemungkinan benturan handling saat sortir ekspedisi.&rdquo;
                 </p>
               </div>
             </div>

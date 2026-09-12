@@ -226,18 +226,20 @@ export default function CheckoutPage() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[
-                { id: "BCA_VA", label: "BCA VA", badge: "Auto Cek" },
-                { id: "MANDIRI_VA", label: "Mandiri VA", badge: "Auto Cek" },
-                { id: "BRI_VA", label: "BRI VA", badge: "Auto Cek" },
-                { id: "QRIS", label: "QRIS Instan", badge: "Bebas Biaya" },
-              ].map((m) => {
+              {(
+                [
+                  { id: "BCA_VA", label: "BCA VA", badge: "Auto Cek" },
+                  { id: "MANDIRI_VA", label: "Mandiri VA", badge: "Auto Cek" },
+                  { id: "BRI_VA", label: "BRI VA", badge: "Auto Cek" },
+                  { id: "QRIS", label: "QRIS Instan", badge: "Bebas Biaya" },
+                ] as const
+              ).map((m) => {
                 const isSelected = paymentMethod === m.id;
                 return (
                   <button
                     key={m.id}
                     type="button"
-                    onClick={() => setPaymentMethod(m.id as any)}
+                    onClick={() => setPaymentMethod(m.id)}
                     className={`p-3 rounded-xl border text-center flex flex-col items-center justify-center transition-all ${
                       isSelected
                         ? "border-brand-primary bg-brand-primary-soft/60 text-brand-primary font-bold shadow-xs"

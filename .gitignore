@@ -37,3 +37,8 @@ next-env.d.ts
 
 # turborepo
 .turbo
+
+# sqlite local dev
+*.db
+*.db-journal
+dev.db

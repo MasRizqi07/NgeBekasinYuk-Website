@@ -51,7 +51,7 @@ function SearchContent() {
     if (queryParam) setSearchQuery(queryParam);
     if (categoryParam) setSelectedCategory(categoryParam);
     if (canNegoParam === "true") toggleCanNegoOnly();
-  }, [queryParam, categoryParam, canNegoParam]);
+  }, [queryParam, categoryParam, canNegoParam, setSearchQuery, setSelectedCategory, toggleCanNegoOnly]);
 
   const listings = getFilteredListings();
 
@@ -69,7 +69,7 @@ function SearchContent() {
     { id: "price_low", label: "Harga Terendah" },
     { id: "price_high", label: "Harga Tertinggi" },
     { id: "newest", label: "Terbaru Listing" },
-  ];
+  ] as const;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col gap-4">
@@ -197,7 +197,7 @@ function SearchContent() {
                     <button
                       key={opt.id}
                       onClick={() => {
-                        setSortBy(opt.id as any);
+                        setSortBy(opt.id);
                         setSortDropdownOpen(false);
                       }}
                       className={`text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between ${

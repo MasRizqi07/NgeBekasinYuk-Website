@@ -7,8 +7,6 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ShieldCheck,
-  MoreVertical,
-  User,
   Copy,
   Check,
   Clock,
@@ -23,8 +21,6 @@ import {
   Truck,
   MapPin,
   HelpCircle,
-  Play,
-  RotateCw,
   Star,
   Upload,
 } from "lucide-react";
@@ -145,7 +141,7 @@ export default function OrderDetailPage() {
 
     const dispute = createDispute({
       orderId: order.id,
-      reason: disputeReason as any,
+      reason: disputeReason,
       notes: disputeNotes,
       evidencePhotos: disputeFile ? [disputeFile] : [],
     });
