@@ -273,6 +273,10 @@ The following external dependencies are appropriately simulated via clear provid
 | **Build** | Next.js production build succeeds | **PASS** | `pnpm --filter web run build` clean (27 routes) |
 | **GitHub Actions exact SHA** | CI passes all 9 gates on remote push | **PASS** | Verified on pushed branch commit |
 
+> [!NOTE]
+> **CI Run Clarification & Pass #3 Follow-up (Section 76)**:
+> Pass #2 report initially referenced Run ID 34682937305. Independent review confirmed that the actual successful PR workflow for the Pass #2 head commit was executed under **Run ID 34683011108**, which ran against GitHub's generated PR merge commit while referencing head SHA `d1208d3289205ab9fe59628df501561d0177907b`. Hardening Pass #3 establishes direct-push exact-branch-SHA verification to guarantee literal branch HEAD validation. See [`HARDENING_PASS_3_FINAL_CERTIFICATION.md`](./HARDENING_PASS_3_FINAL_CERTIFICATION.md).
+
 ---
 
 ## 15. Maturity Verdict

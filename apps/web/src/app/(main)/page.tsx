@@ -163,7 +163,7 @@ export default function HomePage() {
         </div>
 
         <div className="flex gap-4 overflow-x-auto no-scrollbar py-1">
-          {negoItems.map((item) => (
+          {negoItems.map((item, idx) => (
             <div
               key={item.id}
               className="min-w-[260px] max-w-[260px] sm:min-w-[280px] sm:max-w-[280px] shrink-0"
@@ -178,6 +178,7 @@ export default function HomePage() {
                     alt={item.title}
                     fill
                     sizes="(max-width: 640px) 260px, 280px"
+                    priority={idx === 0}
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-brand-secondary text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs">

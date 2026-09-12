@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "@/lib/auth/session";
+import { validateAuthoritativeSession } from "@/lib/auth/authoritativeSession";
 import { WithdrawalRequestSchema } from "@/lib/validations";
 import { WalletLedgerService, WalletDomainError } from "@/domain/wallet/WalletLedgerService";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession();
+    const session = await validateAuthoritativeSession();
     if (!session) {
       return NextResponse.json({ error: "UNAUTHORIZED", message: "Silakan login terlebih dahulu." }, { status: 401 });
     }

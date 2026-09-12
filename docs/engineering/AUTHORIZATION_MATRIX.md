@@ -1,45 +1,58 @@
 # NgeBekasinYuk Server-Enforced Authorization Matrix
+### Hardening Pass #3 Dual-Layer Verification Standards
 
-## 1. Role-Based Access Control (RBAC) & Ownership
+## 1. Dual-Layer Authorization Architecture
 
-Authorization is strictly validated on the server boundary. Client-side route hiding or button disabling is treated purely as user experience, not security.
+Authorization enforces strict separation of concerns across two defense layers:
+1. **Layer 1: Coarse Edge Routing Guard (`src/proxy.ts`)**
+   Cryptographically validates HMAC-SHA256 session signatures and checks coarse route roles for page navigation without burdening the database on static requests.
+2. **Layer 2: Authoritative Database Validation (`validateAuthoritativeSession()`)**
+   High-risk mutating endpoints query PostgreSQL to guarantee the user exists, `accountStatus === "ACTIVE"`, `token.sessionVersion === dbUser.sessionVersion`, and the authoritative database role authorizes the specific action.
+
+---
+
+## 2. Role-Based Access Control (RBAC) & Ownership Matrix
 
 | Action | Anonymous | Buyer | Seller | Admin | Server Enforcement Boundary |
 |---|---|---|---|---|---|
 | View Public Listings | Yes | Yes | Yes | Yes | Public Catalog Query |
 | Search & Filter Products | Yes | Yes | Yes | Yes | Public Search Query |
 | Register / Login | Yes | Redirect | Redirect | Redirect | `/api/auth/login`, `/api/auth/register` |
-| Create Product Listing | No | No | Yes (Self) | Yes | Validates `session.role === "SELLER"` |
-| Update/Delete Listing | No | No | Owner Seller | Admin Override | Validates `listing.sellerId === session.userId` |
-| Create Order / Checkout | No | Yes | Yes (as buyer) | No | Validates authenticated buyer session |
-| Confirm Payment Webhook | No | No | No | System / Demo | Guarded in production (`ALLOW_DEMO_IN_PRODUCTION`) |
-| Ship Order | No | No | Owner Seller | Admin Override | Validates `order.sellerId === session.userId` |
-| Confirm Item Receipt | No | Owner Buyer | No | No | Validates `order.buyerId === session.userId` |
-| Open Inspection Dispute | No | Owner Buyer | No | No | Validates `order.buyerId === session.userId` |
+| Create Product Listing | No | No | Yes (Self) | Yes | Authoritative check `dbUser.role === "SELLER"` |
+| Update/Delete Listing | No | No | Owner Seller | Admin Override | Validates `listing.sellerId === dbUser.id` |
+| Create Order / Checkout | No | Yes | Yes (as buyer) | No | Validates active buyer session |
+| Confirm Payment Webhook | No | No | No | System | Strictly disabled in `APP_ENV=production` |
+| Ship Order | No | No | Owner Seller | Admin Override | Validates `order.sellerId === dbUser.id` |
+| Confirm Item Receipt | No | Owner Buyer | No | No | Validates `order.buyerId === dbUser.id` |
+| Open Inspection Dispute | No | Owner Buyer | No | No | Validates `order.buyerId === dbUser.id` |
 | Submit Dispute Evidence | No | Owner Buyer | Owner Seller | Admin | Validates dispute participation |
-| Request Step-Up Grant | No | No | No | Admin | `/api/admin/step-up` (RFC 6238 TOTP challenge) |
-| Decide Dispute Verdict | No | No | No | Admin (Step-Up) | `/api/disputes/[id]/verdict` (requires verified step-up token) |
+| Request Step-Up Grant | No | No | No | Admin | `/api/admin/step-up` (authoritative DB admin + distributed TOTP) |
+| Decide Dispute Verdict | No | No | No | Admin (Step-Up) | `/api/disputes/[id]/verdict` (single-use grant consumed in DB) |
 | Withdraw Seller Wallet | No | No | Owner Seller | No | `/api/wallet/withdraw` (validates hashed PIN + conditional lock) |
-| Access Admin Console | No | No | No | Admin | `middleware.ts` verifies HMAC signature & `role === "ADMIN"` |
+| Access Admin Console | No | No | No | Admin | `src/proxy.ts` verifies HMAC signature & `role === "ADMIN"` |
 | Access Chat Conversation | No | Participant | Participant | Admin Policy | Validates user is buyer or seller of conversation |
-| Access User Notifications | No | Owner | Owner | Owner | Validates `notification.userId === session.userId` |
+| Access User Notifications | No | Owner | Owner | Owner | Validates `notification.userId === dbUser.id` |
 
 ---
 
-## 2. Resource Ownership Invariants
+## 3. Resource Ownership & Invariant Verification
 
-1. **Buyer Ownership**:
-   `assert(order.buyerId === session.userId)` must hold for:
+1. **Authoritative Session Invariant**:
+   `assert(dbUser.accountStatus === "ACTIVE")` and `assert(token.sessionVersion === dbUser.sessionVersion)`.
+   If a user is suspended, disabled, downgraded, or their password is reset, all prior session tokens fail authoritative validation immediately.
+2. **Buyer Ownership**:
+   `assert(order.buyerId === dbUser.id)` must hold for:
    - Order receipt confirmation
-   - Dispute opening
+   - Inspection dispute opening
    - Viewing private checkout / payment detail
-2. **Seller Ownership**:
-   `assert(order.sellerId === session.userId)` must hold for:
+3. **Seller Ownership**:
+   `assert(order.sellerId === dbUser.id)` must hold for:
    - Marking order shipped
    - Submitting seller dispute evidence
-   - Accessing seller wallet and requesting withdrawals
-3. **Admin Privilege & Step-Up**:
-   - `assert(session.role === "ADMIN")` verified via HMAC-SHA256 signature in `middleware.ts`.
-   - `assert(stepUpGrant.adminId === session.userId && stepUpGrant.valid)` verified in `/api/disputes/[id]/verdict`.
-4. **Session Versioning Invariant**:
-   `assert(session.sessionVersion === dbUser.sessionVersion)` for privileged operations, ensuring immediate revocation upon role demotion or account suspension.
+   - Accessing seller wallet and requesting disbursements
+4. **Single-Use Admin Step-Up Invariant**:
+   `assert(grant.adminId === dbUser.id && grant.action === expectedAction && grant.resourceId === expectedResource && grant.consumedAt === null)`.
+   Step-up grants are consumable exactly once within an atomic database transaction. Re-use attempts are strictly rejected.
+5. **Distributed Replay Invariant**:
+   `assert(dbUser.lastTotpStep === null || dbUser.lastTotpStep < submittedStep)`.
+   Prevents OTP reuse across multiple instances and survives process restarts.

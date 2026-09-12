@@ -5,11 +5,13 @@ import { parseEnv } from "@/lib/env";
 describe("Production Environment Validation Tests", () => {
   const validProductionEnv = {
     NODE_ENV: "production",
+    APP_ENV: "production",
     DATABASE_URL: "postgresql://postgres:securepassword@prod-db.internal:5432/ngebekasinyuk_prod?schema=public",
     AUTH_SECRET: "c0mplex-prod-auth-secret-min-32-characters-long!",
     ADMIN_STEP_UP_SECRET: "c0mplex-prod-stepup-secret-min-32-characters-long!",
     SESSION_COOKIE_NAME: "ngebekasinyuk_session",
     ADMIN_STEP_UP_TTL_SECONDS: "300",
+    TOTP_ENCRYPTION_KEY: "prod-totp-encryption-key-32-characters-long!",
     DEMO_PAYMENT_PROVIDER: "false",
     DEMO_KYC_PROVIDER: "false",
     DEMO_WITHDRAWAL_PROVIDER: "false",
@@ -47,13 +49,13 @@ describe("Production Environment Validation Tests", () => {
     expect(() => parseEnv(env)).toThrow(/must be a PostgreSQL connection string/);
   });
 
-  it("FAILS STARTUP if demo providers are enabled in production without explicit sandbox override", () => {
+  it("FAILS STARTUP if demo providers are enabled in production", () => {
     const envWithDemo = {
       ...validProductionEnv,
       DEMO_PAYMENT_PROVIDER: "true",
       ALLOW_DEMO_IN_PRODUCTION: "false",
     };
-    expect(() => parseEnv(envWithDemo)).toThrow(/Demo simulation providers are prohibited in production/);
+    expect(() => parseEnv(envWithDemo)).toThrow(/Demo simulation providers are strictly prohibited in production/);
   });
 
   it("allows development defaults when NODE_ENV !== production", () => {
@@ -62,6 +64,6 @@ describe("Production Environment Validation Tests", () => {
     };
     const config = parseEnv(devEnv);
     expect(config.NODE_ENV).toBe("development");
-    expect(config.DATABASE_URL).toBe("file:./dev.db");
+    expect(config.DATABASE_URL).toContain("postgresql://");
   });
 });

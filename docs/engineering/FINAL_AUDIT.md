@@ -7,6 +7,7 @@ NgeBekasinYuk is an Indonesian Consumer-to-Consumer (C2C) secondhand tech market
 This hardening engineering cycle audited, repaired, restructured, and verified the entire application across Hardening Pass #1 and Hardening Pass #2. The system has successfully transitioned from a **high-fidelity client simulation** toward a **secure, server-authoritative, relational database-backed, audit-logged Production Candidate architecture** while preserving all 20 existing marketplace routes and visual/motion excellence.
 
 For the definitive Pass #2 forensic audit report, see [`HARDENING_PASS_2.md`](./HARDENING_PASS_2.md).
+For the final Pass #3 Production Candidate certification report, see [`HARDENING_PASS_3_FINAL_CERTIFICATION.md`](./HARDENING_PASS_3_FINAL_CERTIFICATION.md).
 
 ---
 

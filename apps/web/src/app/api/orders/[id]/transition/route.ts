@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
-import { getServerSession } from "@/lib/auth/session";
+import { validateAuthoritativeSession } from "@/lib/auth/authoritativeSession";
 import { OrderTransitionSchema } from "@/lib/validations";
 import {
   assertTransition,
@@ -14,7 +14,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await validateAuthoritativeSession();
     if (!session) {
       return NextResponse.json({ error: "UNAUTHORIZED", message: "Silakan login terlebih dahulu." }, { status: 401 });
     }

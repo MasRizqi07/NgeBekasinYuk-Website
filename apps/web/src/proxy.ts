@@ -7,7 +7,7 @@ import { verifySession } from "@/lib/auth/session";
 
 const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "ngebekasinyuk_session";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const response = NextResponse.next();
 

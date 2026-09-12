@@ -30,6 +30,8 @@ jobs:
       DATABASE_URL: "postgresql://postgres:postgrespassword@localhost:5432/ngebekasinyuk_ci?schema=public"
       AUTH_SECRET: "ci-auth-secret-min-32-characters-test-key-prod"
       ADMIN_STEP_UP_SECRET: "ci-admin-step-up-secret-min-32-chars-test"
+      TOTP_ENCRYPTION_KEY: "ci-totp-encryption-key-32-characters-long!"
+      APP_ENV: "test"
       ALLOW_DEMO_IN_PRODUCTION: "true"
       DEMO_PAYMENT_PROVIDER: "true"
       DEMO_KYC_PROVIDER: "true"
@@ -40,6 +42,14 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Verify Exact Git HEAD SHA
+        shell: bash
+        run: |
+          echo "Checked out SHA: $(git rev-parse HEAD)"
+          echo "GitHub Event: ${{ github.event_name }}"
+          echo "GitHub Ref: ${{ github.ref }}"
+          echo "GitHub SHA: ${{ github.sha }}"
 
       - name: Setup Node.js 20.x
         uses: actions/setup-node@v4

@@ -1,5 +1,5 @@
 // RFC 6238 TOTP and Admin Step-Up Grant Unit Tests (HP2-P0-03)
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import {
   generateTotpSecret,
   generateTotpCode,
@@ -8,10 +8,26 @@ import {
   verifyStepUpGrant,
   DEV_ADMIN_TOTP_SEED,
 } from "@/lib/auth/totp";
+import { prisma } from "@/server/db/prisma";
 
 describe("RFC 6238 TOTP & Step-Up Grant Unit Tests", () => {
   const secret = DEV_ADMIN_TOTP_SEED;
   const adminId = "admin-test-007";
+
+  beforeAll(async () => {
+    await prisma.user.upsert({
+      where: { id: adminId },
+      update: { role: "ADMIN", accountStatus: "ACTIVE" },
+      create: {
+        id: adminId,
+        email: "admin-test-007@ngebekasinyuk.id",
+        name: "Admin 007",
+        hashedPassword: "dummy",
+        role: "ADMIN",
+        accountStatus: "ACTIVE",
+      },
+    });
+  });
 
   it("generates and verifies a valid 6-digit TOTP code", () => {
     const code = generateTotpCode(secret);

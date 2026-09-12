@@ -286,6 +286,7 @@ export default function AdminDisputesPage() {
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRTbFAOv8W_XbBkuklHWrt6clzjiyXf5Jt_WWzjJ4HmwL8_nptcJqQmcjAdS-QYUE1LqpYCaB-Vzz2MfF2vom66TKpqlXzKrhEJaoETa-9M0vp7IWxRIamaZazLGTjnpgGxsV6ubT9AGGEc2hylFbOXkv4fcfwU3KL1BpJkkoKcXEgO5JvPCtQMbyqmi1WWYNHChBoODldZ_Yy9GO5MxtD2kFwOAicSe8wCvD2jYHFariTHu-Pb_wU"
                   alt="Buyer video"
                   fill
+                  priority
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover opacity-70"
                 />
