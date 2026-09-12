@@ -234,7 +234,12 @@ GitHub workflow head_sha
 checked-out SHA in Actions runner
 ```
 
-Verified with GitHub Actions push trigger on `antigravity/hardening-pass-3`.
+Verified with GitHub Actions direct push workflow on `antigravity/hardening-pass-3`:
+- **Workflow Run ID**: `34712143070`
+- **Workflow URL**: [https://github.com/MasRizqi07/NgeBekasinYuk-Website/actions/runs/34712143070](https://github.com/MasRizqi07/NgeBekasinYuk-Website/actions/runs/34712143070)
+- **Trigger**: `push`
+- **Exact Commit SHA**: `6cecad1363f23dc170a4006151041ce8542469f4`
+- **Result**: `completed / success` (All 9 verification gates passed)
 
 ---
 
