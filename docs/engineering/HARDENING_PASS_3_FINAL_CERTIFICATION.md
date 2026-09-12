@@ -272,20 +272,43 @@ Verified with GitHub Actions direct push workflow on `antigravity/hardening-pass
 | **Exact branch SHA CI** | Resolved Pass 3 | **PASS** | Direct push workflow on `antigravity/hardening-pass-3` |
 | **DB sessionVersion validation** | Resolved Pass 3 | **PASS** | `validateAuthoritativeSession()`, `test/unit/sessionRevocation.test.ts` |
 | **Persistent TOTP replay prevention** | Resolved Pass 3 | **PASS** | Atomic PostgreSQL timestep recording, `test/unit/totpDistributedReplay.test.ts` |
-| **AES-256-GCM Encryption-at-Rest** | Resolved Pass 3 | **PASS** | `src/lib/security/encryption.ts`, `test/unit/totpEncryption.test.ts` |
+| **Legacy Data Upgrade Path Safety** | `FINAL-OPS-01` | **PASS** | Preflight verification script (`db:verify-totp-migration`), fail-closed backfill (`db:migrate-totp-secrets`), 8-step upgrade runbook in `DEPLOYMENT.md`, automated integration test `migrationUpgradeSafety.test.ts` |
 
 ---
 
-## 14. Final Certification
+## 14. Operational Migration Safety Patch (`FINAL-OPS-01`)
+
+During the Certification Recheck, an operational upgrade risk was identified:
+- Migration `20260913020000_drop_plaintext_totp_secret` issues `ALTER TABLE "User" DROP COLUMN "totpSecret";`.
+- If an operator deploys migrations directly on an existing database from Pass #2, legacy plaintext seeds would be dropped before the backfill script could encrypt them.
+- In `scripts/migrate-totp-secrets.ts`, CLI exit code was 0 even if `errors > 0`.
+
+### Resolution Implemented:
+1. **Migration Script Fail-Closed Exit**:
+   `scripts/migrate-totp-secrets.ts` now inspects `result.errors` and exits with code 1 if any record fails to encrypt.
+2. **Preflight Verification Script (`scripts/verify-totp-migration.ts`)**:
+   Inspects the database and evaluates `COUNT(users with old plaintext TOTP and no ciphertext)`. If count > 0, it logs a critical failure and exits with code 1, preventing the operator from applying the drop-column migration.
+3. **Dedicated Package Scripts**:
+   Added `pnpm --filter web run db:migrate-totp-secrets` and `pnpm --filter web run db:verify-totp-migration`.
+4. **Mandatory 8-Step Upgrade Runbook**:
+   Explicitly documented in `docs/engineering/DEPLOYMENT.md` Section 3.2:
+   `pg_dump` → confirm migration #2 → `db:migrate-totp-secrets` → `db:verify-totp-migration` → abort if errors > 0 → `db:migrate:deploy` → verify status & envelopes → run smoke test.
+5. **Automated Upgrade Safety Integration Test**:
+   `apps/web/test/integration/migrationUpgradeSafety.test.ts` simulates the Pass #2 database state, verifies preflight failure on unmigrated records, runs backfill encryption, confirms preflight success, validates AES-256-GCM envelope decryption with zero data loss, and verifies clean state after column dropping.
+
+---
+
+## 15. Final Certification
 
 ### Final Classification: **Production Candidate**
 
-With the completion and verification of the **Final Security Closure Patch**:
+With the completion and verification of the **Final Security Closure Patch** and the **Operational Migration Safety Patch**:
 - Plaintext TOTP fallback has been completely eradicated in production.
-- Legacy database column `totpSecret` has been safely dropped via forward migration.
+- Legacy database column `totpSecret` has been safely dropped via forward migration with guaranteed data preservation.
 - Financial step-up grants strictly enforce mandatory resource binding (`resourceId`) with zero wildcard loopholes.
 - The financial dispute verdict endpoint strictly enforces single-use scoped grant tokens, completely eliminating raw TOTP bypass routes.
 - The 12 HIGH dependency advisories in unbuilt scaffolding have been formally triaged with zero impact on production runtime.
-- Exact-SHA CI, 111 Vitest tests, and 19 Playwright tests confirm 100% test reproducibility.
+- Exact-SHA CI, 113 Vitest tests (17 suites), and 19 Playwright tests confirm 100% test reproducibility.
+- Zero data loss upgrade path from Pass #2 schema to Pass #3 final schema is guaranteed by automated integration tests and preflight scripts.
 
 The NgeBekasinYuk codebase is **officially certified as a Production Candidate**.

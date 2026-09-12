@@ -45,7 +45,7 @@ All database changes are managed through forward Prisma migrations:
 2. `20260912083315_pass_3_security_hardening`: Added `accountStatus`, `lastTotpStep`, encrypted TOTP secret fields (`totpSecretCiphertext`, `totpSecretIv`, `totpSecretTag`, `totpSecretKeyVersion`), and `AdminStepUpGrant` table.
 3. `20260913020000_drop_plaintext_totp_secret`: Dropped legacy plaintext `totpSecret` column to strictly enforce zero plaintext credentials at rest (`AP4-P0-01`, `AP4-P0-02`).
 
-### Deploying to Production:
+### 3.1 Fresh Database Deployment (Greenfield / CI):
 ```bash
 # 1. Validate Prisma schema
 pnpm --filter web exec prisma validate
@@ -53,11 +53,49 @@ pnpm --filter web exec prisma validate
 # 2. Generate typed client
 pnpm --filter web run prisma:generate
 
-# 3. Apply pending forward migrations
-pnpm --filter web exec prisma migrate deploy
+# 3. Apply all pending forward migrations
+pnpm --filter web run db:migrate:deploy
 
 # 4. Verify migration status
+pnpm --filter web run db:migrate:status
+```
+
+### 3.2 Upgrading Existing Production Databases (Pass #2 → Pass #3 Final Schema):
+> [!CAUTION]
+> **CRITICAL DATA PRESERVATION PROTOCOL (`FINAL-OPS-01`)**
+> Migration `20260913020000_drop_plaintext_totp_secret` issues `ALTER TABLE "User" DROP COLUMN "totpSecret";`.
+> You **MUST NOT** apply forward migrations past migration #2 until the legacy TOTP encryption backfill and preflight verification have succeeded!
+
+Follow this strict 8-step deployment sequence:
+
+```bash
+# Step 1: Database backup
+pg_dump "$DATABASE_URL" -Fc -f "ngebekasinyuk_pre_upgrade_$(date +%Y%m%d_%H%M%S).dump"
+
+# Step 2: Confirm schema is up to date through migration #2
 pnpm --filter web exec prisma migrate status
+# Ensure 20260912083315_pass_3_security_hardening is applied
+
+# Step 3: Run the TOTP encryption backfill script
+# Scans all records with plaintext totpSecret and generates AES-256-GCM encrypted envelopes
+pnpm --filter web run db:migrate-totp-secrets
+
+# Step 4: Run preflight verification check
+# Fails with exit code 1 if COUNT(users with plaintext TOTP and no ciphertext) > 0
+pnpm --filter web run db:verify-totp-migration
+
+# Step 5: Abort deployment if Step 3 or Step 4 reported any errors (non-zero exit code).
+# Do NOT proceed to Step 6 if any plaintext seeds remain unencrypted.
+
+# Step 6: Apply migration #3 (DROP COLUMN "totpSecret")
+pnpm --filter web run db:migrate:deploy
+
+# Step 7: Verify migration status & envelopes
+pnpm --filter web run db:migrate:status
+pnpm --filter web run db:verify-totp-migration
+
+# Step 8: Run smoke test for admin TOTP authentication and dispute step-up authorization
+pnpm --filter web run test -- test/integration/adminStepUpTotp.test.ts
 ```
 
 ---
