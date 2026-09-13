@@ -57,17 +57,22 @@ export default function OrderDetailPage() {
   const [disputeNotes, setDisputeNotes] = useState("");
   const [disputeFile, setDisputeFile] = useState<string | null>(null);
 
-  // Countdown timer simulation for inspection
-  const [inspectionSeconds, setInspectionSeconds] = useState(135165); // ~1 day 13h 32m
+  const order = getOrderById(orderId);
+
+  // Countdown timer dynamically calculated from order.inspectionExpiresAt
+  const [inspectionSeconds, setInspectionSeconds] = useState(() => {
+    if (!order || !order.inspectionExpiresAt) return 0;
+    const diff = Math.floor((new Date(order.inspectionExpiresAt).getTime() - Date.now()) / 1000);
+    return diff > 0 ? diff : 0;
+  });
 
   useEffect(() => {
+    if (!order?.inspectionExpiresAt) return;
     const timer = setInterval(() => {
       setInspectionSeconds((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
-
-  const order = getOrderById(orderId);
+  }, [order?.inspectionExpiresAt]);
 
   if (!order) {
     return (

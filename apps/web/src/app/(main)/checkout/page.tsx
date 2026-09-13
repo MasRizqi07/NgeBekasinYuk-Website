@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -37,6 +37,18 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<
     "BCA_VA" | "MANDIRI_VA" | "BRI_VA" | "BNI_VA" | "QRIS"
   >("BCA_VA");
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem("checkout_paymentMethod");
+    if (saved) {
+      setPaymentMethod(saved as any);
+    }
+  }, []);
+
+  const handleSetPaymentMethod = (method: typeof paymentMethod) => {
+    setPaymentMethod(method);
+    sessionStorage.setItem("checkout_paymentMethod", method);
+  };
 
   const address = user.addresses.find((a) => a.isDefault) || user.addresses[0];
   const shippingFee = selectedCourier.price;
@@ -235,7 +247,7 @@ export default function CheckoutPage() {
                   <button
                     key={m.id}
                     type="button"
-                    onClick={() => setPaymentMethod(m.id)}
+                    onClick={() => handleSetPaymentMethod(m.id)}
                     className={`p-3 rounded-xl border text-center flex flex-col items-center justify-center transition-all ${
                       isSelected
                         ? "border-brand-primary bg-brand-primary-soft/60 text-brand-primary font-bold shadow-xs"
