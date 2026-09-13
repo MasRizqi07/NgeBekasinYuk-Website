@@ -7,6 +7,13 @@ import React from "react";
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
+  // Exclude routes that handle financial state and must bypass component remounting
+  const isExcluded = pathname?.startsWith("/checkout") || pathname?.startsWith("/orders");
+
+  if (isExcluded) {
+    return <div className="flex-1 flex flex-col min-h-full">{children}</div>;
+  }
+
   return (
     <AnimatePresence mode="wait">
       <motion.div

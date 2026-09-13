@@ -1,0 +1,59 @@
+
+> web@0.1.0 test D:\MY CODE\NgeBekasinYuk-Web\apps\web
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/MY CODE/NgeBekasinYuk-Web/apps/web[39m
+
+ [32mÔ£ô[39m test/unit/sessionTampering.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+[90mstdout[2m | test/integration/migrationUpgradeSafety.test.ts[2m > [22m[2mOperational Migration Upgrade Safety (FINAL-OPS-01)[2m > [22m[2mverifies clean preflight state on modern schema with dropped plaintext column
+[22m[39m[Preflight Safety Check] SUCCESS: Column 'totpSecret' does not exist or has already been dropped.
+
+[90mstdout[2m | test/integration/migrationUpgradeSafety.test.ts[2m > [22m[2mOperational Migration Upgrade Safety (FINAL-OPS-01)[2m > [22m[2msafely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[22m[39m[Migration] Starting legacy TOTP encryption check...
+
+ [32mÔ£ô[39m test/unit/totp.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 167[2mms[22m[39m
+[90mstdout[2m | test/integration/migrationUpgradeSafety.test.ts[2m > [22m[2mOperational Migration Upgrade Safety (FINAL-OPS-01)[2m > [22m[2msafely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[22m[39m[Migration] Encrypted TOTP secret for user: usr-legacy-test-1789311747030
+[Migration] Completed: 1 migrated, 0 errors.
+
+ [32mÔ£ô[39m test/unit/totpDistributedReplay.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 236[2mms[22m[39m
+[90mstdout[2m | test/integration/migrationUpgradeSafety.test.ts[2m > [22m[2mOperational Migration Upgrade Safety (FINAL-OPS-01)[2m > [22m[2msafely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[22m[39m[Preflight Safety Check] SUCCESS: 0 unmigrated plaintext TOTP records found.
+
+ [32mÔ£ô[39m test/unit/sessionRevocation.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 184[2mms[22m[39m
+[90mstdout[2m | test/integration/migrationUpgradeSafety.test.ts[2m > [22m[2mOperational Migration Upgrade Safety (FINAL-OPS-01)[2m > [22m[2msafely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[22m[39m[Preflight Safety Check] SUCCESS: Column 'totpSecret' does not exist or has already been dropped.
+
+ [32mÔ£ô[39m test/unit/stepUpGrant.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 327[2mms[22m[39m
+ [32mÔ£ô[39m test/integration/migrationUpgradeSafety.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 260[2mms[22m[39m
+ [32mÔ£ô[39m test/integration/orderEscrowLifecycle.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 512[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m executes full lifecycle: payment -> shipment -> inspection -> receipt confirmation -> escrow release [33m 510[2mms[22m[39m
+ [32mÔ£ô[39m test/unit/money.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32mÔ£ô[39m test/unit/orderStateMachine.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mÔ£ô[39m test/integration/disputeResolution.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 1081[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m buyer opens dispute -> freezes escrow account and transitions order to DISPUTED [33m 507[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m admin resolves dispute with REFUND_BUYER verdict -> executes refund and marks dispute RESOLVED_BUYER [33m 332[2mms[22m[39m
+ [32mÔ£ô[39m test/unit/envValidation.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m test/unit/totpEncryption.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32mÔ£ô[39m test/unit/environmentMatrix.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mÔ£ô[39m test/unit/authorization.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32mÔ£ô[39m test/unit/escrowLedger.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 1324[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m releases escrow funds to seller wallet and records immutable ledger [33m 504[2mms[22m[39m
+ [32mÔ£ô[39m test/integration/concurrency.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 1561[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m PARALLEL ESCROW RELEASE: Two simultaneous releases credit the seller wallet exactly once [33m 668[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m RELEASE VS REFUND RACE: Mutual exclusion guaranteed when release and refund collide [33m 319[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m PARALLEL WITHDRAWALS: Two simultaneous 800k withdrawals on a 1M balance only allow one deduction [33m 356[2mms[22m[39m
+ [32mÔ£ô[39m test/unit/walletLedger.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 3259[2mms[22m[39m
+       [33m[2mÔ£ô[22m[39m accepts the correct 6-digit PIN [33m 571[2mms[22m[39m
+       [33m[2mÔ£ô[22m[39m rejects an incorrect 6-digit PIN (fixes the original P0-04 bug) [33m 456[2mms[22m[39m
+       [33m[2mÔ£ô[22m[39m locks user PIN after 5 consecutive failed attempts [33m 623[2mms[22m[39m
+       [33m[2mÔ£ô[22m[39m successfully creates withdrawal and deducts active balance with valid PIN [33m 326[2mms[22m[39m
+       [33m[2mÔ£ô[22m[39m rejects withdrawal with insufficient active balance [33m 342[2mms[22m[39m
+       [33m[2mÔ£ô[22m[39m IDEMPOTENCY: duplicate withdrawal request does not double-debit active balance [33m 437[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m17 passed[39m[22m[90m (17)[39m
+[2m      Tests [22m [1m[32m113 passed[39m[22m[90m (113)[39m
+[2m   Start at [22m 22:02:26
+[2m   Duration [22m 3.98s[2m (transform 1.67s, setup 0ms, import 5.88s, tests 9.03s, environment 4ms)[22m
+
