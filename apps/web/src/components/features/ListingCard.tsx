@@ -45,7 +45,9 @@ export function ListingCard({ listing, priority = false }: ListingCardProps) {
         </div>
 
         {/* Top-Right: Wishlist Toggle */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           type="button"
           onClick={(e) => {
             e.preventDefault();
@@ -53,14 +55,14 @@ export function ListingCard({ listing, priority = false }: ListingCardProps) {
             toggleFavorite(listing.id);
           }}
           aria-label="Simpan ke favorit"
-          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/85 backdrop-blur-md flex items-center justify-center text-text-muted hover:text-brand-danger hover:scale-110 active:scale-95 transition-all shadow-xs"
+          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full glass flex items-center justify-center text-text-muted hover:text-brand-danger transition-colors shadow-xs"
         >
           <Heart
             className={`w-4 h-4 ${
               isFavorite ? "fill-brand-danger text-brand-danger" : ""
             }`}
           />
-        </button>
+        </motion.button>
 
         {/* Bottom Overlay: Condition Tag */}
         <div className="absolute bottom-2 left-2.5">

@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import { Home, PackageCheck, Plus, MessageSquare, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/stores/useChatStore";
@@ -50,7 +51,7 @@ export function MobileBottomNav() {
   ];
 
   return (
-    <nav className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-surface-border pb-safe">
+    <nav className="sm:hidden fixed bottom-0 inset-x-0 z-40 glass-panel border-t border-surface-border pb-safe">
       <div className="h-16 px-4 flex items-center justify-around relative">
         {navItems.map((item) => {
           if (item.isFab) {
@@ -80,15 +81,20 @@ export function MobileBottomNav() {
                 item.isActive ? "text-brand-primary font-bold" : "text-text-muted hover:text-text-secondary"
               )}
             >
-              <div className="relative">
-                <Icon className={cn("w-5 h-5", item.isActive && "stroke-[2.25]")} />
-                {item.badge && (
-                  <span className="absolute -top-1 -right-2 min-w-3.75 h-3.5 px-0.5 rounded-full bg-brand-primary text-white text-[9px] font-bold flex items-center justify-center">
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-              <span className="text-[10px] mt-1 tracking-tight">{item.label}</span>
+              <motion.div 
+                whileTap={{ scale: 0.8 }}
+                className="relative flex flex-col items-center"
+              >
+                <div className="relative">
+                  <Icon className={cn("w-5 h-5", item.isActive && "stroke-[2.25]")} />
+                  {item.badge && (
+                    <span className="absolute -top-1 -right-2 min-w-3.75 h-3.5 px-0.5 rounded-full bg-brand-primary text-white text-[9px] font-bold flex items-center justify-center">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] mt-1 tracking-tight">{item.label}</span>
+              </motion.div>
             </Link>
           );
         })}

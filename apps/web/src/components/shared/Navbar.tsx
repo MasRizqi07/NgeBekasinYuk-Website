@@ -21,6 +21,8 @@ import { useListingStore } from "@/stores/useListingStore";
 import { useNotificationStore } from "@/stores/useNotificationStore";
 import { useChatStore } from "@/stores/useChatStore";
 import { useUserStore } from "@/stores/useUserStore";
+import { ThemeToggle } from "./ThemeToggle";
+import { motion } from "framer-motion";
 
 export function Navbar() {
   const router = useRouter();
@@ -39,7 +41,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-surface-border shadow-[0_1px_4px_rgba(16,24,40,0.04)]">
+    <header className="sticky top-0 z-40 w-full glass-panel shadow-[0_1px_4px_rgba(16,24,40,0.04)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-3 sm:gap-6">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
@@ -89,6 +91,8 @@ export function Navbar() {
 
         {/* Action Controls & Navigation */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <ThemeToggle />
+
           {/* Notifications */}
           <Link
             href="/notifications"
@@ -126,7 +130,9 @@ export function Navbar() {
 
           {/* User Profile Dropdown */}
           <div className="relative">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="flex items-center gap-1.5 p-1 rounded-xl hover:bg-surface-subtle transition-colors"
             >
@@ -140,7 +146,7 @@ export function Navbar() {
                 />
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-text-muted hidden sm:block" />
-            </button>
+            </motion.button>
 
             {isProfileOpen && (
               <>

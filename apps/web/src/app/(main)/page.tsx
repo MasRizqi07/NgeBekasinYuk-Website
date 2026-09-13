@@ -20,6 +20,7 @@ import { useListingStore } from "@/stores/useListingStore";
 import { EscrowBanner } from "@/components/shared/EscrowBanner";
 import { ListingCard } from "@/components/features/ListingCard";
 import { formatRupiah } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 export default function HomePage() {
   const { listings, setSelectedCategory } = useListingStore();
@@ -123,13 +124,15 @@ export default function HomePage() {
                 key={cat.id}
                 href={`/search?category=${cat.id}`}
                 onClick={() => setSelectedCategory(cat.id)}
-                className="group flex flex-col items-center gap-2 min-w-20.5 sm:min-w-25 p-3 rounded-2xl bg-white border border-surface-border shadow-xs hover:shadow-md hover:border-brand-primary/40 transition-all text-center shrink-0 active:scale-95"
+                className="group flex flex-col items-center gap-2 min-w-20.5 sm:min-w-25 p-3 rounded-2xl bg-white dark:bg-surface-subtle border border-surface-border shadow-xs hover:shadow-md hover:border-brand-primary/40 transition-all text-center shrink-0"
               >
-                <div
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${cat.color}`}
                 >
                   <Icon className="w-6 h-6" />
-                </div>
+                </motion.div>
                 <div className="flex flex-col items-center">
                   <span className="font-bold text-xs text-on-surface truncate w-18">
                     {cat.name}
@@ -249,7 +252,9 @@ export default function HomePage() {
               { id: "laptop", label: "MacBook & Laptop" },
               { id: "smartphone", label: "Smartphone" },
             ].map((tab) => (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
@@ -259,7 +264,7 @@ export default function HomePage() {
                 }`}
               >
                 {tab.label}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
