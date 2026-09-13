@@ -38,6 +38,7 @@ export const WithdrawalRequestSchema = z.object({
   accountNumber: z.string().min(5).max(30).trim(),
   accountHolder: z.string().min(2).max(100).trim(),
   pin: z.string().regex(/^\d{6}$/, "PIN harus berupa 6 digit angka"),
+  clientRequestId: z.string().min(16).max(100),
 });
 
 export const OpenDisputeSchema = z.object({
