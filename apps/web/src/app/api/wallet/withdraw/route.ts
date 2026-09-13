@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { amount, bankName, accountNumber, accountHolder, pin } = validated.data;
+    const { amount, bankName, accountNumber, accountHolder, pin, clientRequestId } = validated.data;
 
     const result = await WalletLedgerService.requestWithdrawal({
       userId: session.id,
@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       accountNumber,
       accountHolder,
       pin,
+      customIdempotencyKey: clientRequestId,
     });
 
     return NextResponse.json(result);

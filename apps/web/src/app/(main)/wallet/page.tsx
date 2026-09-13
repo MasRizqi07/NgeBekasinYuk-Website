@@ -34,20 +34,28 @@ export default function WalletPage() {
   const [pin, setPin] = useState("123456");
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<LedgerTab>("ALL");
+  const [clientRequestId, setClientRequestId] = useState<string | null>(null);
 
   const handleQuickChip = (val: number) => {
     setWithdrawAmount(val);
+    setClientRequestId(null);
   };
 
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
 
+    const requestId = clientRequestId || crypto.randomUUID();
+    if (!clientRequestId) {
+      setClientRequestId(requestId);
+    }
+
     try {
-      const res = await withdrawFunds(withdrawAmount, selectedBankId, pin);
+      const res = await withdrawFunds(withdrawAmount, selectedBankId, pin, requestId);
       setIsProcessing(false);
 
       if (res.success) {
+        setClientRequestId(null);
         confetti({
           particleCount: 80,
           spread: 70,
@@ -55,6 +63,9 @@ export default function WalletPage() {
         });
         showToast(res.message, "success");
       } else {
+        if (!res.message.includes("Status penarikan belum bisa dipastikan")) {
+          setClientRequestId(null);
+        }
         showToast(res.message, "error");
       }
     } catch {
@@ -222,7 +233,10 @@ export default function WalletPage() {
                 <input
                   type="number"
                   value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(Number(e.target.value))}
+                  onChange={(e) => {
+                    setWithdrawAmount(Number(e.target.value));
+                    setClientRequestId(null);
+                  }}
                   className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface font-bold text-base focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
                 />
               </div>
@@ -252,7 +266,10 @@ export default function WalletPage() {
               <label className="font-bold text-on-surface">Rekening Tujuan</label>
               <select
                 value={selectedBankId}
-                onChange={(e) => setSelectedBankId(e.target.value)}
+                onChange={(e) => {
+                  setSelectedBankId(e.target.value);
+                  setClientRequestId(null);
+                }}
                 className="w-full p-3 bg-surface-container-low rounded-xl border border-outline-variant/30 text-on-surface font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {bankAccounts.map((b) => (
@@ -283,7 +300,10 @@ export default function WalletPage() {
                 type="password"
                 maxLength={6}
                 value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) => {
+                  setPin(e.target.value.replace(/\D/g, "").slice(0, 6));
+                  setClientRequestId(null);
+                }}
                 placeholder="Masukkan 6 digit PIN"
                 className="w-40 mx-auto text-center font-mono tracking-widest text-xs py-1.5 px-3 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
               />

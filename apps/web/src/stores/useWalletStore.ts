@@ -12,7 +12,8 @@ interface WalletStore {
   withdrawFunds: (
     amount: number,
     bankId: string,
-    pin: string
+    pin: string,
+    clientRequestId: string
   ) => Promise<{ success: boolean; message: string }>;
   releaseEscrowToWallet: (amount: number, orderId: string, itemTitle: string) => void;
   holdEscrowFunds: (amount: number, orderId: string, itemTitle: string) => void;
@@ -26,7 +27,7 @@ export const useWalletStore = create<WalletStore>()(
       bankAccounts: SEED_BANK_ACCOUNTS,
       transactions: SEED_WALLET_TRANSACTIONS,
 
-      withdrawFunds: async (amount, bankId, pin) => {
+      withdrawFunds: async (amount, bankId, pin, clientRequestId) => {
         const { saldoAktif, bankAccounts } = get();
 
         // P0-04 FIX: Strict 6-digit numeric validation, never allowing arbitrary 6-digit numbers
@@ -57,6 +58,7 @@ export const useWalletStore = create<WalletStore>()(
               accountNumber: bank.accountNumber,
               accountHolder: bank.accountHolder,
               pin,
+              clientRequestId,
             }),
           });
 
@@ -96,7 +98,7 @@ export const useWalletStore = create<WalletStore>()(
           return {
             success: false,
             message:
-              "Tidak dapat menghubungi server. Penarikan saldo dibatalkan, saldo tidak berubah. Silakan coba lagi.",
+              "Status penarikan belum bisa dipastikan. Cek riwayat transaksi sebelum mencoba lagi — jika Anda mencoba lagi, permintaan ini akan otomatis dianggap sama dan tidak akan memotong saldo dua kali.",
           };
         }
       },
