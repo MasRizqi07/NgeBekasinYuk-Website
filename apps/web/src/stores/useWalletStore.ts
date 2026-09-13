@@ -87,30 +87,16 @@ export const useWalletStore = create<WalletStore>()(
             success: true,
             message: `Penarikan Rp ${amount.toLocaleString("id-ID")} ke ${bank.bankName} berhasil diproses! [Simulasi BI-FAST]`,
           };
-        } catch {
-          // Client prototype fallback: strictly enforce valid demo PIN
-          if (pin !== "123456") {
-            return { success: false, message: "PIN transaksi salah." };
-          }
-
-          const newTrx: WalletTransaction = {
-            id: `WD-${Date.now().toString().slice(-6)}`,
-            type: "WITHDRAWAL",
-            amount,
-            referenceId: `TF-${Math.floor(100000 + Math.random() * 900000)}`,
-            status: "SUCCESS",
-            timestamp: "Baru saja",
-            description: `Penarikan saldo ke Rekening ${bank.bankName} (${bank.accountNumber.slice(-4)}) [Simulasi BI-FAST]`,
-          };
-
-          set((state) => ({
-            saldoAktif: state.saldoAktif - amount,
-            transactions: [newTrx, ...state.transactions],
-          }));
-
+        } catch (err) {
+          // SECURITY FIX: never fabricate a successful withdrawal client-side.
+          // A network/fetch failure means we do NOT know the server's true state,
+          // so local balance/transactions must stay untouched and the caller must
+          // be told the operation did not complete.
+          console.error("[useWalletStore] withdrawFunds request failed:", err);
           return {
-            success: true,
-            message: `Penarikan Rp ${amount.toLocaleString("id-ID")} ke ${bank.bankName} berhasil diproses! [Simulasi BI-FAST]`,
+            success: false,
+            message:
+              "Tidak dapat menghubungi server. Penarikan saldo dibatalkan, saldo tidak berubah. Silakan coba lagi.",
           };
         }
       },

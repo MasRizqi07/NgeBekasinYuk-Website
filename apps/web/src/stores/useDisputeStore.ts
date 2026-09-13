@@ -151,7 +151,17 @@ export const useDisputeStore = create<DisputeStore>()(
         const newStatus: DisputeStatus =
           verdict === "REFUND_BUYER" ? "RESOLVED_BUYER" : "RESOLVED_SELLER";
 
-        // Optimistic UI update via Zustand setter
+        // NOTE: This function assumes the caller (admin disputes UI) has ALREADY
+        // executed the authoritative server call to POST /api/disputes/:id/verdict
+        // with a real, single-use step-up grant token obtained from
+        // POST /api/admin/step-up, and that the server responded with success.
+        // This function only syncs local UI state to reflect that outcome —
+        // it must never independently call the verdict API itself. A prior
+        // version fired a second, redundant request here using a hardcoded
+        // fake stepUpCode ("882910"), which the server always rejected with
+        // 401 INVALID_STEP_UP_CODE (no "." grant token) and which polluted the
+        // audit log with a spurious failed step-up attempt on every legitimate
+        // dispute resolution. That call has been removed.
         set((state) => ({
           disputes: state.disputes.map((d) =>
             d.id === disputeId
@@ -164,19 +174,6 @@ export const useDisputeStore = create<DisputeStore>()(
               : d
           ),
         }));
-
-        // Fire server-authoritative verdict API in background
-        fetch(`/api/disputes/${disputeId}/verdict`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            verdict,
-            adminNotes,
-            stepUpCode: "882910", // Standard admin OTP
-          }),
-        }).catch((err) => {
-          console.warn("[useDisputeStore] Fallback to client prototype resolution:", err);
-        });
 
         const orderStore = useOrderStore.getState();
         const linkedOrder = orderStore.getOrderById(dispute.orderId);
