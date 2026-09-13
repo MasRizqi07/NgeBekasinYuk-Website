@@ -57,14 +57,42 @@ export default function OrderDetailPage() {
   const [disputeNotes, setDisputeNotes] = useState("");
   const [disputeFile, setDisputeFile] = useState<string | null>(null);
 
-  const order = getOrderById(orderId);
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchOrder = async () => {
+      try {
+        const res = await fetch(`/api/orders/${orderId}`);
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            setError("FORBIDDEN: Anda tidak memiliki akses ke pesanan ini.");
+          } else {
+            setError("Gagal memuat pesanan.");
+          }
+          return;
+        }
+        const data = await res.json();
+        setOrder(data);
+      } catch (err) {
+        setError("Terjadi kesalahan sistem.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrder();
+  }, [orderId]);
 
   // Countdown timer dynamically calculated from order.inspectionExpiresAt
-  const [inspectionSeconds, setInspectionSeconds] = useState(() => {
-    if (!order || !order.inspectionExpiresAt) return 0;
-    const diff = Math.floor((new Date(order.inspectionExpiresAt).getTime() - Date.now()) / 1000);
-    return diff > 0 ? diff : 0;
-  });
+  const [inspectionSeconds, setInspectionSeconds] = useState(0);
+
+  useEffect(() => {
+    if (order && order.inspectionExpiresAt) {
+      const diff = Math.floor((new Date(order.inspectionExpiresAt).getTime() - Date.now()) / 1000);
+      setInspectionSeconds(diff > 0 ? diff : 0);
+    }
+  }, [order]);
 
   useEffect(() => {
     if (!order?.inspectionExpiresAt) return;
@@ -73,6 +101,34 @@ export default function OrderDetailPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [order?.inspectionExpiresAt]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+        <div className="text-on-surface-variant font-medium text-sm animate-pulse">Memuat pesanan...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+        <div className="bg-surface-container-lowest p-8 rounded-3xl text-center max-w-sm w-full border border-error/30 space-y-4">
+          <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mx-auto text-error">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <h2 className="font-bold text-lg text-error">Akses Ditolak / Gagal</h2>
+          <p className="text-xs text-on-surface-variant">{error}</p>
+          <Link
+            href="/orders"
+            className="block w-full py-2.5 bg-primary text-on-primary rounded-xl text-xs font-bold mt-4"
+          >
+            Kembali ke Daftar Pesanan
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (!order) {
     return (
