@@ -58,7 +58,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <ToastProvider>
       <div className="min-h-screen bg-surface flex">
         {/* Left Sidebar */}
-        <aside className="fixed left-0 top-0 bottom-0 w-64 bg-surface-container-lowest z-50 flex flex-col border-r border-outline-variant/30 hidden lg:flex shadow-xs">
+        <aside className="fixed left-0 top-0 bottom-0 w-64 bg-surface-container-lowest z-50 hidden lg:flex flex-col border-r border-outline-variant/30 shadow-xs">
           {/* Brand Header */}
           <div className="h-16 px-5 flex items-center justify-between border-b border-outline-variant/20">
             <Link href="/" className="flex items-center gap-2.5">

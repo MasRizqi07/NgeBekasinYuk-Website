@@ -65,7 +65,7 @@ export default function CheckoutPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-6">
       {/* Escrow Trust Micro-Banner */}
-      <div className="bg-gradient-to-r from-brand-secondary-light via-surface-subtle to-brand-primary-soft/30 p-4 rounded-2xl border border-brand-secondary/30 shadow-xs flex items-start gap-3">
+      <div className="bg-linear-to-r from-brand-secondary-light via-surface-subtle to-brand-primary-soft/30 p-4 rounded-2xl border border-brand-secondary/30 shadow-xs flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-brand-secondary text-white flex items-center justify-center shrink-0 shadow-sm">
           <Lock className="w-5 h-5" />
         </div>

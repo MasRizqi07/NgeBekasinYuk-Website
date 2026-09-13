@@ -194,7 +194,7 @@ export default function SellPage() {
           </div>
 
           {/* Tips Card */}
-          <div className="bg-brand-secondary-light p-3.5 rounded-xl border border-brand-secondary/30 flex items-start gap-2.5 text-xs text-[#00714F]">
+          <div className="bg-brand-secondary-light p-3.5 rounded-xl border border-brand-secondary/30 flex items-start gap-2.5 text-xs text-on-secondary-container">
             <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-brand-secondary" />
             <p className="leading-relaxed">
               <strong>Tips Kurasi:</strong> Pastikan foto jelas di ruangan terang. Wajib sertakan foto layar
@@ -312,7 +312,7 @@ export default function SellPage() {
                   className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
                     category === c.id
                       ? "bg-brand-primary text-white border-brand-primary shadow-xs"
-                      : "bg-surface-subtle text-text-secondary border-surface-border hover:bg-[#E3E8EF]"
+                      : "bg-surface-subtle text-text-secondary border-surface-border hover:bg-outline-variant"
                   }`}
                 >
                   {c.label}
@@ -394,7 +394,7 @@ export default function SellPage() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                     completeness.includes(item)
                       ? "bg-brand-secondary text-white"
-                      : "bg-surface-subtle text-text-secondary hover:bg-[#E3E8EF]"
+                      : "bg-surface-subtle text-text-secondary hover:bg-outline-variant"
                   }`}
                 >
                   {item}
@@ -555,7 +555,7 @@ export default function SellPage() {
           </div>
 
           {/* Escrow Seller Protection Notice */}
-          <div className="bg-brand-secondary-light p-4 rounded-xl border border-brand-secondary/30 flex items-start gap-3 text-xs text-[#00714F]">
+          <div className="bg-brand-secondary-light p-4 rounded-xl border border-brand-secondary/30 flex items-start gap-3 text-xs text-on-secondary-container">
             <ShieldCheck className="w-5 h-5 text-brand-secondary shrink-0 mt-0.5" />
             <div className="leading-relaxed">
               <strong>Jaminan Keamanan Penjual:</strong> Pembeli wajib mentransfer dana ke rekening

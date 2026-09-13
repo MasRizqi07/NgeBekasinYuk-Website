@@ -100,7 +100,7 @@ export default function EscrowEducationPage() {
               sizes="(max-width: 768px) 100vw, 768px"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
               <div className="flex items-center gap-2 text-white text-xs font-semibold">
                 <CheckCircle2 className="w-4 h-4 text-secondary-fixed shrink-0" />
                 <span>Rekening Escrow Resmi Dipercaya 85.000+ Transaksi Sukses</span>

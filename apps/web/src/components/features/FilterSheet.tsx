@@ -109,7 +109,7 @@ export function FilterSheet({ isOpen, onClose }: FilterSheetProps) {
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
                       isSelected
                         ? "bg-brand-primary text-white shadow-xs"
-                        : "bg-surface-subtle text-text-secondary hover:bg-[#E3E8EF]"
+                        : "bg-surface-subtle text-text-secondary hover:bg-outline-variant"
                     }`}
                   >
                     {cat.label}
@@ -212,7 +212,7 @@ export function FilterSheet({ isOpen, onClose }: FilterSheetProps) {
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
                       isSelected
                         ? "bg-brand-primary text-white"
-                        : "bg-surface-subtle text-text-secondary hover:bg-[#E3E8EF]"
+                        : "bg-surface-subtle text-text-secondary hover:bg-outline-variant"
                     }`}
                   >
                     {city}

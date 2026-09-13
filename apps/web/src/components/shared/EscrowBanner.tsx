@@ -13,7 +13,7 @@ export function EscrowBanner({ variant = "compact", className }: EscrowBannerPro
     return (
       <div
         className={cn(
-          "w-full bg-gradient-to-r from-secondary-container/25 via-surface-subtle to-primary-fixed/20 p-3.5 rounded-2xl flex items-center justify-between gap-3 border border-brand-secondary/20 shadow-xs",
+          "w-full bg-linear-to-r from-secondary-container/25 via-surface-subtle to-primary-fixed/20 p-3.5 rounded-2xl flex items-center justify-between gap-3 border border-brand-secondary/20 shadow-xs",
           className
         )}
       >
@@ -92,13 +92,13 @@ export function EscrowBanner({ variant = "compact", className }: EscrowBannerPro
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0F6FFF] via-[#0A5BD6] to-[#0057CE] p-5 sm:p-7 text-white shadow-xl shadow-brand-primary/20",
+        "relative overflow-hidden rounded-2xl bg-linear-to-br from-[#0F6FFF] via-brand-primary-hover to-[#0057CE] p-5 sm:p-7 text-white shadow-xl shadow-brand-primary/20",
         className
       )}
     >
       <div className="relative z-10 flex flex-col gap-3 max-w-xl">
         <div className="inline-flex items-center gap-1.5 self-start rounded-full bg-white/20 backdrop-blur-md px-3 py-1 text-xs font-semibold shadow-xs">
-          <ShieldCheck className="w-4 h-4 text-[#60F9BD]" />
+          <ShieldCheck className="w-4 h-4 text-secondary-container" />
           <span className="tracking-wide uppercase text-[11px]">Garansi Rekber Resmi Kustodian BI</span>
         </div>
 
@@ -113,15 +113,15 @@ export function EscrowBanner({ variant = "compact", className }: EscrowBannerPro
 
         <div className="grid grid-cols-3 gap-2 pt-2">
           <div className="flex flex-col items-center justify-center rounded-xl bg-white/15 p-2.5 text-center backdrop-blur-md border border-white/10">
-            <Clock className="w-5 h-5 text-[#60F9BD]" />
+            <Clock className="w-5 h-5 text-secondary-container" />
             <span className="text-xs font-bold mt-1">Uji 2x24 Jam</span>
           </div>
           <div className="flex flex-col items-center justify-center rounded-xl bg-white/15 p-2.5 text-center backdrop-blur-md border border-white/10">
-            <CheckCircle2 className="w-5 h-5 text-[#60F9BD]" />
+            <CheckCircle2 className="w-5 h-5 text-secondary-container" />
             <span className="text-xs font-bold mt-1">Bisa Nego Santai</span>
           </div>
           <div className="flex flex-col items-center justify-center rounded-xl bg-white/15 p-2.5 text-center backdrop-blur-md border border-white/10">
-            <ShieldCheck className="w-5 h-5 text-[#60F9BD]" />
+            <ShieldCheck className="w-5 h-5 text-secondary-container" />
             <span className="text-xs font-bold mt-1">Anti Tipu-Tipu</span>
           </div>
         </div>

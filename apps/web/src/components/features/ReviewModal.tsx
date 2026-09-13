@@ -90,7 +90,7 @@ export function ReviewModal({ isOpen, onClose, order }: ReviewModalProps) {
                   <Star
                     className={`w-7 h-7 ${
                       (hoverRating || rating) >= star
-                        ? "fill-[#F5A524] text-[#F5A524]"
+                        ? "fill-brand-warning text-brand-warning"
                         : "text-surface-border"
                     }`}
                   />
@@ -122,7 +122,7 @@ export function ReviewModal({ isOpen, onClose, order }: ReviewModalProps) {
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                       isSelected
                         ? "bg-brand-primary text-white"
-                        : "bg-surface-subtle text-text-secondary hover:bg-[#E3E8EF]"
+                        : "bg-surface-subtle text-text-secondary hover:bg-outline-variant"
                     }`}
                   >
                     {tag}

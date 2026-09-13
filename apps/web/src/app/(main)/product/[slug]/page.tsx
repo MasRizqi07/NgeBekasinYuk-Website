@@ -206,7 +206,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* 100% Proteksi Escrow Rekber Box */}
-          <div className="bg-gradient-to-br from-white via-surface-subtle to-brand-primary-soft/30 p-5 rounded-2xl border border-brand-primary/20 shadow-xs flex flex-col gap-3">
+          <div className="bg-linear-to-br from-white via-surface-subtle to-brand-primary-soft/30 p-5 rounded-2xl border border-brand-primary/20 shadow-xs flex flex-col gap-3">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center shrink-0 shadow-sm">
                 <Lock className="w-5 h-5" />
@@ -320,7 +320,7 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-text-muted mt-0.5">
                   <span className="flex items-center gap-0.5 font-bold text-[#B26A00]">
-                    <Star className="w-3.5 h-3.5 fill-[#F5A524] text-[#F5A524]" />
+                    <Star className="w-3.5 h-3.5 fill-brand-warning text-brand-warning" />
                     {listing.seller.rating} ({listing.seller.reviewCount})
                   </span>
                   <span>•</span>
@@ -426,7 +426,7 @@ export default function ProductDetailPage() {
                   key={rate}
                   type="button"
                   onClick={() => setNegoPrice(val)}
-                  className="flex-1 py-1.5 rounded-lg bg-surface-subtle text-xs font-semibold text-text-secondary hover:bg-[#E3E8EF] transition-colors"
+                  className="flex-1 py-1.5 rounded-lg bg-surface-subtle text-xs font-semibold text-text-secondary hover:bg-outline-variant transition-colors"
                 >
                   -{(100 - rate * 100).toFixed(0)}% ({formatRupiah(val)})
                 </button>

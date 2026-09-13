@@ -177,7 +177,7 @@ function SearchContent() {
           <div className="relative shrink-0">
             <button
               onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
-              className="h-9 px-3 rounded-xl bg-surface-subtle hover:bg-[#E3E8EF] text-on-surface font-semibold text-xs flex items-center gap-1.5 transition-colors"
+              className="h-9 px-3 rounded-xl bg-surface-subtle hover:bg-outline-variant text-on-surface font-semibold text-xs flex items-center gap-1.5 transition-colors"
             >
               <ArrowUpDown className="w-3.5 h-3.5 text-text-muted" />
               <span>
@@ -223,7 +223,7 @@ function SearchContent() {
             className={`h-9 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
               canNegoOnly
                 ? "bg-brand-accent text-white"
-                : "bg-surface-subtle text-text-secondary hover:bg-[#E3E8EF]"
+                : "bg-surface-subtle text-text-secondary hover:bg-outline-variant"
             }`}
           >
             <span>Bisa Nego</span>
@@ -235,7 +235,7 @@ function SearchContent() {
             className={`h-9 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
               verifiedSellerOnly
                 ? "bg-brand-secondary text-white"
-                : "bg-surface-subtle text-text-secondary hover:bg-[#E3E8EF]"
+                : "bg-surface-subtle text-text-secondary hover:bg-outline-variant"
             }`}
           >
             <span>KYC Verified</span>
@@ -281,7 +281,7 @@ export default function SearchPage() {
   return (
     <Suspense
       fallback={
-        <div className="max-w-7xl mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <div className="max-w-7xl mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-100 gap-3">
           <div className="w-8 h-8 border-3 border-brand-primary border-t-transparent rounded-full animate-spin" />
           <p className="text-xs text-text-secondary">Memuat data pencarian...</p>
         </div>

@@ -109,7 +109,7 @@ export function Navbar() {
           >
             <MessageSquare className="w-5 h-5" />
             {unreadChats > 0 && (
-              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-brand-primary text-white text-[10px] font-bold flex items-center justify-center">
+              <span className="absolute top-1.5 right-1.5 min-w-4 h-4 px-1 rounded-full bg-brand-primary text-white text-[10px] font-bold flex items-center justify-center">
                 {unreadChats}
               </span>
             )}
@@ -120,7 +120,7 @@ export function Navbar() {
             href="/sell"
             className="hidden sm:inline-flex items-center gap-1.5 bg-brand-accent hover:bg-brand-accent-hover text-white font-bold text-sm px-4 h-11 rounded-xl shadow-[0_4px_16px_0_rgba(255,122,0,0.32)] transition-all hover:scale-[1.02] active:scale-95"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
+            <Plus className="w-4 h-4 stroke-3" />
             <span>Jual Gadget</span>
           </Link>
 

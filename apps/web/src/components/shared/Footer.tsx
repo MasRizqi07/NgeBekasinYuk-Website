@@ -45,7 +45,7 @@ export function Footer() {
           </div>
 
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FDE8E8] text-brand-danger flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-brand-danger-soft text-brand-danger flex items-center justify-center shrink-0">
               <HeartHandshake className="w-5 h-5" />
             </div>
             <div>

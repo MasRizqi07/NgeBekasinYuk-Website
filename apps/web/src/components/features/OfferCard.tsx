@@ -45,7 +45,7 @@ export function OfferCard({ offer, listing, convoId }: OfferCardProps) {
     <div
       className={`w-full max-w-md my-3 rounded-2xl p-4 shadow-md flex flex-col gap-3 relative overflow-hidden border ${
         isAccepted
-          ? "bg-[#E6F9F3] border-brand-secondary/40"
+          ? "bg-brand-secondary-light border-brand-secondary/40"
           : isRejected
           ? "bg-brand-danger-soft border-brand-danger/30"
           : "bg-surface-subtle border-surface-border"
@@ -122,7 +122,7 @@ export function OfferCard({ offer, listing, convoId }: OfferCardProps) {
             Harga Penawaran:
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold bg-[#E6F9F3] text-brand-secondary px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-bold bg-brand-secondary-light text-brand-secondary px-1.5 py-0.5 rounded">
               Hemat {offer.discountPercent}%
             </span>
             <span
@@ -139,7 +139,7 @@ export function OfferCard({ offer, listing, convoId }: OfferCardProps) {
       {/* Accepted State: Instant Checkout CTA */}
       {isAccepted && (
         <div className="flex flex-col gap-2 pt-1">
-          <div className="flex items-center gap-1.5 text-[11px] text-[#00714F] leading-tight">
+          <div className="flex items-center gap-1.5 text-[11px] text-on-secondary-container leading-tight">
             <Lock className="w-3.5 h-3.5 shrink-0" />
             <span>
               Harga Rp {offer.offerPrice.toLocaleString("id-ID")} terkunci khusus untuk akunmu.

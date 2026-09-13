@@ -104,13 +104,13 @@ export function ListingCard({ listing, priority = false }: ListingCardProps) {
 
           {/* Seller Metadata (City & Rating) */}
           <div className="flex items-center justify-between text-[11px] text-text-muted">
-            <div className="flex items-center gap-1 truncate max-w-[120px]">
+            <div className="flex items-center gap-1 truncate max-w-30">
               <MapPin className="w-3 h-3 text-text-muted shrink-0" />
               <span className="truncate">{listing.city}</span>
             </div>
 
             <div className="flex items-center gap-0.5 shrink-0 font-medium">
-              <Star className="w-3 h-3 fill-[#F5A524] text-[#F5A524]" />
+              <Star className="w-3 h-3 fill-brand-warning text-brand-warning" />
               <span>{listing.seller.rating}</span>
             </div>
           </div>

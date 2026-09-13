@@ -36,7 +36,7 @@ export default function ProfilePage() {
         <div className="bg-surface-container-lowest rounded-3xl p-5 border border-outline-variant/30 shadow-xs space-y-4">
           <div className="flex items-start gap-4">
             <div className="relative shrink-0">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center text-on-primary font-black text-2xl shadow-sm">
+              <div className="w-20 h-20 rounded-full bg-linear-to-tr from-primary to-primary-container flex items-center justify-center text-on-primary font-black text-2xl shadow-sm">
                 {user.avatar ? (
                   <Image
                     src={user.avatar}

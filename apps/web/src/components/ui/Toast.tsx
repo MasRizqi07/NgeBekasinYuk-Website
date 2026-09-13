@@ -52,20 +52,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 toast.type === "success" && "border-brand-secondary/30 text-on-surface",
                 toast.type === "error" && "border-brand-danger/30 text-on-surface",
                 toast.type === "info" && "border-brand-primary/30 text-on-surface",
-                toast.type === "warning" && "border-[#F5A524]/40 text-on-surface"
+                toast.type === "warning" && "border-brand-warning/40 text-on-surface"
               )}
             >
               {toast.type === "success" && (
-                <CheckCircle2 className="w-5 h-5 text-brand-secondary flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-brand-secondary shrink-0 mt-0.5" />
               )}
               {toast.type === "error" && (
-                <AlertCircle className="w-5 h-5 text-brand-danger flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-brand-danger shrink-0 mt-0.5" />
               )}
               {toast.type === "info" && (
-                <Info className="w-5 h-5 text-brand-primary flex-shrink-0 mt-0.5" />
+                <Info className="w-5 h-5 text-brand-primary shrink-0 mt-0.5" />
               )}
               {toast.type === "warning" && (
-                <AlertCircle className="w-5 h-5 text-[#F5A524] flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-brand-warning shrink-0 mt-0.5" />
               )}
 
               <div className="flex-1 min-w-0">
