@@ -27,6 +27,7 @@ import {
 import { useOrderStore } from "@/stores/useOrderStore";
 import { useDisputeStore } from "@/stores/useDisputeStore";
 import { formatRupiah, copyTextToClipboard } from "@/lib/utils";
+import type { Order } from "@/types";
 import { useToast } from "@/components/ui/Toast";
 import OrderTimeline from "@/components/features/OrderTimeline";
 import ReviewModal from "@/components/features/ReviewModal";
@@ -38,7 +39,6 @@ export default function OrderDetailPage() {
   const router = useRouter();
   const orderId = params.id as string;
   const {
-    getOrderById,
     confirmOrderReceived,
     shipOrder,
     simulateDelivered,
@@ -57,9 +57,10 @@ export default function OrderDetailPage() {
   const [disputeNotes, setDisputeNotes] = useState("");
   const [disputeFile, setDisputeFile] = useState<string | null>(null);
 
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [inspectionSeconds, setInspectionSeconds] = useState(0);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -75,7 +76,11 @@ export default function OrderDetailPage() {
         }
         const data = await res.json();
         setOrder(data);
-      } catch (err) {
+        if (data.inspectionExpiresAt) {
+          const diff = Math.floor((new Date(data.inspectionExpiresAt).getTime() - Date.now()) / 1000);
+          setInspectionSeconds(diff > 0 ? diff : 0);
+        }
+      } catch {
         setError("Terjadi kesalahan sistem.");
       } finally {
         setLoading(false);
@@ -85,14 +90,8 @@ export default function OrderDetailPage() {
   }, [orderId]);
 
   // Countdown timer dynamically calculated from order.inspectionExpiresAt
-  const [inspectionSeconds, setInspectionSeconds] = useState(0);
 
-  useEffect(() => {
-    if (order && order.inspectionExpiresAt) {
-      const diff = Math.floor((new Date(order.inspectionExpiresAt).getTime() - Date.now()) / 1000);
-      setInspectionSeconds(diff > 0 ? diff : 0);
-    }
-  }, [order]);
+  // The initial countdown value is set when fetching the order
 
   useEffect(() => {
     if (!order?.inspectionExpiresAt) return;
@@ -627,9 +626,14 @@ export default function OrderDetailPage() {
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <button
-              onClick={() => {
-                shipOrder(order.id, "JT" + Math.floor(1000000000 + Math.random() * 9000000000));
+              onClick={async () => {
+                await fetch(`/api/orders/${order.id}/transition`, {
+                  method: "POST",
+                  body: JSON.stringify({ toStatus: "SHIPPED", shippingCourier: "JT", shippingAirwayBill: "JT" + Math.floor(1000000000 + Math.random() * 9000000000) })
+                });
                 showToast("Simulasi: Penjual telah menginput resi kurir!", "info");
+                // Refresh the page to load updated data from API
+                window.location.reload();
               }}
               className="p-2 bg-surface-container-lowest text-on-surface hover:bg-surface-container rounded-xl font-bold border border-outline-variant/30 text-left flex items-center gap-1.5"
             >
@@ -637,9 +641,13 @@ export default function OrderDetailPage() {
               <span>1. Simulasi Kirim Resi</span>
             </button>
             <button
-              onClick={() => {
-                simulateDelivered(order.id);
+              onClick={async () => {
+                await fetch(`/api/orders/${order.id}/transition`, {
+                  method: "POST",
+                  body: JSON.stringify({ toStatus: "INSPECTING" })
+                });
                 showToast("Simulasi: Kurir konfirmasi paket telah tiba!", "success");
+                window.location.reload();
               }}
               className="p-2 bg-surface-container-lowest text-on-surface hover:bg-surface-container rounded-xl font-bold border border-outline-variant/30 text-left flex items-center gap-1.5"
             >

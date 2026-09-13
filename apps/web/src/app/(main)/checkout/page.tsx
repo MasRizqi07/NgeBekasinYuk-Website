@@ -34,14 +34,14 @@ export default function CheckoutPage() {
       ? items[0].negotiatedPrice
       : activeListing.price;
 
-  const [paymentMethod, setPaymentMethod] = useState<
-    "BCA_VA" | "MANDIRI_VA" | "BRI_VA" | "BNI_VA" | "QRIS"
-  >("BCA_VA");
+  type PaymentMethod = "BCA_VA" | "MANDIRI_VA" | "BRI_VA" | "BNI_VA" | "QRIS";
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("BCA_VA");
 
   useEffect(() => {
-    const saved = sessionStorage.getItem("checkout_paymentMethod");
+    const saved = sessionStorage.getItem("checkout_paymentMethod") as PaymentMethod;
     if (saved) {
-      setPaymentMethod(saved as any);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPaymentMethod(saved);
     }
   }, []);
 

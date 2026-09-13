@@ -19,7 +19,11 @@ export async function GET(
       include: {
         buyer: true,
         seller: true,
-        listing: true,
+        listing: {
+          include: {
+            seller: true,
+          }
+        },
       }
     });
 
@@ -47,7 +51,7 @@ export async function GET(
     };
 
     return NextResponse.json(clientOrder);
-  } catch (error: any) {
+  } catch (error) {
     console.error("GET /api/orders/[id] Error:", error);
     return NextResponse.json(
       { error: "INTERNAL_SERVER_ERROR", message: "Gagal memuat pesanan" },
