@@ -201,4 +201,64 @@ describe("Withdrawal Retry Idempotency Integration Tests (PostgreSQL)", () => {
     expect(data.error).toBe("VALIDATION_ERROR");
     expect(data.details).toHaveProperty("clientRequestId");
   });
+
+  it("4. Two withdrawal requests with the SAME Idempotency-Key HTTP HEADER -> wallet debited exactly once, second response has isDuplicate: true", async () => {
+    const headerKey = `hdr-idemp-same-${Date.now()}-xyz98765`;
+    const payload = {
+      amount: 150_000,
+      bankName: "MANDIRI",
+      accountNumber: "9876543210",
+      accountHolder: "Idempotency Seller",
+      pin,
+      // clientRequestId omitted from JSON body — supplied via standard HTTP header!
+    };
+
+    // First call with Idempotency-Key header
+    const req1 = new Request("http://localhost:3000/api/wallet/withdraw", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": headerKey,
+      },
+      body: JSON.stringify(payload),
+    });
+    const res1 = await POST(req1);
+    expect(res1.status).toBe(200);
+    const data1 = await res1.json();
+
+    expect(data1.success).toBe(true);
+    expect(data1.isDuplicate).toBe(false);
+    expect(data1.amount).toBe(150_000);
+    expect(data1.newActiveBalance).toBe(350_000);
+
+    // Second call: duplicate request replaying identical Idempotency-Key header
+    const req2 = new Request("http://localhost:3000/api/wallet/withdraw", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": headerKey,
+      },
+      body: JSON.stringify(payload),
+    });
+    const res2 = await POST(req2);
+    expect(res2.status).toBe(200);
+    const data2 = await res2.json();
+
+    expect(data2.success).toBe(true);
+    expect(data2.isDuplicate).toBe(true);
+    expect(data2.withdrawalId).toBe(data1.withdrawalId);
+    expect(data2.withdrawalNumber).toBe(data1.withdrawalNumber);
+    expect(data2.newActiveBalance).toBe(350_000);
+
+    // Verify DB ledger: wallet balance debited exactly once (350k, not 200k)
+    const wallet = await prisma.wallet.findUniqueOrThrow({
+      where: { userId: sellerId },
+    });
+    expect(wallet.activeBalance).toBe(350_000);
+
+    const withdrawals = await prisma.withdrawal.findMany({
+      where: { walletId: wallet.id, idempotencyKey: headerKey },
+    });
+    expect(withdrawals.length).toBe(1);
+  });
 });
