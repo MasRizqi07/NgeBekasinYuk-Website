@@ -36,7 +36,7 @@ test.describe("Authentication Journey E2E (HP2-P1-02)", () => {
     await page.click('button[type="submit"]');
 
     // Error toast or message appears
-    await expect(page.getByText(/Email atau kata sandi tidak cocok/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Email atau kata sandi tidak cocok/i).first()).toBeVisible({ timeout: 10_000 });
 
     // 6. Valid login attempt with correct password
     await page.fill('input[type="password"]', testPassword);

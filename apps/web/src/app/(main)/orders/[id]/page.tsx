@@ -41,7 +41,6 @@ export default function OrderDetailPage() {
   const {
     confirmOrderReceived,
     shipOrder,
-    simulateDelivered,
     markAsDisputed,
   } = useOrderStore();
   const { createDispute } = useDisputeStore();

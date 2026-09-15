@@ -25,7 +25,7 @@ test.describe("Buyer Happy Path E2E Journey", () => {
     ]);
 
     // MOCK THE API FOR E2E TEST SINCE CHECKOUT HAS NO BACKEND
-    let mockOrder: any = null;
+    let mockOrder: Record<string, unknown> | null = null;
     await context.route('**/api/orders/**', async (route) => {
       const request = route.request();
       const url = request.url();
@@ -59,9 +59,11 @@ test.describe("Buyer Happy Path E2E Journey", () => {
         await route.fulfill({ json: mockOrder });
       } else if (request.method() === 'POST' && url.includes('transition')) {
         const body = JSON.parse(request.postData() || '{}');
-        mockOrder.status = body.toStatus;
-        if (body.toStatus === 'INSPECTING') {
-          mockOrder.inspectionExpiresAt = new Date(Date.now() + 172800000).toISOString();
+        if (mockOrder) {
+          mockOrder.status = body.toStatus;
+          if (body.toStatus === 'INSPECTING') {
+            mockOrder.inspectionExpiresAt = new Date(Date.now() + 172800000).toISOString();
+          }
         }
         await route.fulfill({ json: { success: true, order: mockOrder } });
       } else {
