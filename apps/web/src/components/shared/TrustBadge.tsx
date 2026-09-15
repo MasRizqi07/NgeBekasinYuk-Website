@@ -71,7 +71,7 @@ export function TrustBadge({
           className
         )}
       >
-        <Star className={cn("fill-[#F5A524] text-[#F5A524]", size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5")} />
+        <Star className={cn("fill-brand-warning text-brand-warning", size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5")} />
         <span>{score ? `${score} Trust Score` : label || "4.9 (50+)"}</span>
       </span>
     );

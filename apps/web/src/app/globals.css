@@ -27,6 +27,37 @@
   --text-muted: #8A94A6;
 }
 
+.dark {
+  /* Surfaces & Text - Dark Mode */
+  --bg-app: #121212;
+  --bg-card: #1E1E1E;
+  --bg-subtle: #2C2C2C;
+  --border-color: #333333;
+  --text-primary: #F5F5F5;
+  --text-secondary: #A0A0A0;
+  --text-muted: #737373;
+
+  /* Template Theme Colors Compatibility - Dark Mode */
+  --color-surface: #121212;
+  --color-surface-dim: #1E1E1E;
+  --color-surface-bright: #2C2C2C;
+  --color-surface-container-lowest: #000000;
+  --color-surface-container-low: #1A1A1A;
+  --color-surface-container: #1E1E1E;
+  --color-surface-container-high: #2C2C2C;
+  --color-surface-container-highest: #333333;
+  --color-surface-variant: #333333;
+  
+  --color-on-surface: #F5F5F5;
+  --color-on-surface-variant: #A0A0A0;
+  --color-inverse-surface: #F7F8FA;
+  --color-inverse-on-surface: #1A1D23;
+  --color-outline: #737373;
+  --color-outline-variant: #333333;
+  --color-background: #121212;
+  --color-on-background: #F5F5F5;
+}
+
 @theme {
   --font-sans: var(--font-inter);
   
@@ -110,7 +141,12 @@
 
 .no-scrollbar {
   -ms-overflow-style: none;
-  scrollbar-width: none;
+}
+
+@supports (scrollbar-width: none) {
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
 }
 
 .pb-safe {
@@ -122,8 +158,90 @@
 }
 
 body {
-  background-color: #F7F8FA;
-  color: #1A1D23;
+  background-color: var(--color-background, #F7F8FA);
+  color: var(--color-on-background, #1A1D23);
   font-family: var(--font-inter, 'Inter', sans-serif);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Dark Mode Fixes */
+.dark .bg-white {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+.dark .text-on-surface {
+  color: var(--color-on-surface) !important;
+}
+
+/* Glassmorphism Premium Utilities */
+
+/* 1. Panel Besar (Navbar, Card, Modal) */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  pointer-events: none;
+}
+
+.glass-panel::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 1px; height: 100%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), transparent, rgba(255, 255, 255, 0.2));
+  pointer-events: none;
+}
+
+.dark .glass-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.dark .glass-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.dark .glass-panel::after {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent, rgba(255, 255, 255, 0.05));
+}
+
+/* 2. Komponen Kecil (Tombol, Ikon) */
+.glass, .glass-btn {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.dark .glass, .dark .glass-btn {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.glass-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+.dark .glass-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
 }

@@ -21,6 +21,8 @@ import { useListingStore } from "@/stores/useListingStore";
 import { useNotificationStore } from "@/stores/useNotificationStore";
 import { useChatStore } from "@/stores/useChatStore";
 import { useUserStore } from "@/stores/useUserStore";
+import { ThemeToggle } from "./ThemeToggle";
+import { motion } from "framer-motion";
 
 export function Navbar() {
   const router = useRouter();
@@ -39,7 +41,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-surface-border shadow-[0_1px_4px_rgba(16,24,40,0.04)]">
+    <header className="sticky top-0 z-40 w-full glass-panel shadow-[0_1px_4px_rgba(16,24,40,0.04)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-3 sm:gap-6">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
@@ -89,6 +91,8 @@ export function Navbar() {
 
         {/* Action Controls & Navigation */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <ThemeToggle />
+
           {/* Notifications */}
           <Link
             href="/notifications"
@@ -109,7 +113,7 @@ export function Navbar() {
           >
             <MessageSquare className="w-5 h-5" />
             {unreadChats > 0 && (
-              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-brand-primary text-white text-[10px] font-bold flex items-center justify-center">
+              <span className="absolute top-1.5 right-1.5 min-w-4 h-4 px-1 rounded-full bg-brand-primary text-white text-[10px] font-bold flex items-center justify-center">
                 {unreadChats}
               </span>
             )}
@@ -120,13 +124,15 @@ export function Navbar() {
             href="/sell"
             className="hidden sm:inline-flex items-center gap-1.5 bg-brand-accent hover:bg-brand-accent-hover text-white font-bold text-sm px-4 h-11 rounded-xl shadow-[0_4px_16px_0_rgba(255,122,0,0.32)] transition-all hover:scale-[1.02] active:scale-95"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
+            <Plus className="w-4 h-4 stroke-3" />
             <span>Jual Gadget</span>
           </Link>
 
           {/* User Profile Dropdown */}
           <div className="relative">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="flex items-center gap-1.5 p-1 rounded-xl hover:bg-surface-subtle transition-colors"
             >
@@ -140,7 +146,7 @@ export function Navbar() {
                 />
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-text-muted hidden sm:block" />
-            </button>
+            </motion.button>
 
             {isProfileOpen && (
               <>

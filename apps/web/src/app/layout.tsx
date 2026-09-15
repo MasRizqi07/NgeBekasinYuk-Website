@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { ClientErrorHandler } from "@/components/shared/ClientErrorHandler";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
 const inter = Inter({
@@ -31,9 +33,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full flex flex-col bg-surface font-sans text-on-surface" suppressHydrationWarning>
-        <ClientErrorHandler />
-        {children}
+      <body className="min-h-full flex flex-col bg-surface font-sans text-on-surface transition-colors duration-300" suppressHydrationWarning>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ToastProvider>
+            <ClientErrorHandler />
+            {children}
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

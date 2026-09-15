@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -34,9 +34,21 @@ export default function CheckoutPage() {
       ? items[0].negotiatedPrice
       : activeListing.price;
 
-  const [paymentMethod, setPaymentMethod] = useState<
-    "BCA_VA" | "MANDIRI_VA" | "BRI_VA" | "BNI_VA" | "QRIS"
-  >("BCA_VA");
+  type PaymentMethod = "BCA_VA" | "MANDIRI_VA" | "BRI_VA" | "BNI_VA" | "QRIS";
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("BCA_VA");
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem("checkout_paymentMethod") as PaymentMethod;
+    if (saved) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPaymentMethod(saved);
+    }
+  }, []);
+
+  const handleSetPaymentMethod = (method: typeof paymentMethod) => {
+    setPaymentMethod(method);
+    sessionStorage.setItem("checkout_paymentMethod", method);
+  };
 
   const address = user.addresses.find((a) => a.isDefault) || user.addresses[0];
   const shippingFee = selectedCourier.price;
@@ -65,7 +77,7 @@ export default function CheckoutPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-6">
       {/* Escrow Trust Micro-Banner */}
-      <div className="bg-gradient-to-r from-brand-secondary-light via-surface-subtle to-brand-primary-soft/30 p-4 rounded-2xl border border-brand-secondary/30 shadow-xs flex items-start gap-3">
+      <div className="bg-linear-to-r from-brand-secondary-light via-surface-subtle to-brand-primary-soft/30 p-4 rounded-2xl border border-brand-secondary/30 shadow-xs flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-brand-secondary text-white flex items-center justify-center shrink-0 shadow-sm">
           <Lock className="w-5 h-5" />
         </div>
@@ -235,7 +247,7 @@ export default function CheckoutPage() {
                   <button
                     key={m.id}
                     type="button"
-                    onClick={() => setPaymentMethod(m.id)}
+                    onClick={() => handleSetPaymentMethod(m.id)}
                     className={`p-3 rounded-xl border text-center flex flex-col items-center justify-center transition-all ${
                       isSelected
                         ? "border-brand-primary bg-brand-primary-soft/60 text-brand-primary font-bold shadow-xs"

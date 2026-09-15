@@ -23,7 +23,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const showToast = React.useCallback(
     (message: string, type: "success" | "error" | "info" | "warning" = "success", title?: string) => {
-      const id = `toast-${Date.now()}`;
+      const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       setToasts((prev) => [...prev, { id, type, title, message }]);
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -48,37 +48,38 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
               className={cn(
-                "pointer-events-auto p-4 rounded-xl shadow-lg border flex items-start gap-3 bg-white",
-                toast.type === "success" && "border-brand-secondary/30 text-on-surface",
-                toast.type === "error" && "border-brand-danger/30 text-on-surface",
-                toast.type === "info" && "border-brand-primary/30 text-on-surface",
-                toast.type === "warning" && "border-[#F5A524]/40 text-on-surface"
+                "pointer-events-auto p-4 rounded-xl shadow-lg border flex items-start gap-3 bg-white dark:bg-zinc-900 border-border dark:border-zinc-800 text-on-surface transition-colors",
+                toast.type === "success" && "border-brand-secondary/40 dark:border-brand-secondary/30",
+                toast.type === "error" && "border-brand-danger/40 dark:border-brand-danger/30",
+                toast.type === "info" && "border-brand-primary/40 dark:border-brand-primary/30",
+                toast.type === "warning" && "border-brand-warning/50 dark:border-brand-warning/40"
               )}
             >
               {toast.type === "success" && (
-                <CheckCircle2 className="w-5 h-5 text-brand-secondary flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-brand-secondary shrink-0 mt-0.5" />
               )}
               {toast.type === "error" && (
-                <AlertCircle className="w-5 h-5 text-brand-danger flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-brand-danger shrink-0 mt-0.5" />
               )}
               {toast.type === "info" && (
-                <Info className="w-5 h-5 text-brand-primary flex-shrink-0 mt-0.5" />
+                <Info className="w-5 h-5 text-brand-primary shrink-0 mt-0.5" />
               )}
               {toast.type === "warning" && (
-                <AlertCircle className="w-5 h-5 text-[#F5A524] flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-brand-warning shrink-0 mt-0.5" />
               )}
 
               <div className="flex-1 min-w-0">
                 {toast.title && (
                   <h4 className="font-bold text-sm text-on-surface">{toast.title}</h4>
                 )}
-                <p className="text-xs text-text-secondary mt-0.5 leading-snug">{toast.message}</p>
+                <p className="text-xs text-text-secondary dark:text-zinc-400 mt-0.5 leading-snug">{toast.message}</p>
               </div>
 
               <button
                 type="button"
                 onClick={() => removeToast(toast.id)}
-                className="text-text-muted hover:text-on-surface p-1 rounded-md"
+                className="text-text-muted hover:text-on-surface p-1 rounded-md transition-colors"
+                aria-label="Tutup notifikasi"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -90,13 +91,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useToast() {
+export function useToast(): ToastContextType {
   const context = React.useContext(ToastContext);
   if (!context) {
     return {
-      showToast: (msg: string) => {
+      showToast: (message: string, type: "success" | "error" | "info" | "warning" = "success", title?: string) => {
         if (typeof window !== "undefined") {
-          console.log("[Toast]:", msg);
+          console.log(`[Toast ${type}]:`, title ? `${title} - ${message}` : message);
         }
       },
     };

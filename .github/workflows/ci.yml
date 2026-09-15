@@ -38,6 +38,7 @@ jobs:
       DEMO_WITHDRAWAL_PROVIDER: "true"
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"
       CI: "true"
+      STORE_PATH: ""
 
     steps:
       - name: Checkout Repository

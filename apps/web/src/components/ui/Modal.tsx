@@ -71,7 +71,7 @@ export function Modal({
           >
             {/* Drag Handle for mobile */}
             <div className="pt-3 pb-1 flex justify-center sm:hidden">
-              <div className="w-10 h-1.5 bg-[#E3E8EF] rounded-full" />
+              <div className="w-10 h-1.5 bg-outline-variant rounded-full" />
             </div>
 
             {/* Header */}

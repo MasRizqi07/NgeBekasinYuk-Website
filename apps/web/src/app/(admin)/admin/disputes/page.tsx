@@ -97,7 +97,11 @@ export default function AdminDisputesPage() {
         "success"
       );
     } catch {
-      showToast("Terjadi kesalahan jaringan saat memproses putusan sengketa.", "error");
+      showToast(
+        "Status putusan sengketa belum bisa dipastikan (koneksi terputus/timeout). Periksa riwayat audit sebelum mencoba lagi.",
+        "warning",
+        "Status Putusan Belum Dipastikan"
+      );
       setIsExecuting(false);
     }
   };

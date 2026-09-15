@@ -27,6 +27,7 @@ import {
 import { useOrderStore } from "@/stores/useOrderStore";
 import { useDisputeStore } from "@/stores/useDisputeStore";
 import { formatRupiah, copyTextToClipboard } from "@/lib/utils";
+import type { Order } from "@/types";
 import { useToast } from "@/components/ui/Toast";
 import OrderTimeline from "@/components/features/OrderTimeline";
 import ReviewModal from "@/components/features/ReviewModal";
@@ -38,10 +39,8 @@ export default function OrderDetailPage() {
   const router = useRouter();
   const orderId = params.id as string;
   const {
-    getOrderById,
     confirmOrderReceived,
     shipOrder,
-    simulateDelivered,
     markAsDisputed,
   } = useOrderStore();
   const { createDispute } = useDisputeStore();
@@ -57,17 +56,77 @@ export default function OrderDetailPage() {
   const [disputeNotes, setDisputeNotes] = useState("");
   const [disputeFile, setDisputeFile] = useState<string | null>(null);
 
-  // Countdown timer simulation for inspection
-  const [inspectionSeconds, setInspectionSeconds] = useState(135165); // ~1 day 13h 32m
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [inspectionSeconds, setInspectionSeconds] = useState(0);
 
   useEffect(() => {
+    const fetchOrder = async () => {
+      try {
+        const res = await fetch(`/api/orders/${orderId}`);
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            setError("FORBIDDEN: Anda tidak memiliki akses ke pesanan ini.");
+          } else {
+            setError("Gagal memuat pesanan.");
+          }
+          return;
+        }
+        const data = await res.json();
+        setOrder(data);
+        if (data.inspectionExpiresAt) {
+          const diff = Math.floor((new Date(data.inspectionExpiresAt).getTime() - Date.now()) / 1000);
+          setInspectionSeconds(diff > 0 ? diff : 0);
+        }
+      } catch {
+        setError("Terjadi kesalahan sistem.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrder();
+  }, [orderId]);
+
+  // Countdown timer dynamically calculated from order.inspectionExpiresAt
+
+  // The initial countdown value is set when fetching the order
+
+  useEffect(() => {
+    if (!order?.inspectionExpiresAt) return;
     const timer = setInterval(() => {
       setInspectionSeconds((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [order?.inspectionExpiresAt]);
 
-  const order = getOrderById(orderId);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+        <div className="text-on-surface-variant font-medium text-sm animate-pulse">Memuat pesanan...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+        <div className="bg-surface-container-lowest p-8 rounded-3xl text-center max-w-sm w-full border border-error/30 space-y-4">
+          <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mx-auto text-error">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <h2 className="font-bold text-lg text-error">Akses Ditolak / Gagal</h2>
+          <p className="text-xs text-on-surface-variant">{error}</p>
+          <Link
+            href="/orders"
+            className="block w-full py-2.5 bg-primary text-on-primary rounded-xl text-xs font-bold mt-4"
+          >
+            Kembali ke Daftar Pesanan
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (!order) {
     return (
@@ -110,7 +169,8 @@ export default function OrderDetailPage() {
     }
   };
 
-  const handleReleaseFunds = () => {
+  const handleReleaseFunds = async () => {
+    if (!order) return;
     if (
       window.confirm(
         `Konfirmasi barang sesuai & lepaskan dana ${formatRupiah(
@@ -118,17 +178,41 @@ export default function OrderDetailPage() {
         )} ke penjual ${order.listing.seller.name}? Tindakan ini tidak dapat dibatalkan.`
       )
     ) {
-      confirmOrderReceived(order.id);
-      confetti({
-        particleCount: 90,
-        spread: 80,
-        origin: { y: 0.6 },
-      });
-      showToast(
-        "Terima kasih! Dana telah berhasil dicairkan ke dompet penjual.",
-        "success"
-      );
-      setShowReviewModal(true);
+      try {
+        const res = await fetch(`/api/orders/${order.id}/transition`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            toStatus: "COMPLETED",
+          }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.message || "Gagal melepaskan dana escrow.", "error");
+          return;
+        }
+
+        confirmOrderReceived(order.id);
+        setOrder((prev) => (prev ? { ...prev, status: "COMPLETED" as const } : null));
+        confetti({
+          particleCount: 90,
+          spread: 80,
+          origin: { y: 0.6 },
+        });
+        showToast(
+          "Terima kasih! Dana telah berhasil dicairkan ke dompet penjual.",
+          "success"
+        );
+        setShowReviewModal(true);
+      } catch (err) {
+        console.error("[OrderDetailPage] handleReleaseFunds failed:", err);
+        showToast(
+          "Status pencairan dana belum bisa dipastikan (koneksi terputus/timeout). Periksa status pesanan Anda.",
+          "warning",
+          "Status Pencairan Belum Dipastikan"
+        );
+      }
     }
   };
 
@@ -566,9 +650,14 @@ export default function OrderDetailPage() {
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <button
-              onClick={() => {
-                shipOrder(order.id, "JT" + Math.floor(1000000000 + Math.random() * 9000000000));
+              onClick={async () => {
+                await fetch(`/api/orders/${order.id}/transition`, {
+                  method: "POST",
+                  body: JSON.stringify({ toStatus: "SHIPPED", shippingCourier: "JT", shippingAirwayBill: "JT" + Math.floor(1000000000 + Math.random() * 9000000000) })
+                });
                 showToast("Simulasi: Penjual telah menginput resi kurir!", "info");
+                // Refresh the page to load updated data from API
+                window.location.reload();
               }}
               className="p-2 bg-surface-container-lowest text-on-surface hover:bg-surface-container rounded-xl font-bold border border-outline-variant/30 text-left flex items-center gap-1.5"
             >
@@ -576,9 +665,13 @@ export default function OrderDetailPage() {
               <span>1. Simulasi Kirim Resi</span>
             </button>
             <button
-              onClick={() => {
-                simulateDelivered(order.id);
+              onClick={async () => {
+                await fetch(`/api/orders/${order.id}/transition`, {
+                  method: "POST",
+                  body: JSON.stringify({ toStatus: "INSPECTING" })
+                });
                 showToast("Simulasi: Kurir konfirmasi paket telah tiba!", "success");
+                window.location.reload();
               }}
               className="p-2 bg-surface-container-lowest text-on-surface hover:bg-surface-container rounded-xl font-bold border border-outline-variant/30 text-left flex items-center gap-1.5"
             >
