@@ -62,15 +62,22 @@ export default function WalletPage() {
           origin: { y: 0.6 },
         });
         showToast(res.message, "success");
+      } else if (res.status === "UNKNOWN") {
+        // AMBIGUOUS / PENDING: server state unconfirmed due to timeout/network error
+        // Retain clientRequestId so subsequent retry reuses identical Idempotency-Key
+        showToast(res.message, "warning", "Status Penarikan Belum Dipastikan");
       } else {
-        if (!res.message.includes("Status penarikan belum bisa dipastikan")) {
-          setClientRequestId(null);
-        }
-        showToast(res.message, "error");
+        setClientRequestId(null);
+        showToast(res.message, "error", "Penarikan Gagal");
       }
     } catch {
       setIsProcessing(false);
-      showToast("Terjadi kesalahan saat memproses penarikan.", "error");
+      // Unhandled client runtime error: do not assert failure; retain requestId and warn
+      showToast(
+        "Status penarikan belum bisa dipastikan (koneksi terputus/timeout). Cek riwayat transaksi sebelum mencoba lagi.",
+        "warning",
+        "Status Penarikan Belum Dipastikan"
+      );
     }
   };
 

@@ -14,7 +14,7 @@ interface WalletStore {
     bankId: string,
     pin: string,
     clientRequestId: string
-  ) => Promise<{ success: boolean; message: string }>;
+  ) => Promise<{ success: boolean; status: "SUCCESS" | "FAILED" | "UNKNOWN"; message: string }>;
   releaseEscrowToWallet: (amount: number, orderId: string, itemTitle: string) => void;
   holdEscrowFunds: (amount: number, orderId: string, itemTitle: string) => void;
 }
@@ -32,16 +32,17 @@ export const useWalletStore = create<WalletStore>()(
 
         // P0-04 FIX: Strict 6-digit numeric validation, never allowing arbitrary 6-digit numbers
         if (!/^\d{6}$/.test(pin)) {
-          return { success: false, message: "PIN transaksi harus berupa 6 digit angka." };
+          return { success: false, status: "FAILED", message: "PIN transaksi harus berupa 6 digit angka." };
         }
 
         if (amount < 10000) {
-          return { success: false, message: "Minimal penarikan saldo adalah Rp 10.000." };
+          return { success: false, status: "FAILED", message: "Minimal penarikan saldo adalah Rp 10.000." };
         }
 
         if (amount > saldoAktif) {
           return {
             success: false,
+            status: "FAILED",
             message: "Saldo tersedia tidak mencukupi untuk penarikan ini.",
           };
         }
@@ -66,6 +67,7 @@ export const useWalletStore = create<WalletStore>()(
           if (!res.ok) {
             return {
               success: false,
+              status: "FAILED",
               message: data.message || "Gagal memproses penarikan saldo.",
             };
           }
@@ -87,6 +89,7 @@ export const useWalletStore = create<WalletStore>()(
 
           return {
             success: true,
+            status: "SUCCESS",
             message: `Penarikan Rp ${amount.toLocaleString("id-ID")} ke ${bank.bankName} berhasil diproses! [Simulasi BI-FAST]`,
           };
         } catch (err) {
@@ -97,8 +100,9 @@ export const useWalletStore = create<WalletStore>()(
           console.error("[useWalletStore] withdrawFunds request failed:", err);
           return {
             success: false,
+            status: "UNKNOWN",
             message:
-              "Status penarikan belum bisa dipastikan. Cek riwayat transaksi sebelum mencoba lagi — jika Anda mencoba lagi, permintaan ini akan otomatis dianggap sama dan tidak akan memotong saldo dua kali.",
+              "Status penarikan belum bisa dipastikan (koneksi terputus/timeout). Cek mutasi saldo sebelum mencoba lagi — jika Anda mencoba lagi, permintaan ini menggunakan Idempotency-Key yang aman dan tidak akan memotong saldo dua kali.",
           };
         }
       },

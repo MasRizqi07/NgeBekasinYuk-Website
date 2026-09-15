@@ -169,7 +169,8 @@ export default function OrderDetailPage() {
     }
   };
 
-  const handleReleaseFunds = () => {
+  const handleReleaseFunds = async () => {
+    if (!order) return;
     if (
       window.confirm(
         `Konfirmasi barang sesuai & lepaskan dana ${formatRupiah(
@@ -177,17 +178,41 @@ export default function OrderDetailPage() {
         )} ke penjual ${order.listing.seller.name}? Tindakan ini tidak dapat dibatalkan.`
       )
     ) {
-      confirmOrderReceived(order.id);
-      confetti({
-        particleCount: 90,
-        spread: 80,
-        origin: { y: 0.6 },
-      });
-      showToast(
-        "Terima kasih! Dana telah berhasil dicairkan ke dompet penjual.",
-        "success"
-      );
-      setShowReviewModal(true);
+      try {
+        const res = await fetch(`/api/orders/${order.id}/transition`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            toStatus: "COMPLETED",
+          }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.message || "Gagal melepaskan dana escrow.", "error");
+          return;
+        }
+
+        confirmOrderReceived(order.id);
+        setOrder((prev) => (prev ? { ...prev, status: "COMPLETED" as const } : null));
+        confetti({
+          particleCount: 90,
+          spread: 80,
+          origin: { y: 0.6 },
+        });
+        showToast(
+          "Terima kasih! Dana telah berhasil dicairkan ke dompet penjual.",
+          "success"
+        );
+        setShowReviewModal(true);
+      } catch (err) {
+        console.error("[OrderDetailPage] handleReleaseFunds failed:", err);
+        showToast(
+          "Status pencairan dana belum bisa dipastikan (koneksi terputus/timeout). Periksa status pesanan Anda.",
+          "warning",
+          "Status Pencairan Belum Dipastikan"
+        );
+      }
     }
   };
 
