@@ -6,7 +6,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-Strict_5.x-green)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.4_App_Router-black)
 ![Database](https://img.shields.io/badge/Prisma_ORM-6.4.1_PostgreSQL-indigo)
-![Tests](https://img.shields.io/badge/Vitest-116_Passed_100%25-success)
+![Tests](https://img.shields.io/badge/Vitest-125_Passed_100%25-success)
 ![E2E](https://img.shields.io/badge/Playwright-20_Passed_100%25-success)
 ![ESLint](https://img.shields.io/badge/ESLint-0_Errors_0_Warnings-brightgreen)
 
@@ -40,7 +40,7 @@ Validation         : Zod schemas for all mutating endpoints, fail-closed runtime
 Security & Auth    : Web Crypto HMAC-SHA256 Signed HttpOnly Session Cookies, Bcrypt Password & PIN,
                      Database-Authoritative Session Revocation, AES-256-GCM Encrypted TOTP Secrets,
                      Persistent PostgreSQL-backed TOTP Replay Defense, Single-Use Step-Up Grants
-Test Runners       : Vitest v4.1.x (116 unit, integration & concurrency tests across 18 suites),
+Test Runners       : Vitest v4.1.x (125 unit, integration & concurrency tests across 19 suites),
                      Playwright v1.50+ (20 browser & security regression E2E tests)
 Quality Gate       : ESLint (0 errors, 0 warnings), Strict TypeScript (0 errors)
 ```
