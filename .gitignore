@@ -45,3 +45,11 @@ next-env.d.ts
 *.db
 *.db-journal
 dev.db
+
+# test & build capture logs
+*_output.txt
+build_*.txt
+test_*.txt
+tsc_*.txt
+lint_*.txt
+
