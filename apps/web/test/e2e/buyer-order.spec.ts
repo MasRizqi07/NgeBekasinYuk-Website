@@ -1,12 +1,35 @@
 import { test, expect } from "@playwright/test";
 import { signSession } from "@/lib/auth/session";
+import { prisma } from "@/server/db/prisma";
 
-test.describe("Buyer Happy Path E2E Journey", () => {
-  test("buyer can browse product, checkout, pay escrow, inspect, and complete order", async ({ page, context }) => {
-    page.on('pageerror', error => console.log('PAGE ERROR:', error.message));
-    page.on('console', msg => {
-      if (msg.type() === 'error') console.log('CONSOLE ERROR:', msg.text());
+// ==============================================================================
+// NgeBekasinYuk Server-Authoritative Buyer Journey E2E Test Suite
+//
+// ZERO API MOCKS POLICY:
+// All order creation, payment simulation, shipping transitions, and escrow releases
+// execute against real Next.js API route handlers backed by PostgreSQL transactions.
+// ==============================================================================
+
+test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
+  test.beforeEach(async () => {
+    // Ensure the seed listing is available and in ACTIVE status
+    await prisma.productListing.update({
+      where: { id: "prod-ipad-air5" },
+      data: { status: "ACTIVE" },
     });
+  });
+
+  test("buyer can browse product, checkout, pay escrow, inspect, and complete order", async ({
+    page,
+    context,
+    request,
+  }) => {
+    page.on("pageerror", (error) => console.log("PAGE ERROR:", error.message));
+    page.on("console", (msg) => {
+      if (msg.type() === "error") console.log("CONSOLE ERROR:", msg.text());
+    });
+
+    // 1. Authenticate as Buyer (usr-buyer-budi)
     const buyerToken = await signSession({
       id: "usr-buyer-budi",
       email: "buyer@ngebekasinyuk.id",
@@ -24,102 +47,177 @@ test.describe("Buyer Happy Path E2E Journey", () => {
       },
     ]);
 
-    // MOCK THE API FOR E2E TEST SINCE CHECKOUT HAS NO BACKEND
-    let mockOrder: Record<string, unknown> | null = null;
-    await context.route('**/api/orders/**', async (route) => {
-      const request = route.request();
-      const url = request.url();
-      if (request.method() === 'GET' && !url.includes('transition')) {
-        // Extract order ID: URL is /api/orders/{id}
-        const parts = url.split('/');
-        const ordersIdx = parts.indexOf('orders');
-        const id = ordersIdx !== -1 ? parts[ordersIdx + 1] : parts.pop();
-        if (!mockOrder) {
-          mockOrder = {
-            id,
-            status: 'FUNDED',
-            buyerId: 'usr-buyer-budi',
-            sellerId: 'usr-seller-1',
-            buyerName: 'Budi Pratama',
-            buyerPhone: '081234567890',
-            itemPrice: 10000000,
-            shippingFee: 50000,
-            escrowFee: 0,
-            totalAmount: 10050000,
-            paymentMethod: 'BCA_VA',
-            courier: 'J&T Reguler',
-            shippingAddress: 'Mock Address',
-            inspectionExpiresAt: null,
-            createdAt: new Date().toISOString(),
-            listing: { title: 'iPad Air 5', price: 10000000, id: 'list-1', images: [], condition: 'Bekas - Normal', seller: { name: 'Seller', city: 'Jakarta' } },
-            buyer: { id: 'usr-buyer-budi', name: 'Budi Pratama' },
-            seller: { id: 'usr-seller-1', name: 'Seller' }
-          };
-        }
-        await route.fulfill({ json: mockOrder });
-      } else if (request.method() === 'POST' && url.includes('transition')) {
-        const body = JSON.parse(request.postData() || '{}');
-        if (mockOrder) {
-          mockOrder.status = body.toStatus;
-          if (body.toStatus === 'INSPECTING') {
-            mockOrder.inspectionExpiresAt = new Date(Date.now() + 172800000).toISOString();
-          }
-        }
-        await route.fulfill({ json: { success: true, order: mockOrder } });
-      } else {
-        await route.continue();
-      }
-    });
-
-    // 1. Visit product page
+    // 2. Visit Product Detail Page (PDP)
     await page.goto("/product/ipad-air-5-64gb-wifi-starlight");
     await expect(page.getByText(/iPad Air 5/i).first()).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/100% Proteksi Rekber Escrow/i).first()).toBeVisible();
 
-    // 2. Open Checkout
-    await page.goto("/checkout");
+    // 3. Navigate to Checkout via Beli Sekarang button
+    await page.click('button:has-text("Beli Sekarang")');
+    await page.waitForURL(/\/checkout/, { timeout: 10_000 });
     await expect(page.getByText(/Dana Aman Ditahan Rekber/i).first()).toBeVisible({ timeout: 10_000 });
 
-    // 3. Initiate payment
+    // 4. Submit Order to real server API (POST /api/orders)
     await page.click('button:has-text("Bayar dengan Escrow")');
     await page.waitForURL(/\/payment\/.*\/pending/, { timeout: 15_000 });
     await expect(page.getByText(/Menunggu Pembayaran/i).first()).toBeVisible();
 
-    // 4. Simulate payment callback
+    // Extract real server-generated order ID from the URL
+    const paymentUrl = page.url();
+    const orderIdMatch = paymentUrl.match(/\/payment\/([^/]+)\/pending/);
+    expect(orderIdMatch).not.toBeNull();
+    const orderId = orderIdMatch![1];
+    expect(orderId).toMatch(/^ord-/);
+
+    // 5. Trigger Real Payment Webhook Simulation (POST /api/payment/simulate-webhook)
     await page.click('button:has-text("⚡ Simulasi Bayar Sekarang")');
-    await page.waitForURL(/\/orders\/.*/, { timeout: 15_000 });
-    try {
-      await expect(page.getByText(/Rincian Pengiriman & Rekber/i).first()).toBeVisible({ timeout: 5000 });
-    } catch (e) {
-      await page.screenshot({ path: 'test-failure-screenshot.png', fullPage: true });
-      console.log("PAGE CONTENT ON FAILURE:", await page.content());
-      throw e;
-    }
+    await page.waitForURL(new RegExp(`/orders/${orderId}`), { timeout: 15_000 });
+    await expect(page.getByText(/Rincian Pengiriman & Rekber/i).first()).toBeVisible({ timeout: 10_000 });
 
-    // 5. Simulate shipping and delivery to enter inspection
-    // Click "Simulasi Kirim Resi" — this triggers a POST to /transition then window.location.reload()
-    await page.click('button:has-text("1. Simulasi Kirim Resi")');
-    await page.waitForLoadState('networkidle');
-    // After reload, the mock returns order with status=SHIPPED
-    await page.waitForTimeout(1000);
+    // Verify order funding & escrow hold in PostgreSQL
+    const dbOrderFunded = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { escrowAccount: true },
+    });
+    expect(dbOrderFunded).not.toBeNull();
+    expect(dbOrderFunded?.status).toBe("FUNDED");
+    expect(dbOrderFunded?.escrowAccount).not.toBeNull();
+    expect(dbOrderFunded?.escrowAccount?.status).toBe("HELD");
 
-    // Click "Simulasi Paket Tiba" — transitions to INSPECTING then reloads
-    await page.click('button:has-text("2. Simulasi Paket Tiba")');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    // 6. Real Seller marks order as SHIPPED via authoritative transition endpoint
+    const sellerToken = await signSession({
+      id: dbOrderFunded!.sellerId,
+      email: "seller@ngebekasinyuk.id",
+      name: "Dimas Aditya",
+      role: "SELLER",
+      isVerified: true,
+    });
 
-    // 6. Enter inspection state and release funds
+    const shipRes = await request.post(`http://localhost:3000/api/orders/${orderId}/transition`, {
+      headers: {
+        Cookie: `ngebekasinyuk_session=${sellerToken}`,
+        "Content-Type": "application/json",
+      },
+      data: {
+        toStatus: "SHIPPED",
+        shippingCourier: "J&T Express",
+        shippingAirwayBill: "JT928174829102",
+      },
+    });
+    expect(shipRes.ok()).toBeTruthy();
+    const shipJson = await shipRes.json();
+    expect(shipJson.success).toBe(true);
+
+    // 7. Real Admin/Courier marks order as DELIVERED and initiates INSPECTING
+    const adminToken = await signSession({
+      id: "usr-admin-ngebekasin",
+      email: "admin@ngebekasinyuk.id",
+      name: "Admin NgeBekasinYuk",
+      role: "ADMIN",
+      isVerified: true,
+    });
+
+    const deliverRes = await request.post(`http://localhost:3000/api/orders/${orderId}/transition`, {
+      headers: {
+        Cookie: `ngebekasinyuk_session=${adminToken}`,
+        "Content-Type": "application/json",
+      },
+      data: {
+        toStatus: "DELIVERED",
+      },
+    });
+    expect(deliverRes.ok()).toBeTruthy();
+
+    const inspectRes = await request.post(`http://localhost:3000/api/orders/${orderId}/transition`, {
+      headers: {
+        Cookie: `ngebekasinyuk_session=${adminToken}`,
+        "Content-Type": "application/json",
+      },
+      data: {
+        toStatus: "INSPECTING",
+      },
+    });
+    expect(inspectRes.ok()).toBeTruthy();
+
+    // 8. Assert in PostgreSQL: status is INSPECTING and inspectionExpiresAt is non-null
+    const dbOrderInspecting = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+    expect(dbOrderInspecting?.status).toBe("INSPECTING");
+    expect(dbOrderInspecting?.inspectionExpiresAt).not.toBeNull();
+
+    // 9. Buyer reloads order page to see inspection state and release button
+    await page.reload();
+    await expect(page.getByText(/Paket Tiba! Masa Inspeksi Dimulai/i).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Lepas Dana/i).first()).toBeVisible({ timeout: 10_000 });
+
+    // 10. Buyer clicks "Lepas Dana" to authoritatively release funds
     page.on("dialog", (dialog) => dialog.accept());
-    try {
-      await expect(page.getByText(/Lepas Dana/i).first()).toBeVisible({ timeout: 10_000 });
-    } catch (e) {
-      await page.screenshot({ path: 'test-failure-screenshot-2.png', fullPage: true });
-      console.log("PAGE CONTENT ON FAILURE 2:", await page.content());
-      throw e;
-    }
     await page.click('button:has-text("Lepas Dana")');
 
-    // 7. Verify order completed and review prompt appears
+    // 11. Assert UI reflects COMPLETED status with review modal / prompt
     await expect(page.getByText(/Beri Ulasan Gadget/i).first()).toBeVisible({ timeout: 10_000 });
+
+    // 12. Assert in PostgreSQL: order COMPLETED, escrow RELEASED, seller wallet credited
+    const dbOrderCompleted = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { escrowAccount: true },
+    });
+    expect(dbOrderCompleted?.status).toBe("COMPLETED");
+    expect(dbOrderCompleted?.escrowAccount?.status).toBe("RELEASED");
+
+    const sellerLedger = await prisma.walletLedgerEntry.findFirst({
+      where: {
+        referenceId: orderId,
+        referenceType: "ORDER",
+        type: "ESCROW_RELEASE",
+        direction: "CREDIT",
+      },
+    });
+    expect(sellerLedger).not.toBeNull();
+    expect(sellerLedger?.amount).toBe(dbOrderCompleted?.itemPrice);
+  });
+
+  test("negative: tampered price in order creation is rejected and never reaches DB", async ({
+    request,
+  }) => {
+    const buyerToken = await signSession({
+      id: "usr-buyer-budi",
+      email: "buyer@ngebekasinyuk.id",
+      name: "Budi Pratama",
+      role: "BUYER",
+      isVerified: true,
+    });
+
+    // Malicious request attempting to tamper with prices
+    const maliciousRes = await request.post("http://localhost:3000/api/orders", {
+      headers: {
+        Cookie: `ngebekasinyuk_session=${buyerToken}`,
+        "Content-Type": "application/json",
+        "Idempotency-Key": `tamper-attempt-${Date.now()}`,
+      },
+      data: {
+        listingId: "prod-ipad-air5",
+        shippingAddress: "Jl. Percobaan Tamper No. 999, Jakarta",
+        courier: "J&T Express Regular",
+        paymentMethod: "BCA_VA",
+        itemPrice: 500,
+        totalAmount: 500,
+      },
+    });
+
+    // CreateOrderSchema has .strict(), rejecting unrecognized keys with 400 VALIDATION_ERROR
+    expect(maliciousRes.status()).toBe(400);
+    const body = await maliciousRes.json();
+    expect(body.error).toBe("VALIDATION_ERROR");
+
+    // Verify in PostgreSQL that no order with the tampered amount exists
+    const tamperedOrder = await prisma.order.findFirst({
+      where: {
+        buyerId: "usr-buyer-budi",
+        totalAmount: 500,
+      },
+    });
+    expect(tamperedOrder).toBeNull();
   });
 });

@@ -525,8 +525,8 @@ export default function PendingPaymentPage() {
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 rounded-xl overflow-hidden bg-surface-container shrink-0 relative">
               <Image
-                src={order.listing.images[0] || "/assets/products/ipad-mini-unboxing.png"}
-                alt={order.listing.title}
+                src={order.listing?.images?.[0] || "/assets/products/ipad-mini-unboxing.png"}
+                alt={order.listing?.title || "Produk"}
                 fill
                 sizes="64px"
                 className="object-cover"

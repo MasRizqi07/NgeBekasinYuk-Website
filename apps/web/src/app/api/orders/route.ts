@@ -203,6 +203,7 @@ export async function POST(request: Request) {
             listing: {
               include: {
                 seller: true,
+                images: true,
               },
             },
             paymentAttempts: {
@@ -300,6 +301,7 @@ export async function GET(request: Request) {
           listing: {
             include: {
               seller: true,
+              images: true,
             },
           },
           paymentAttempts: {

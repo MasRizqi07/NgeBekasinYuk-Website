@@ -23,6 +23,7 @@ export async function GET(
         listing: {
           include: {
             seller: true,
+            images: true,
           }
         },
         paymentAttempts: {

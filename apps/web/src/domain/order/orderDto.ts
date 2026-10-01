@@ -10,6 +10,7 @@ export type OrderWithRelations = Prisma.OrderGetPayload<{
     listing: {
       include: {
         seller: true;
+        images?: true;
       };
     };
     paymentAttempts?: true;
@@ -20,6 +21,11 @@ export function mapOrderToDto(order: OrderWithRelations) {
   const latestPayment = order.paymentAttempts && order.paymentAttempts.length > 0
     ? order.paymentAttempts[0]
     : null;
+
+  const rawImages = (order.listing as { images?: Array<{ url: string }> | string[] } | undefined)?.images;
+  const mappedImages: string[] = Array.isArray(rawImages)
+    ? rawImages.map((img) => (typeof img === "string" ? img : img.url))
+    : [];
 
   return {
     ...order,
@@ -32,5 +38,11 @@ export function mapOrderToDto(order: OrderWithRelations) {
     qrString: latestPayment?.qrString || undefined,
     paymentAttemptId: latestPayment?.id,
     reviewGiven: false,
+    listing: order.listing
+      ? {
+          ...order.listing,
+          images: mappedImages,
+        }
+      : undefined,
   };
 }
