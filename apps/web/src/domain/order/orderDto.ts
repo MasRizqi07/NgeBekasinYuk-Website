@@ -30,6 +30,7 @@ export function mapOrderToDto(order: OrderWithRelations) {
     paymentMethod: latestPayment?.paymentMethod || "BCA_VA",
     vaNumber: latestPayment?.vaNumber || "8077098765432101",
     qrString: latestPayment?.qrString || undefined,
+    paymentAttemptId: latestPayment?.id,
     reviewGiven: false,
   };
 }

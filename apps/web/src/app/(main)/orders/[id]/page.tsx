@@ -24,7 +24,6 @@ import {
   Star,
   Upload,
 } from "lucide-react";
-import { useOrderStore } from "@/stores/useOrderStore";
 import { useDisputeStore } from "@/stores/useDisputeStore";
 import { formatRupiah, copyTextToClipboard } from "@/lib/utils";
 import type { Order } from "@/types";
@@ -38,11 +37,6 @@ export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
   const orderId = params.id as string;
-  const {
-    confirmOrderReceived,
-    shipOrder,
-    markAsDisputed,
-  } = useOrderStore();
   const { createDispute } = useDisputeStore();
   const { showToast } = useToast();
 
@@ -193,7 +187,6 @@ export default function OrderDetailPage() {
           return;
         }
 
-        confirmOrderReceived(order.id);
         setOrder((prev) => (prev ? { ...prev, status: "COMPLETED" as const } : null));
         confetti({
           particleCount: 90,
@@ -230,7 +223,6 @@ export default function OrderDetailPage() {
       evidencePhotos: disputeFile ? [disputeFile] : [],
     });
 
-    markAsDisputed(order.id, dispute.id);
     setShowDisputeModal(false);
     showToast("Tiket sengketa berhasil dibuka. Dana dibekukan aman.", "warning");
     router.push(`/disputes/${dispute.id}`);
@@ -756,9 +748,27 @@ export default function OrderDetailPage() {
 
           {order.status === "FUNDED" && (
             <button
-              onClick={() => {
-                shipOrder(order.id, "JT9928174620");
-                showToast("Simulasi: Resi pengiriman dibuat!", "success");
+              onClick={async () => {
+                try {
+                  const res = await fetch(`/api/orders/${order.id}/transition`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      toStatus: "SHIPPED",
+                      shippingAirwayBill: "JT9928174620",
+                      shippingCourier: "J&T Express",
+                    }),
+                  });
+                  if (res.ok) {
+                    showToast("Resi pengiriman berhasil diinput!", "success");
+                    window.location.reload();
+                  } else {
+                    const data = await res.json().catch(() => ({}));
+                    showToast(data.message || "Gagal menginput resi pengiriman", "error");
+                  }
+                } catch {
+                  showToast("Terjadi kesalahan jaringan", "error");
+                }
               }}
               className="w-full h-11 bg-primary text-on-primary rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-xs hover:bg-primary/90"
             >

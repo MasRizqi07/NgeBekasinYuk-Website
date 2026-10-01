@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useCartStore, AVAILABLE_COURIERS } from "@/stores/useCartStore";
 import { useUserStore } from "@/stores/useUserStore";
-import { useOrderStore } from "@/stores/useOrderStore";
 import { useListingStore } from "@/stores/useListingStore";
 import { formatRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -23,8 +22,9 @@ export default function CheckoutPage() {
   const { showToast } = useToast();
   const { items, selectedCourier, setSelectedCourier, clearCart } = useCartStore();
   const { user } = useUserStore();
-  const { createOrder } = useOrderStore();
   const { listings } = useListingStore();
+  const [clientRequestId, setClientRequestId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // If cart is empty, fallback to demo item (e.g. iPad Air 5 or first listing)
   const activeListing =
@@ -47,6 +47,7 @@ export default function CheckoutPage() {
 
   const handleSetPaymentMethod = (method: typeof paymentMethod) => {
     setPaymentMethod(method);
+    setClientRequestId(null);
     sessionStorage.setItem("checkout_paymentMethod", method);
   };
 
@@ -55,23 +56,47 @@ export default function CheckoutPage() {
   const escrowFee = 0; // Promo launching
   const totalAmount = activePrice + shippingFee + escrowFee;
 
-  const handlePayEscrow = () => {
-    const order = createOrder({
-      listing: activeListing,
-      itemPrice: activePrice,
-      shippingFee,
-      escrowFee,
-      totalAmount,
-      buyerName: user.name,
-      buyerPhone: user.phone,
-      shippingAddress: `${address.addressLine}, ${address.city} ${address.postalCode}`,
-      courier: `${selectedCourier.name} ${selectedCourier.service}`,
-      paymentMethod,
-    });
+  const handlePayEscrow = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    clearCart();
-    showToast("Pesanan dibuat! Mengalihkan ke pembayaran...", "info");
-    router.push(`/payment/${order.id}/pending`);
+    const requestId = clientRequestId || crypto.randomUUID();
+    if (!clientRequestId) {
+      setClientRequestId(requestId);
+    }
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": requestId,
+        },
+        body: JSON.stringify({
+          listingId: activeListing.id,
+          shippingAddress: `${address.addressLine}, ${address.city} ${address.postalCode}`,
+          courier: `${selectedCourier.name} ${selectedCourier.service}`,
+          paymentMethod,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.message || data.error || "Gagal membuat pesanan", "error");
+        setIsSubmitting(false);
+        return;
+      }
+
+      setClientRequestId(null);
+      clearCart();
+      showToast("Pesanan dibuat! Mengalihkan ke pembayaran...", "info");
+      router.push(`/payment/${data.id}/pending`);
+    } catch (err) {
+      console.error("[Checkout] Order creation failed:", err);
+      showToast("Terjadi kesalahan jaringan. Silakan coba lagi.", "error");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -306,10 +331,11 @@ export default function CheckoutPage() {
             variant="primary"
             size="lg"
             onClick={handlePayEscrow}
+            disabled={isSubmitting}
             className="w-full font-bold gap-2 shadow-lg"
           >
             <Lock className="w-4 h-4" />
-            <span>Bayar dengan Escrow 🔒</span>
+            <span>{isSubmitting ? "Memproses Pesanan..." : "Bayar dengan Escrow 🔒"}</span>
           </Button>
 
           <p className="text-[11px] text-text-muted text-center leading-relaxed">

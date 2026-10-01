@@ -12,7 +12,6 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Order } from "@/types";
-import { useOrderStore } from "@/stores/useOrderStore";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
@@ -24,9 +23,6 @@ interface OrderTimelineProps {
 }
 
 export function OrderTimeline({ order }: OrderTimelineProps) {
-  const { payOrder, shipOrder, simulateDelivered, confirmOrderReceived } =
-    useOrderStore();
-
   const [resiModalOpen, setResiModalOpen] = useState(false);
   const [resiInput, setResiInput] = useState("");
   const [courierInput, setCourierInput] = useState(order.courier || "J&T Express");
@@ -100,10 +96,25 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
 
   const currentStageIndex = getStageIndex(order.status);
 
-  const handleShipSubmit = (e: React.FormEvent) => {
+  const handleShipSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resiInput.trim()) return;
-    shipOrder(order.id, resiInput.trim(), courierInput);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/transition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toStatus: "SHIPPED",
+          shippingAirwayBill: resiInput.trim(),
+          shippingCourier: courierInput,
+        }),
+      });
+      if (res.ok) {
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error(err);
+    }
     setResiModalOpen(false);
   };
 
@@ -147,9 +158,16 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
               variant="success"
               size="sm"
               className="flex-1 sm:flex-none font-bold"
-              onClick={() => {
-                confirmOrderReceived(order.id);
-                setReviewModalOpen(true);
+              onClick={async () => {
+                const res = await fetch(`/api/orders/${order.id}/transition`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ toStatus: "COMPLETED" }),
+                });
+                if (res.ok) {
+                  setReviewModalOpen(true);
+                  window.location.reload();
+                }
               }}
             >
               Konfirmasi Barang Sesuai
@@ -257,20 +275,11 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
 
           <div className="flex flex-wrap items-center gap-2">
             {order.status === "PENDING_PAYMENT" && (
-              <>
-                <Link href={`/payment/${order.id}/pending`}>
-                  <Button size="sm" variant="primary">
-                    Buka Halaman VA (Menunggu Bayar)
-                  </Button>
-                </Link>
-                <Button
-                  size="sm"
-                  variant="success"
-                  onClick={() => payOrder(order.id)}
-                >
-                  ⚡ Bayar Sekarang (Simulasi Lunas)
+              <Link href={`/payment/${order.id}/pending`}>
+                <Button size="sm" variant="primary">
+                  Buka Halaman VA (Menunggu Bayar)
                 </Button>
-              </>
+              </Link>
             )}
 
             {order.status === "FUNDED" && (
@@ -287,7 +296,20 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
               <Button
                 size="sm"
                 variant="accent"
-                onClick={() => simulateDelivered(order.id)}
+                onClick={async () => {
+                  try {
+                    const res = await fetch(`/api/orders/${order.id}/transition`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ toStatus: "DELIVERED" }),
+                    });
+                    if (res.ok) {
+                      window.location.reload();
+                    }
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
               >
                 🚚 Kurir: Simulasikan Paket Tiba (Mulai Inspeksi)
               </Button>
@@ -298,9 +320,20 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
                 <Button
                   size="sm"
                   variant="success"
-                  onClick={() => {
-                    confirmOrderReceived(order.id);
-                    setReviewModalOpen(true);
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`/api/orders/${order.id}/transition`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ toStatus: "COMPLETED" }),
+                      });
+                      if (res.ok) {
+                        setReviewModalOpen(true);
+                        window.location.reload();
+                      }
+                    } catch (err) {
+                      console.error(err);
+                    }
                   }}
                 >
                   ✅ Konfirmasi Barang Sesuai (Cairkan Dana)

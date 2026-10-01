@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   DollarSign,
@@ -10,13 +10,28 @@ import {
   TrendingUp,
   ArrowRight,
 } from "lucide-react";
-import { useOrderStore } from "@/stores/useOrderStore";
+import type { Order } from "@/types";
 import { useDisputeStore } from "@/stores/useDisputeStore";
 import { formatRupiah } from "@/lib/utils";
 
 export default function AdminDashboardPage() {
-  const { orders } = useOrderStore();
+  const [orders, setOrders] = useState<Order[]>([]);
   const { disputes } = useDisputeStore();
+
+  useEffect(() => {
+    async function loadRecentOrders() {
+      try {
+        const res = await fetch("/api/orders?limit=5");
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(data.orders || []);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadRecentOrders();
+  }, []);
 
   return (
     <div className="space-y-6 pb-20 text-xs">

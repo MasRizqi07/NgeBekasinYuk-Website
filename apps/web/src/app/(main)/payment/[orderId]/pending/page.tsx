@@ -23,7 +23,7 @@ import {
   ShieldCheck,
   Check,
 } from "lucide-react";
-import { useOrderStore } from "@/stores/useOrderStore";
+import type { Order } from "@/types";
 import { formatRupiah, copyTextToClipboard } from "@/lib/utils";
 import { useToast } from "@/components/ui/Toast";
 import confetti from "canvas-confetti";
@@ -32,40 +32,50 @@ export default function PendingPaymentPage() {
   const params = useParams();
   const router = useRouter();
   const orderId = params.orderId as string;
-  const { getOrderById, payOrder } = useOrderStore();
   const { showToast } = useToast();
 
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"va" | "qris">("va");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(86340); // ~23h 59m
 
-  const order = getOrderById(orderId) || {
-    id: orderId || "STX-2026-0941",
-    listing: {
-      id: "seed-macbook-m1",
-      slug: "macbook-air-m1-256gb-space-grey",
-      title: "MacBook Air M1 256GB Space Grey (Mulus 99%)",
-      price: 8450000,
-      images: [
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuBUdbwsUwn1HToCtAScn-lmpCkowk8hnz0zCAZ3cQUz5y2l2usZdI4YOshyu-eo6FVZLIOWV8uId8iPhzwUdcgGorjRKXwi1ZMfsMDyG-NBKYeeDu4eXGMN76AuqMjFvODzz4ocvtyKavtrVnXMsAPutfKjJW1A744y95mx61X9tJWrVsjoiqL_ABSeBf6wuSFDcIdQCxvHl3KL1MC2VUusioki6xCIvq0lBmHZpzaA_WybUwsbVHb3",
-      ],
-      seller: {
-        id: "usr-dimas",
-        name: "Dimas Aditya",
-        city: "Jakarta Barat",
-        isVerified: true,
-      },
-      condition: "LIKE_NEW",
-    },
-    itemPrice: 8450000,
-    shippingFee: 22000,
-    escrowFee: 0,
-    totalAmount: 8472000,
-    vaNumber: "8277 0812 3456 7890",
-    courier: "J&T Express Regular",
-    status: "PENDING_PAYMENT",
-  };
+  useEffect(() => {
+    async function loadOrder() {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/orders/${orderId}`);
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            setError("Anda tidak memiliki akses ke pesanan ini.");
+          } else {
+            setError("Pesanan tidak ditemukan.");
+          }
+          return;
+        }
+        const data = await res.json();
+        setOrder(data);
+        if (data.status !== "PENDING_PAYMENT") {
+          router.replace(`/orders/${orderId}`);
+          return;
+        }
+        if (data.paymentExpiresAt) {
+          const diff = Math.floor((new Date(data.paymentExpiresAt).getTime() - Date.now()) / 1000);
+          setSecondsLeft(diff > 0 ? diff : 0);
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Gagal memuat pesanan dari server.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (orderId) {
+      loadOrder();
+    }
+  }, [orderId, router]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -87,10 +97,37 @@ export default function PendingPaymentPage() {
     }
   };
 
-  const handleSimulatePayment = () => {
+  const handleSimulatePayment = async () => {
+    if (!order || isSimulating) return;
     setIsSimulating(true);
-    setTimeout(() => {
-      payOrder(order.id);
+
+    try {
+      const paymentAttemptId =
+        order.paymentAttemptId ||
+        order.paymentAttempts?.[0]?.id ||
+        `pay-${order.id}`;
+
+      const res = await fetch("/api/payment/simulate-webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentAttemptId,
+          orderId: order.id,
+          amount: order.totalAmount,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.success === false) {
+        setIsSimulating(false);
+        showToast(
+          data.message || data.error || "Gagal memproses simulasi webhook pembayaran.",
+          "error"
+        );
+        return;
+      }
+
       setIsSimulating(false);
       confetti({
         particleCount: 80,
@@ -101,8 +138,39 @@ export default function PendingPaymentPage() {
       setTimeout(() => {
         router.push(`/orders/${order.id}`);
       }, 1000);
-    }, 1200);
+    } catch (err) {
+      console.error("[PendingPaymentPage] handleSimulatePayment error:", err);
+      setIsSimulating(false);
+      showToast("Terjadi kesalahan jaringan saat verifikasi pembayaran", "error");
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+        <div className="text-on-surface-variant font-medium text-sm animate-pulse">
+          Memuat tagihan pembayaran escrow...
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+        <div className="bg-surface-container-lowest p-8 rounded-3xl text-center max-w-sm w-full border border-error/30 space-y-4">
+          <h2 className="font-bold text-lg text-error">Gagal Memuat Pembayaran</h2>
+          <p className="text-xs text-on-surface-variant">{error || "Pesanan tidak ditemukan"}</p>
+          <button
+            onClick={() => router.push("/orders")}
+            className="block w-full py-2.5 bg-primary text-on-primary rounded-xl text-xs font-bold mt-4"
+          >
+            Lihat Pesanan Saya
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-surface pb-32 pt-4">

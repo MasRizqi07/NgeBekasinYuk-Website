@@ -2,8 +2,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DisputeStatus, DisputeTicket } from "../types";
 import { SEED_DISPUTE } from "../lib/seedData";
-import { useOrderStore } from "./useOrderStore";
-import { useWalletStore } from "./useWalletStore";
 import { useNotificationStore } from "./useNotificationStore";
 
 interface CreateDisputePayload {
@@ -67,17 +65,16 @@ export const useDisputeStore = create<DisputeStore>()(
           buyerEvidencePhotos = photosArg || [];
         }
 
-        const order = useOrderStore.getState().getOrderById(orderId);
         const disputeId = `DSP-2026-${Math.floor(10000 + Math.random() * 90000)}`;
 
         const newDispute: DisputeTicket = {
           id: disputeId,
           orderId,
-          listingTitle: order ? order.listing.title : "MacBook Air M1 256GB Space Grey",
-          listingPrice: order ? order.itemPrice : 8500000,
-          listingImage: order && order.listing.images[0] ? order.listing.images[0] : "https://lh3.googleusercontent.com/aida-public/AB6AXuBUdbwsUwn1HToCtAScn-lmpCkowk8hnz0zCAZ3cQUz5y2l2usZdI4YOshyu-eo6FVZLIOWV8uId8iPhzwUdcgGorjRKXwi1ZMfsMDyG-NBKYeeDu4eXGMN76AuqMjFvODzz4ocvtyKavtrVnXMsAPutfKjJW1A744y95mx61X9tJWrVsjoiqL_ABSeBf6wuSFDcIdQCxvHl3KL1MC2VUusioki6xCIvq0lBmHZpzaA_WybUwsbVHb3",
-          buyerName: order ? order.buyerName : "Budi Pratama",
-          sellerName: order ? order.listing.seller.name : "Dimas Aditya",
+          listingTitle: "MacBook Air M1 256GB Space Grey",
+          listingPrice: 8500000,
+          listingImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuBUdbwsUwn1HToCtAScn-lmpCkowk8hnz0zCAZ3cQUz5y2l2usZdI4YOshyu-eo6FVZLIOWV8uId8iPhzwUdcgGorjRKXwi1ZMfsMDyG-NBKYeeDu4eXGMN76AuqMjFvODzz4ocvtyKavtrVnXMsAPutfKjJW1A744y95mx61X9tJWrVsjoiqL_ABSeBf6wuSFDcIdQCxvHl3KL1MC2VUusioki6xCIvq0lBmHZpzaA_WybUwsbVHb3",
+          buyerName: "Budi Pratama",
+          sellerName: "Dimas Aditya",
           reason,
           description,
           buyerEvidencePhotos,
@@ -87,7 +84,7 @@ export const useDisputeStore = create<DisputeStore>()(
           messages: [
             {
               id: `disp-msg-${Date.now()}`,
-              author: order ? order.buyerName : "Budi Pratama",
+              author: "Budi Pratama",
               role: "BUYER",
               text: description,
               timestamp: "Baru saja",
@@ -98,8 +95,6 @@ export const useDisputeStore = create<DisputeStore>()(
         set((state) => ({
           disputes: [newDispute, ...state.disputes],
         }));
-
-        useOrderStore.getState().markAsDisputed(orderId, disputeId);
 
         return newDispute;
       },
@@ -175,19 +170,7 @@ export const useDisputeStore = create<DisputeStore>()(
           ),
         }));
 
-        const orderStore = useOrderStore.getState();
-        const linkedOrder = orderStore.getOrderById(dispute.orderId);
-
         if (verdict === "REFUND_BUYER") {
-          if (linkedOrder) {
-            // P0-06 FIX: Never mutate orderStore.orders directly
-            useOrderStore.setState((state) => ({
-              orders: state.orders.map((o) =>
-                o.id === linkedOrder.id ? { ...o, status: "REFUNDED" } : o
-              ),
-            }));
-          }
-
           useNotificationStore.getState().addNotification({
             type: "DISPUTE",
             title: "Keputusan Sengketa: Pengembalian Dana (REFUND)",
@@ -195,22 +178,6 @@ export const useDisputeStore = create<DisputeStore>()(
             link: `/disputes/${disputeId}`,
           });
         } else {
-          if (linkedOrder) {
-            // P0-06 FIX: Never mutate orderStore.orders directly
-            useOrderStore.setState((state) => ({
-              orders: state.orders.map((o) =>
-                o.id === linkedOrder.id ? { ...o, status: "COMPLETED" } : o
-              ),
-            }));
-            useWalletStore
-              .getState()
-              .releaseEscrowToWallet(
-                dispute.listingPrice,
-                dispute.orderId,
-                dispute.listingTitle
-              );
-          }
-
           useNotificationStore.getState().addNotification({
             type: "DISPUTE",
             title: "Keputusan Sengketa: Dana Dicairkan ke Penjual (RELEASE)",
