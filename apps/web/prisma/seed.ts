@@ -147,7 +147,7 @@ async function main() {
   // 2. Create Product Listings
   const listingIpad = await prisma.productListing.create({
     data: {
-      id: "list-ipad-air-5",
+      id: "prod-ipad-air5",
       slug: "ipad-air-5-64gb-wifi-starlight",
       title: "iPad Air 5 64GB WiFi Starlight - Garansi iBox On",
       description: "Kondisi unit 98% like new, batere health 96%, fullset original iBox. Layar no baret, body mulus terawat.",
@@ -160,12 +160,41 @@ async function main() {
       condition: "LIKE_NEW",
       canNego: true,
       minNegoPrice: 7000000,
-      status: "RESERVED",
+      status: "ACTIVE",
       sellerId: seller.id,
       images: {
         create: [
           {
             url: "https://lh3.googleusercontent.com/aida-public/AB6AXuCjgviysQIAwDZiQ0XoEZvodqrHaDDPNayXxcGbwgx608LfwIXqUxS_WII7yj6enbMiQmCzrkAxvmRfSGkB8CDpuk_U716Nz41oHEWJJWsW-w_cnfNJZcuKmrtGQLQRZvR8edDK3huf4AZHPk4xaRAzUdRJI5OgTpKTXRZPPYqtiSVQz8cEztEGIteVkgS0qPcesQhpA-2Tv_29kxSrXpn1ZH4EJrO-I5jfZuiS1afjn1rSH8mPis_c",
+            isPrimary: true,
+            sortOrder: 1,
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.productListing.create({
+    data: {
+      id: "prod-sony-a7iii",
+      slug: "sony-a7-iii-body-only-sc-4xxx",
+      title: "Sony A7 III Body Only - SC 4xxx Mulus Dus Lengkap",
+      description: "Dijual kamera Sony A7 III kesayangan pemakaian hobi pribadi. Shutter Count baru 4.120 jepretan.",
+      price: 12800000,
+      originalPrice: 13500000,
+      category: "camera",
+      categoryLabel: "Kamera",
+      brand: "Sony",
+      model: "ILCE-7M3",
+      condition: "LIKE_NEW",
+      canNego: true,
+      minNegoPrice: 12000000,
+      status: "ACTIVE",
+      sellerId: seller.id,
+      images: {
+        create: [
+          {
+            url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBA9eU2ewnWRCf9Qto6GOxaOS5X8o-02N4RqCpowftk7HpYZ_uYsPQNcN97v4sr4MJfr95_S4fVUvl9q-rBghLePBKSczep7xPDx_JKdKpoeM7Lyf0yAn7Iooah63Jn2if8IUDjfHczoXbNpUY3h9xrpGA-i0uqFo6J4t0cqGiWZD3PIqT1xQNYNOh0rH_DgLS1dZ-x-VFnpFMUNWV9yKfNyLePCfnQZXHna6dkqEWvPuzEw_ah9Vgr",
             isPrimary: true,
             sortOrder: 1,
           },

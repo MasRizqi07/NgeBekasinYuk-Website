@@ -32,6 +32,16 @@ export const OrderTransitionSchema = z.object({
   reason: z.string().max(500).optional(),
 });
 
+export const CreateOrderSchema = z
+  .object({
+    listingId: z.string().min(1, "Listing ID wajib diisi"),
+    shippingAddress: z.string().min(5, "Alamat pengiriman minimal 5 karakter").max(500),
+    courier: z.string().min(1, "Kurir pengiriman wajib dipilih").max(100),
+    paymentMethod: z.enum(["BCA_VA", "MANDIRI_VA", "BRI_VA", "BNI_VA", "QRIS"]),
+    offerId: z.string().optional(),
+  })
+  .strict();
+
 export const WithdrawalRequestSchema = z.object({
   amount: z.number().int().positive().min(10000, "Minimal penarikan Rp 10.000"),
   bankName: z.string().min(2).max(50).trim(),
