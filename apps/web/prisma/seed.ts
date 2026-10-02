@@ -1,15 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { encryptSensitiveSecret } from "../src/lib/security/encryption";
+import { assertSeedEnvironmentIsSafe } from "./seedSafety";
+
+// Immediate guard at module evaluation before any connections or setup:
+assertSeedEnvironmentIsSafe();
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // SAFETY GUARD: Hard refusal when APP_ENV or NODE_ENV is production
-  if (process.env.APP_ENV === "production" || process.env.NODE_ENV === "production") {
-    console.error("CRITICAL ERROR: Cannot run deterministic seed in production environment!");
-    throw new Error("Seeding aborted: APP_ENV=production or NODE_ENV=production detected.");
-  }
+  assertSeedEnvironmentIsSafe();
+
+  const { encryptSensitiveSecret } = await import("../src/lib/security/encryption");
 
   // WARNING: Default demo PIN "123456" is for local development and CI testing ONLY.
   // It is NEVER permitted in production environments. Production seed execution is blocked above.
