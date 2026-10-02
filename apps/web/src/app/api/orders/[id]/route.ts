@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { validateAuthoritativeSession } from "@/lib/auth/authoritativeSession";
-import { mapOrderToDto } from "@/domain/order/orderDto";
+import { mapOrderToDto, orderSelectFields } from "@/domain/order/orderDto";
 
 export async function GET(
   request: Request,
@@ -17,20 +17,7 @@ export async function GET(
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: {
-        buyer: true,
-        seller: true,
-        listing: {
-          include: {
-            seller: true,
-            images: true,
-          }
-        },
-        paymentAttempts: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
-      }
+      select: orderSelectFields,
     });
 
     if (!order) {

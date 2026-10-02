@@ -6,7 +6,7 @@ import { calculateShippingFee } from "@/domain/shipping/shippingService";
 import { calculateEscrowBreakdown } from "@/domain/money";
 import { generateInternalId, generateOrderNumber } from "@/domain/id";
 import { defaultPaymentProvider } from "@/domain/payment/PaymentProvider";
-import { mapOrderToDto } from "@/domain/order/orderDto";
+import { mapOrderToDto, orderSelectFields } from "@/domain/order/orderDto";
 
 export async function POST(request: Request) {
   try {
@@ -40,11 +40,31 @@ export async function POST(request: Request) {
     });
 
     if (existingKey && new Date() < existingKey.expiresAt) {
-      try {
-        const cachedResult = JSON.parse(existingKey.result);
-        return NextResponse.json(cachedResult, { status: 201 });
-      } catch {
-        // Corrupted cache fallback: continue processing
+      let orderId = existingKey.resourceId;
+      if (!orderId) {
+        try {
+          const parsed = JSON.parse(existingKey.result);
+          orderId = parsed.orderId || parsed.id;
+        } catch {
+          // ignore corrupted JSON
+        }
+      }
+
+      if (orderId) {
+        const replayedOrder = await prisma.order.findUnique({
+          where: { id: orderId },
+          select: orderSelectFields,
+        });
+
+        if (replayedOrder) {
+          if (replayedOrder.buyerId === session.id || session.role === "ADMIN") {
+            return NextResponse.json(mapOrderToDto(replayedOrder), { status: 201 });
+          }
+          return NextResponse.json(
+            { error: "FORBIDDEN", message: "Anda tidak memiliki akses ke pesanan ini." },
+            { status: 403 }
+          );
+        }
       }
     }
 
@@ -194,35 +214,22 @@ export async function POST(request: Request) {
           },
         });
 
-        // e. Fetch Order with full relations for response DTO
+        // e. Fetch Order with allow-list relations for response DTO
         const completeOrder = await tx.order.findUniqueOrThrow({
           where: { id: newOrder.id },
-          include: {
-            buyer: true,
-            seller: true,
-            listing: {
-              include: {
-                seller: true,
-                images: true,
-              },
-            },
-            paymentAttempts: {
-              orderBy: { createdAt: "desc" },
-              take: 1,
-            },
-          },
+          select: orderSelectFields,
         });
 
         const dto = mapOrderToDto(completeOrder);
 
-        // f. Save Idempotency Key record
+        // f. Save Idempotency Key record (Task 3.6.2: store minimal reference without credentials)
         await tx.idempotencyKey.create({
           data: {
             key: idempotencyKey,
             resource: "Order",
             resourceId: newOrder.id,
             action: "CREATE_ORDER",
-            result: JSON.stringify(dto),
+            result: JSON.stringify({ orderId: newOrder.id }),
             expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours TTL
           },
         });
@@ -243,7 +250,24 @@ export async function POST(request: Request) {
           where: { key: idempotencyKey },
         });
         if (replayKey) {
-          return NextResponse.json(JSON.parse(replayKey.result), { status: 201 });
+          let orderId = replayKey.resourceId;
+          if (!orderId) {
+            try {
+              const parsed = JSON.parse(replayKey.result);
+              orderId = parsed.orderId || parsed.id;
+            } catch {
+              // ignore
+            }
+          }
+          if (orderId) {
+            const replayedOrder = await prisma.order.findUnique({
+              where: { id: orderId },
+              select: orderSelectFields,
+            });
+            if (replayedOrder) {
+              return NextResponse.json(mapOrderToDto(replayedOrder), { status: 201 });
+            }
+          }
         }
       }
       throw txError;
@@ -295,20 +319,7 @@ export async function GET(request: Request) {
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
         where: whereClause,
-        include: {
-          buyer: true,
-          seller: true,
-          listing: {
-            include: {
-              seller: true,
-              images: true,
-            },
-          },
-          paymentAttempts: {
-            orderBy: { createdAt: "desc" },
-            take: 1,
-          },
-        },
+        select: orderSelectFields,
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,

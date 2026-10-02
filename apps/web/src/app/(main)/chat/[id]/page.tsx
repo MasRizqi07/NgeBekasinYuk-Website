@@ -20,7 +20,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useChatStore } from "@/stores/useChatStore";
-import { useCartStore } from "@/stores/useCartStore";
 import { SEED_LISTINGS } from "@/lib/seedData";
 import { formatRupiah } from "@/lib/utils";
 import { useToast } from "@/components/ui/Toast";
@@ -39,7 +38,6 @@ export default function ChatDetailPage() {
     rejectOffer,
     isCounterpartTyping,
   } = useChatStore();
-  const { addToCart } = useCartStore();
   const { showToast } = useToast();
 
   const [inputText, setInputText] = useState("");
@@ -93,12 +91,6 @@ export default function ChatDetailPage() {
       origin: { y: 0.6 },
     });
     showToast("Tawaran diterima! Harga khusus terkunci 2 jam.", "success");
-  };
-
-  const handleCheckoutAgreedPrice = (price: number) => {
-    addToCart(conversation.listing, price);
-    showToast("Harga negosiasi berhasil diterapkan ke keranjang!", "success");
-    router.push("/checkout");
   };
 
   return (
@@ -265,11 +257,12 @@ export default function ChatDetailPage() {
                       </div>
 
                       <button
-                        onClick={() => handleCheckoutAgreedPrice(msg.offer!.offerPrice)}
-                        className="w-full py-2.5 px-4 rounded-xl bg-primary text-on-primary font-bold text-xs flex items-center justify-center gap-2 shadow-xs hover:bg-primary/90 transition-all"
+                        disabled
+                        className="w-full py-2.5 px-4 rounded-xl bg-surface-container-high text-on-surface-variant font-bold text-xs flex items-center justify-center gap-2 opacity-60 cursor-not-allowed"
+                        title="Fitur checkout harga negosiasi belum didukung di versi ini"
                       >
                         <ShoppingBag className="w-4 h-4" />
-                        <span>Checkout {formatRupiah(msg.offer.offerPrice)} Sekarang</span>
+                        <span>Checkout Harga Nego (Belum Didukung)</span>
                       </button>
                     </div>
                   ) : msg.offer.status === "REJECTED" ? (
