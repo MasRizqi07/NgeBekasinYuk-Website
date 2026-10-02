@@ -32,7 +32,7 @@ export default function WalletPage() {
   const [withdrawAmount, setWithdrawAmount] = useState<number>(14250000);
   const [selectedBankId, setSelectedBankId] = useState(bankAccounts[0]?.id || "bca-1");
   const [pin, setPin] = useState("");
-  const [hasPin, setHasPin] = useState<boolean | null>(null);
+  const [hasPin, setHasPin] = useState<boolean>(true);
   const [setPinPassword, setSetPinPassword] = useState("");
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
@@ -40,21 +40,6 @@ export default function WalletPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<LedgerTab>("ALL");
   const [clientRequestId, setClientRequestId] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    fetch("/api/wallet/pin")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (isMounted && data && typeof data.hasPin === "boolean") {
-          setHasPin(data.hasPin);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const handleQuickChip = (val: number) => {
     setWithdrawAmount(val);
