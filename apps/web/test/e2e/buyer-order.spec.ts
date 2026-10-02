@@ -178,7 +178,7 @@ test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
     expect(sellerLedger?.amount).toBe(dbOrderCompleted?.itemPrice);
   });
 
-  test("negative: tampered price in order creation is rejected and never reaches DB", async ({
+  test("negative: tampered price or injected buyerId in order creation is rejected and never reaches DB", async ({
     request,
   }) => {
     const buyerToken = await signSession({
@@ -189,8 +189,11 @@ test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
       isVerified: true,
     });
 
-    // Malicious request attempting to tamper with prices
-    const maliciousRes = await request.post("http://localhost:3000/api/orders", {
+    // 1. Record baseline order count in PostgreSQL
+    const countBaseline = await prisma.order.count();
+
+    // 2. Malicious request attempting to tamper with prices (itemPrice & totalAmount)
+    const priceTamperRes = await request.post("http://localhost:3000/api/orders", {
       headers: {
         Cookie: `ngebekasinyuk_session=${buyerToken}`,
         "Content-Type": "application/json",
@@ -207,9 +210,38 @@ test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
     });
 
     // CreateOrderSchema has .strict(), rejecting unrecognized keys with 400 VALIDATION_ERROR
-    expect(maliciousRes.status()).toBe(400);
-    const body = await maliciousRes.json();
-    expect(body.error).toBe("VALIDATION_ERROR");
+    expect(priceTamperRes.status()).toBe(400);
+    const priceTamperBody = await priceTamperRes.json();
+    expect(priceTamperBody.error).toBe("VALIDATION_ERROR");
+
+    // Assert row count in PostgreSQL is strictly unchanged
+    const countAfterPriceTamper = await prisma.order.count();
+    expect(countAfterPriceTamper).toBe(countBaseline);
+
+    // 3. Malicious request carrying valid fields but injecting another user's buyerId
+    const buyerIdTamperRes = await request.post("http://localhost:3000/api/orders", {
+      headers: {
+        Cookie: `ngebekasinyuk_session=${buyerToken}`,
+        "Content-Type": "application/json",
+        "Idempotency-Key": `spoof-buyer-${Date.now()}`,
+      },
+      data: {
+        listingId: "prod-ipad-air5",
+        shippingAddress: "Jl. Percobaan Spoof No. 123, Jakarta",
+        courier: "J&T Express Regular",
+        paymentMethod: "BCA_VA",
+        buyerId: "usr-victim-999", // Unrecognized field: server must derive buyer only from session
+      },
+    });
+
+    // Strict schema rejects injected buyerId with 400 VALIDATION_ERROR
+    expect(buyerIdTamperRes.status()).toBe(400);
+    const buyerIdTamperBody = await buyerIdTamperRes.json();
+    expect(buyerIdTamperBody.error).toBe("VALIDATION_ERROR");
+
+    // Assert row count in PostgreSQL remains strictly unchanged
+    const countAfterBuyerIdTamper = await prisma.order.count();
+    expect(countAfterBuyerIdTamper).toBe(countBaseline);
 
     // Verify in PostgreSQL that no order with the tampered amount exists
     const tamperedOrder = await prisma.order.findFirst({
@@ -219,5 +251,67 @@ test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
       },
     });
     expect(tamperedOrder).toBeNull();
+  });
+
+  test("buyer session attempting seller/courier simulation transitions is rejected with 422", async ({
+    request,
+  }) => {
+    const buyerToken = await signSession({
+      id: "usr-buyer-budi",
+      email: "buyer@ngebekasinyuk.id",
+      name: "Budi Pratama",
+      role: "BUYER",
+      isVerified: true,
+    });
+
+    // Create a fresh test order in FUNDED status
+    const fundedOrder = await prisma.order.create({
+      data: {
+        id: `ord-test-buyer-click-${Date.now()}`,
+        orderNumber: `ORD-${Date.now()}`,
+        buyerId: "usr-buyer-budi",
+        sellerId: "usr-seller-dimas",
+        listingId: "prod-ipad-air5",
+        itemPrice: 7500000,
+        shippingFee: 50000,
+        escrowFee: 0,
+        totalAmount: 7550000,
+        status: "FUNDED",
+        shippingAddress: "Jl. Test 123",
+        shippingCourier: "J&T Express",
+      },
+    });
+
+    const testOrder = fundedOrder;
+
+    // 1. Buyer attempts '1. Simulasi Kirim Resi' (toStatus: SHIPPED)
+    const shipRes = await request.post(`http://localhost:3000/api/orders/${testOrder!.id}/transition`, {
+      headers: {
+        Cookie: `ngebekasinyuk_session=${buyerToken}`,
+        "Content-Type": "application/json",
+      },
+      data: {
+        toStatus: "SHIPPED",
+        shippingCourier: "JT",
+        shippingAirwayBill: "JT1234567890",
+      },
+    });
+    console.log("Buyer 'Simulasi Kirim Resi' HTTP Status:", shipRes.status());
+    console.log("Buyer 'Simulasi Kirim Resi' Body:", await shipRes.text());
+    expect(shipRes.status()).toBe(422);
+
+    // 2. Buyer attempts '2. Simulasi Paket Tiba' (toStatus: INSPECTING)
+    const inspectRes = await request.post(`http://localhost:3000/api/orders/${testOrder!.id}/transition`, {
+      headers: {
+        Cookie: `ngebekasinyuk_session=${buyerToken}`,
+        "Content-Type": "application/json",
+      },
+      data: {
+        toStatus: "INSPECTING",
+      },
+    });
+    console.log("Buyer 'Simulasi Paket Tiba' HTTP Status:", inspectRes.status());
+    console.log("Buyer 'Simulasi Paket Tiba' Body:", await inspectRes.text());
+    expect(inspectRes.status()).toBe(422);
   });
 });
