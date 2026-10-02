@@ -19,6 +19,8 @@
     "db:verify-totp-migration": "tsx ./scripts/verify-totp-migration.ts",
     "db:scrub-order-idempotency": "tsx ./scripts/scrub-order-idempotency-results.ts",
     "db:verify-scrub-order-idempotency": "tsx ./scripts/verify-scrub-order-idempotency.ts",
+    "db:migrate-default-pins": "tsx ./scripts/migrate-default-pins.ts",
+    "db:verify-default-pins": "tsx ./scripts/verify-default-pins.ts",
     "db:seed": "tsx ./prisma/seed.ts",
     "prisma:generate": "prisma generate"
   },
