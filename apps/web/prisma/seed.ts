@@ -5,6 +5,14 @@ import { encryptSensitiveSecret } from "../src/lib/security/encryption";
 const prisma = new PrismaClient();
 
 async function main() {
+  // SAFETY GUARD: Hard refusal when APP_ENV or NODE_ENV is production
+  if (process.env.APP_ENV === "production" || process.env.NODE_ENV === "production") {
+    console.error("CRITICAL ERROR: Cannot run deterministic seed in production environment!");
+    throw new Error("Seeding aborted: APP_ENV=production or NODE_ENV=production detected.");
+  }
+
+  // WARNING: Default demo PIN "123456" is for local development and CI testing ONLY.
+  // It is NEVER permitted in production environments. Production seed execution is blocked above.
   console.log("🌱 Starting deterministic database seeding for NgeBekasinYuk...");
 
   // Clean existing records in reverse dependency order
