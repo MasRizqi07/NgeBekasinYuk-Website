@@ -22,9 +22,10 @@ describe("Database Seed Production Refusal Safety Test (Task 4.7)", () => {
           DEMO_WITHDRAWAL_PROVIDER: "false",
         },
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       errorCaught = true;
-      output = (err.stdout || "") + (err.stderr || "") + (err.message || "");
+      const error = err as { stdout?: string; stderr?: string; message?: string };
+      output = (error.stdout || "") + (error.stderr || "") + (error.message || "");
     }
 
     expect(errorCaught).toBe(true);
@@ -42,9 +43,10 @@ describe("Database Seed Production Refusal Safety Test (Task 4.7)", () => {
           NODE_ENV: "production",
         },
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       errorCaught = true;
-      output = (err.stdout || "") + (err.stderr || "") + (err.message || "");
+      const error = err as { stdout?: string; stderr?: string; message?: string };
+      output = (error.stdout || "") + (error.stderr || "") + (error.message || "");
     }
 
     expect(errorCaught).toBe(true);
