@@ -84,3 +84,49 @@ export const WebhookSimulationSchema = z.object({
   orderId: z.string().min(1),
   amount: z.number().int().positive(),
 });
+
+export const WEAK_PINS = [
+  "000000",
+  "111111",
+  "222222",
+  "333333",
+  "444444",
+  "555555",
+  "666666",
+  "777777",
+  "888888",
+  "999999",
+  "012345",
+  "123456",
+  "234567",
+  "345678",
+  "456789",
+  "543210",
+  "654321",
+  "765432",
+  "876543",
+  "987654",
+  "123123",
+  "121212",
+  "696969",
+  "112233",
+] as const;
+
+export function isTriviallyWeakPin(pin: string): boolean {
+  if ((WEAK_PINS as readonly string[]).includes(pin)) return true;
+  // All identical digits
+  if (/^(\d)\1{5}$/.test(pin)) return true;
+  // Sequential digits ascending or descending
+  const isAscending = "0123456789".includes(pin);
+  const isDescending = "9876543210".includes(pin);
+  if (isAscending || isDescending) return true;
+  return false;
+}
+
+export const SetWalletPinSchema = z
+  .object({
+    password: z.string().min(1, "Password wajib diisi"),
+    pin: z.string().regex(/^\d{6}$/, "PIN harus berupa 6 digit angka"),
+  })
+  .strict();
+
