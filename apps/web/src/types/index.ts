@@ -86,6 +86,8 @@ export interface Order {
   completedAt?: string;
   disputeId?: string;
   reviewGiven?: boolean;
+  paymentAttemptId?: string;
+  paymentAttempts?: Array<{ id: string; amount: number; paymentMethod: string; status: string; vaNumber?: string | null; qrString?: string | null }>;
   createdAt: string;
 }
 

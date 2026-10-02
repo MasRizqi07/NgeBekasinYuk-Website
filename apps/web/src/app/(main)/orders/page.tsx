@@ -15,7 +15,7 @@ import {
   Star,
   ExternalLink,
 } from "lucide-react";
-import { useOrderStore } from "@/stores/useOrderStore";
+import { useEffect } from "react";
 import { Order, OrderStatus } from "@/types";
 import { formatRupiah, copyTextToClipboard } from "@/lib/utils";
 import { useToast } from "@/components/ui/Toast";
@@ -24,21 +24,36 @@ import ReviewModal from "@/components/features/ReviewModal";
 type TabFilter = "ALL" | "PENDING_PAYMENT" | "SHIPPED" | "INSPECTING" | "COMPLETED" | "DISPUTED";
 
 export default function OrdersPage() {
-  const { orders } = useOrderStore();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabFilter>("ALL");
   const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const filteredOrders = orders.filter((order) => {
-    if (activeTab === "ALL") return true;
-    if (activeTab === "PENDING_PAYMENT") return order.status === "PENDING_PAYMENT";
-    if (activeTab === "SHIPPED") return order.status === "FUNDED" || order.status === "SHIPPED";
-    if (activeTab === "INSPECTING") return order.status === "INSPECTING";
-    if (activeTab === "COMPLETED") return order.status === "COMPLETED";
-    if (activeTab === "DISPUTED") return order.status === "DISPUTED";
-    return true;
-  });
+  useEffect(() => {
+    async function loadOrders() {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/orders?status=${activeTab}`);
+        if (!res.ok) {
+          throw new Error("Gagal memuat pesanan");
+        }
+        const data = await res.json();
+        setOrders(data.orders || []);
+        setError(null);
+      } catch (err) {
+        console.error(err);
+        setError("Gagal memuat daftar pesanan dari server");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadOrders();
+  }, [activeTab]);
+
+  const filteredOrders = orders;
 
   const handleCopy = async (id: string) => {
     const ok = await copyTextToClipboard(id);
@@ -137,7 +152,19 @@ export default function OrdersPage() {
         </div>
 
         {/* Orders List */}
-        {filteredOrders.length === 0 ? (
+        {loading ? (
+          <div className="bg-surface-container-lowest rounded-3xl p-12 text-center border border-outline-variant/30 space-y-3">
+            <div className="text-on-surface-variant font-medium text-sm animate-pulse">
+              Memuat daftar pesanan...
+            </div>
+          </div>
+        ) : error ? (
+          <div className="bg-surface-container-lowest rounded-3xl p-12 text-center border border-red-200 space-y-3">
+            <div className="text-red-600 font-medium text-sm">
+              {error}
+            </div>
+          </div>
+        ) : filteredOrders.length === 0 ? (
           <div className="bg-surface-container-lowest rounded-3xl p-12 text-center border border-outline-variant/30 space-y-4">
             <div className="w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center mx-auto text-on-surface-variant">
               <ShoppingBag className="w-8 h-8 opacity-40" />

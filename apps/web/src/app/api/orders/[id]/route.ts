@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { validateAuthoritativeSession } from "@/lib/auth/authoritativeSession";
+import { mapOrderToDto } from "@/domain/order/orderDto";
 
 export async function GET(
   request: Request,
@@ -22,7 +23,12 @@ export async function GET(
         listing: {
           include: {
             seller: true,
+            images: true,
           }
+        },
+        paymentAttempts: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
         },
       }
     });
@@ -36,21 +42,7 @@ export async function GET(
       return NextResponse.json({ error: "FORBIDDEN", message: "Anda tidak memiliki akses ke pesanan ini" }, { status: 403 });
     }
 
-    // Ensure we map the database structure to the structure expected by the client interface
-    // Note: The UI is currently rendering `order.buyerName`, `order.courier`, etc.
-    const clientOrder = {
-      ...order,
-      // Mapping fields for the UI based on types/index.ts
-      buyerName: order.buyer.name,
-      buyerPhone: order.buyer.phone || "081234567890",
-      courier: order.shippingCourier || "SiCepat",
-      trackingNumber: order.shippingAirwayBill || "",
-      paymentMethod: "BCA_VA", // DB might not store it directly on Order, fallback
-      vaNumber: "8077098765432101", 
-      reviewGiven: false,
-    };
-
-    return NextResponse.json(clientOrder);
+    return NextResponse.json(mapOrderToDto(order));
   } catch (error) {
     console.error("GET /api/orders/[id] Error:", error);
     return NextResponse.json(

@@ -100,10 +100,12 @@ export async function POST(
         updateData.shippedAt = new Date();
         if (shippingCourier) updateData.shippingCourier = shippingCourier;
         if (shippingAirwayBill) updateData.shippingAirwayBill = shippingAirwayBill;
-      } else if (toStatus === "DELIVERED") {
-        updateData.deliveredAt = new Date();
-        updateData.inspectionStartedAt = new Date();
-        updateData.inspectionExpiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+      } else if (toStatus === "DELIVERED" || toStatus === "INSPECTING") {
+        if (!order.deliveredAt) updateData.deliveredAt = new Date();
+        if (!order.inspectionStartedAt) updateData.inspectionStartedAt = new Date();
+        if (!order.inspectionExpiresAt) {
+          updateData.inspectionExpiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+        }
       }
 
       const ord = await tx.order.update({

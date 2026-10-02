@@ -2,6 +2,7 @@
 // Honest development/simulation provider decoupled from production payment gateway.
 
 import { prisma } from "@/server/db/prisma";
+import type { Prisma } from "@prisma/client";
 import { assertValidMoney, Money } from "@/domain/money";
 import { buildIdempotencyKey } from "@/domain/id";
 
@@ -34,7 +35,10 @@ export interface WebhookResult {
 }
 
 export interface PaymentProvider {
-  createPayment(params: CreatePaymentParams): Promise<PaymentAttemptResponse>;
+  createPayment(
+    params: CreatePaymentParams,
+    db?: Prisma.TransactionClient | typeof prisma
+  ): Promise<PaymentAttemptResponse>;
   simulateWebhook(params: {
     paymentAttemptId: string;
     orderId: string;
@@ -47,11 +51,14 @@ export class DemoPaymentProvider implements PaymentProvider {
    * Creates a simulated payment attempt with realistic VA number or QRIS string.
    * Explicitly labeled as simulation.
    */
-  async createPayment(params: CreatePaymentParams): Promise<PaymentAttemptResponse> {
+  async createPayment(
+    params: CreatePaymentParams,
+    db: Prisma.TransactionClient | typeof prisma = prisma
+  ): Promise<PaymentAttemptResponse> {
     const { orderId, amount, paymentMethod } = params;
     assertValidMoney(amount, "payment amount");
 
-    const order = await prisma.order.findUnique({
+    const order = await db.order.findUnique({
       where: { id: orderId },
     });
 
@@ -85,7 +92,7 @@ export class DemoPaymentProvider implements PaymentProvider {
       vaNumber = `${prefix}${randomSuffix}`;
     }
 
-    const attempt = await prisma.paymentAttempt.create({
+    const attempt = await db.paymentAttempt.create({
       data: {
         orderId,
         paymentMethod,
