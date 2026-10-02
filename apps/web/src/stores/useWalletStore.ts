@@ -14,7 +14,7 @@ interface WalletStore {
     bankId: string,
     pin: string,
     clientRequestId: string
-  ) => Promise<{ success: boolean; status: "SUCCESS" | "FAILED" | "UNKNOWN"; message: string }>;
+  ) => Promise<{ success: boolean; status: "SUCCESS" | "FAILED" | "UNKNOWN"; message: string; code?: string; statusCode?: number }>;
   releaseEscrowToWallet: (amount: number, orderId: string, itemTitle: string) => void;
   holdEscrowFunds: (amount: number, orderId: string, itemTitle: string) => void;
 }
@@ -68,6 +68,8 @@ export const useWalletStore = create<WalletStore>()(
             return {
               success: false,
               status: "FAILED",
+              statusCode: res.status,
+              code: data.error,
               message: data.message || "Gagal memproses penarikan saldo.",
             };
           }

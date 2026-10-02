@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -31,14 +31,69 @@ export default function WalletPage() {
   const [showBalance, setShowBalance] = useState(true);
   const [withdrawAmount, setWithdrawAmount] = useState<number>(14250000);
   const [selectedBankId, setSelectedBankId] = useState(bankAccounts[0]?.id || "bca-1");
-  const [pin, setPin] = useState("123456");
+  const [pin, setPin] = useState("");
+  const [hasPin, setHasPin] = useState<boolean | null>(null);
+  const [setPinPassword, setSetPinPassword] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [isSettingPin, setIsSettingPin] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<LedgerTab>("ALL");
   const [clientRequestId, setClientRequestId] = useState<string | null>(null);
 
+  useEffect(() => {
+    let isMounted = true;
+    fetch("/api/wallet/pin")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data && typeof data.hasPin === "boolean") {
+          setHasPin(data.hasPin);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleQuickChip = (val: number) => {
     setWithdrawAmount(val);
     setClientRequestId(null);
+  };
+
+  const handleSetPin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPin !== confirmPin) {
+      showToast("Konfirmasi PIN tidak cocok dengan PIN baru.", "error");
+      return;
+    }
+    if (!/^\d{6}$/.test(newPin)) {
+      showToast("PIN harus berupa 6 digit angka.", "error");
+      return;
+    }
+    setIsSettingPin(true);
+    try {
+      const res = await fetch("/api/wallet/pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: setPinPassword, pin: newPin }),
+      });
+      const data = await res.json();
+      setIsSettingPin(false);
+      if (res.ok) {
+        setHasPin(true);
+        setSetPinPassword("");
+        setNewPin("");
+        setConfirmPin("");
+        setPin(newPin);
+        showToast("PIN transaksi berhasil diatur! Silakan lanjutkan penarikan dana.", "success");
+      } else {
+        showToast(data.message || "Gagal mengatur PIN transaksi.", "error");
+      }
+    } catch {
+      setIsSettingPin(false);
+      showToast("Gagal terhubung ke server. Silakan coba lagi.", "error");
+    }
   };
 
   const handleWithdraw = async (e: React.FormEvent) => {
@@ -68,7 +123,12 @@ export default function WalletPage() {
         showToast(res.message, "warning", "Status Penarikan Belum Dipastikan");
       } else {
         setClientRequestId(null);
-        showToast(res.message, "error", "Penarikan Gagal");
+        if (res.code === "PIN_NOT_SET" || res.statusCode === 409) {
+          setHasPin(false);
+          showToast("PIN transaksi belum dibuat. Silakan atur PIN transaksi Anda terlebih dahulu.", "info");
+        } else {
+          showToast(res.message, "error", "Penarikan Gagal");
+        }
       }
     } catch {
       setIsProcessing(false);
@@ -218,106 +278,190 @@ export default function WalletPage() {
           </div>
         </div>
 
-        {/* Interactive Withdrawal Form */}
-        <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-4 shadow-xs space-y-4">
-          <div className="flex items-center justify-between text-xs border-b border-outline-variant/20 pb-2.5">
-            <div className="flex items-center gap-1.5 font-bold text-on-surface">
-              <Wallet className="w-4 h-4 text-primary" />
-              <span>Formulir Tarik Dana</span>
+        {/* Interactive Withdrawal Form or Set PIN Form */}
+        {hasPin === false ? (
+          <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-4 shadow-xs space-y-4">
+            <div className="flex items-center justify-between text-xs border-b border-outline-variant/20 pb-2.5">
+              <div className="flex items-center gap-1.5 font-bold text-on-surface">
+                <KeyRound className="w-4 h-4 text-primary" />
+                <span>Atur PIN Transaksi Baru</span>
+              </div>
+              <span className="bg-amber-500/10 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-semibold">
+                Wajib untuk Penarikan
+              </span>
             </div>
-            <span className="bg-surface-container text-on-surface-variant text-[10px] px-2 py-0.5 rounded-full font-semibold">
-              BI-FAST 24/7 (Bebas Biaya)
-            </span>
-          </div>
 
-          <form onSubmit={handleWithdraw} className="space-y-3.5 text-xs">
-            <div className="space-y-1.5">
-              <label className="font-bold text-on-surface">Nominal Penarikan</label>
-              <div className="relative flex items-center">
-                <span className="absolute left-3.5 text-on-surface-variant font-bold text-sm">
-                  Rp
-                </span>
+            <form onSubmit={handleSetPin} className="space-y-3.5 text-xs">
+              <p className="text-on-surface-variant text-[11px] leading-relaxed">
+                Untuk keamanan akun dan transaksi penarikan dana Anda, silakan buat 6 digit PIN transaksi baru dan masukkan password akun Anda untuk verifikasi.
+              </p>
+
+              {/* Account Password */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-on-surface" htmlFor="account-password">
+                  Password Akun
+                </label>
                 <input
-                  type="number"
-                  value={withdrawAmount}
-                  onChange={(e) => {
-                    setWithdrawAmount(Number(e.target.value));
-                    setClientRequestId(null);
-                  }}
-                  className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface font-bold text-base focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
+                  id="account-password"
+                  type="password"
+                  aria-label="Password Akun"
+                  value={setPinPassword}
+                  onChange={(e) => setSetPinPassword(e.target.value)}
+                  placeholder="Masukkan password akun Anda"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
                 />
               </div>
 
-              {/* Quick chips */}
-              <div className="grid grid-cols-4 gap-1.5 pt-1">
-                {[
-                  { label: "500 Rb", val: 500000 },
-                  { label: "2 Juta", val: 2000000 },
-                  { label: "5 Juta", val: 5000000 },
-                  { label: "Semua", val: saldoAktif },
-                ].map((chip, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleQuickChip(chip.val)}
-                    className="py-1.5 bg-surface-container-low hover:bg-primary-fixed rounded-lg text-xs font-semibold text-on-surface text-center transition-colors"
-                  >
-                    {chip.label}
-                  </button>
-                ))}
+              {/* New 6-digit PIN */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-on-surface" htmlFor="new-pin">
+                  PIN Transaksi Baru (6 Digit)
+                </label>
+                <input
+                  id="new-pin"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  aria-label="PIN Transaksi Baru 6 Digit"
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="6 digit angka (contoh: 849201)"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-on-surface text-xs font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
+                />
               </div>
-            </div>
 
-            {/* Destination Bank Account */}
-            <div className="space-y-1.5">
-              <label className="font-bold text-on-surface">Rekening Tujuan</label>
-              <select
-                value={selectedBankId}
-                onChange={(e) => {
-                  setSelectedBankId(e.target.value);
-                  setClientRequestId(null);
-                }}
-                className="w-full p-3 bg-surface-container-low rounded-xl border border-outline-variant/30 text-on-surface font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+              {/* Confirm PIN */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-on-surface" htmlFor="confirm-pin">
+                  Konfirmasi PIN Transaksi
+                </label>
+                <input
+                  id="confirm-pin"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  aria-label="Konfirmasi PIN Transaksi"
+                  value={confirmPin}
+                  onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="Ulangi 6 digit PIN transaksi baru"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-on-surface text-xs font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isSettingPin || !setPinPassword || newPin.length !== 6 || confirmPin.length !== 6}
+                className="w-full py-3 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-xs hover:bg-primary/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {bankAccounts.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.bankName} - {b.accountNumber} ({b.accountHolder})
-                  </option>
-                ))}
-              </select>
+                <Lock className="w-3.5 h-3.5" />
+                <span>{isSettingPin ? "Menyimpan PIN..." : "Simpan & Aktifkan PIN Transaksi"}</span>
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-4 shadow-xs space-y-4">
+            <div className="flex items-center justify-between text-xs border-b border-outline-variant/20 pb-2.5">
+              <div className="flex items-center gap-1.5 font-bold text-on-surface">
+                <Wallet className="w-4 h-4 text-primary" />
+                <span>Formulir Tarik Dana</span>
+              </div>
+              <span className="bg-surface-container text-on-surface-variant text-[10px] px-2 py-0.5 rounded-full font-semibold">
+                BI-FAST 24/7 (Bebas Biaya)
+              </span>
             </div>
 
-            {/* Security PIN Input */}
-            <div className="p-3 bg-surface-container-low rounded-xl text-center space-y-1.5 border border-outline-variant/30">
-              <div className="flex items-center justify-center gap-1 text-on-surface-variant font-medium">
-                <KeyRound className="w-3.5 h-3.5" />
-                <span>Otorisasi PIN Transaksi (6 Digit)</span>
-              </div>
-              <div className="flex items-center justify-center gap-2 pt-1">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div
-                    key={i}
-                    className={`w-3 h-3 rounded-full ${
-                      pin.length >= i ? "bg-primary" : "bg-surface-container-highest"
-                    }`}
-                  ></div>
-                ))}
-              </div>
-              <input
-                type="password"
-                maxLength={6}
-                value={pin}
-                onChange={(e) => {
-                  setPin(e.target.value.replace(/\D/g, "").slice(0, 6));
-                  setClientRequestId(null);
-                }}
-                placeholder="Masukkan 6 digit PIN"
-                className="w-40 mx-auto text-center font-mono tracking-widest text-xs py-1.5 px-3 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-              <p className="text-[10px] text-on-surface-variant">Default simulator PIN: 123456</p>
-            </div>
+            <form onSubmit={handleWithdraw} className="space-y-3.5 text-xs">
+              <div className="space-y-1.5">
+                <label className="font-bold text-on-surface">Nominal Penarikan</label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3.5 text-on-surface-variant font-bold text-sm">
+                    Rp
+                  </span>
+                  <input
+                    type="number"
+                    value={withdrawAmount}
+                    onChange={(e) => {
+                      setWithdrawAmount(Number(e.target.value));
+                      setClientRequestId(null);
+                    }}
+                    className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface font-bold text-base focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
+                  />
+                </div>
 
-            {/* Submit Payout Button */}
+                {/* Quick chips */}
+                <div className="grid grid-cols-4 gap-1.5 pt-1">
+                  {[
+                    { label: "500 Rb", val: 500000 },
+                    { label: "2 Juta", val: 2000000 },
+                    { label: "5 Juta", val: 5000000 },
+                    { label: "Semua", val: saldoAktif },
+                  ].map((chip, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleQuickChip(chip.val)}
+                      className="py-1.5 bg-surface-container-low hover:bg-primary-fixed rounded-lg text-xs font-semibold text-on-surface text-center transition-colors"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Destination Bank Account */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-on-surface">Rekening Tujuan</label>
+                <select
+                  value={selectedBankId}
+                  onChange={(e) => {
+                    setSelectedBankId(e.target.value);
+                    setClientRequestId(null);
+                  }}
+                  className="w-full p-3 bg-surface-container-low rounded-xl border border-outline-variant/30 text-on-surface font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {bankAccounts.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.bankName} - {b.accountNumber} ({b.accountHolder})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Security PIN Input */}
+              <div className="p-3 bg-surface-container-low rounded-xl text-center space-y-1.5 border border-outline-variant/30">
+                <div className="flex items-center justify-center gap-1 text-on-surface-variant font-medium">
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>Otorisasi PIN Transaksi (6 Digit)</span>
+                </div>
+                <div className="flex items-center justify-center gap-2 pt-1">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div
+                      key={i}
+                      className={`w-3 h-3 rounded-full ${
+                        pin.length >= i ? "bg-primary" : "bg-surface-container-highest"
+                      }`}
+                    ></div>
+                  ))}
+                </div>
+                <input
+                  type="password"
+                  maxLength={6}
+                  aria-label="PIN Transaksi 6 Digit"
+                  value={pin}
+                  onChange={(e) => {
+                    setPin(e.target.value.replace(/\D/g, "").slice(0, 6));
+                    setClientRequestId(null);
+                  }}
+                  placeholder="Masukkan 6 digit PIN"
+                  className="w-40 mx-auto text-center font-mono tracking-widest text-xs py-1.5 px-3 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              {/* Submit Payout Button */}
             <button
               type="submit"
               disabled={isProcessing || withdrawAmount <= 0}
@@ -332,6 +476,7 @@ export default function WalletPage() {
             </button>
           </form>
         </div>
+        )}
 
         {/* Transaction Ledger */}
         <div className="space-y-3 pt-2">
