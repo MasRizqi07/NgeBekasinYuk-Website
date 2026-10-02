@@ -166,4 +166,92 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
       expect(wallet?.activeBalance).toBe(13000000);
     });
   });
+
+  describe("Task 4.1 — Distinguish 'no PIN' from 'wrong PIN'", () => {
+    it("returns PIN_NOT_SET without consuming failed attempts when hashedPin is null", async () => {
+      // Create user with null hashedPin
+      const noPinUser = await prisma.user.create({
+        data: {
+          email: `no-pin-${Date.now()}@test.id`,
+          name: "No PIN User",
+          role: "SELLER",
+          hashedPassword: await bcrypt.hash("Password123!", 10),
+          hashedPin: null,
+          wallet: {
+            create: {
+              activeBalance: 5000000,
+              heldBalance: 0,
+            },
+          },
+        },
+      });
+
+      // 1. verifyPin returns machine-readable reason PIN_NOT_SET
+      const check = await WalletLedgerService.verifyPin(noPinUser.id, "123456");
+      expect(check.valid).toBe(false);
+      expect(check.reason).toBe("PIN_NOT_SET");
+
+      // Verify pinFailedAttempts is untouched
+      const dbUser1 = await prisma.user.findUnique({ where: { id: noPinUser.id } });
+      expect(dbUser1?.pinFailedAttempts).toBe(0);
+
+      // 2. requestWithdrawal throws PIN_NOT_SET
+      await expect(
+        WalletLedgerService.requestWithdrawal({
+          userId: noPinUser.id,
+          amount: 50000,
+          bankName: "BCA",
+          accountNumber: "1234567890",
+          accountHolder: "No PIN User",
+          pin: "123456",
+        })
+      ).rejects.toThrowError(
+        expect.objectContaining({
+          name: "WalletDomainError",
+          code: "PIN_NOT_SET",
+        })
+      );
+
+      // Verify pinFailedAttempts remains 0 after withdrawal attempt
+      const dbUser2 = await prisma.user.findUnique({ where: { id: noPinUser.id } });
+      expect(dbUser2?.pinFailedAttempts).toBe(0);
+    });
+
+    it("throws INVALID_PIN and increments counter when PIN is wrong", async () => {
+      const wrongPinUser = await prisma.user.create({
+        data: {
+          email: `wrong-pin-${Date.now()}@test.id`,
+          name: "Wrong PIN User",
+          role: "SELLER",
+          hashedPassword: await bcrypt.hash("Password123!", 10),
+          hashedPin: await bcrypt.hash("654321", 10),
+          wallet: {
+            create: {
+              activeBalance: 5000000,
+              heldBalance: 0,
+            },
+          },
+        },
+      });
+
+      await expect(
+        WalletLedgerService.requestWithdrawal({
+          userId: wrongPinUser.id,
+          amount: 50000,
+          bankName: "BCA",
+          accountNumber: "1234567890",
+          accountHolder: "Wrong PIN User",
+          pin: "111222",
+        })
+      ).rejects.toThrowError(
+        expect.objectContaining({
+          name: "WalletDomainError",
+          code: "INVALID_PIN",
+        })
+      );
+
+      const dbUser = await prisma.user.findUnique({ where: { id: wrongPinUser.id } });
+      expect(dbUser?.pinFailedAttempts).toBe(1);
+    });
+  });
 });

@@ -21,6 +21,7 @@ export class WalletDomainError extends Error {
 export interface PinVerificationResult {
   valid: boolean;
   locked: boolean;
+  reason?: "PIN_NOT_SET" | "INVALID_FORMAT" | "LOCKED" | "INCORRECT";
   remainingAttempts?: number;
   lockUntil?: Date | null;
   message?: string;
@@ -85,7 +86,8 @@ export class WalletLedgerService {
       return {
         valid: false,
         locked: false,
-        message: "PIN transaksi belum dibuat. Silakan atur PIN di profil.",
+        reason: "PIN_NOT_SET",
+        message: "PIN transaksi belum dibuat. Silakan atur PIN terlebih dahulu.",
       };
     }
 
@@ -187,6 +189,9 @@ export class WalletLedgerService {
     // 1. Server-side PIN verification
     const pinCheck = await this.verifyPin(userId, pin);
     if (!pinCheck.valid) {
+      if (pinCheck.reason === "PIN_NOT_SET") {
+        throw new WalletDomainError("PIN_NOT_SET", pinCheck.message || "PIN belum diatur");
+      }
       throw new WalletDomainError("INVALID_PIN", pinCheck.message || "PIN tidak valid");
     }
 

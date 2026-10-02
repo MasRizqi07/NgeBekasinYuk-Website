@@ -45,7 +45,9 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof WalletDomainError) {
       const statusCode =
-        error.code === "INVALID_PIN"
+        error.code === "PIN_NOT_SET"
+          ? 409
+          : error.code === "INVALID_PIN"
           ? 401
           : error.code === "INSUFFICIENT_BALANCE"
           ? 422
