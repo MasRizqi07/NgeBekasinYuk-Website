@@ -126,3 +126,28 @@ When rotating encryption keys:
    - `Referrer-Policy: strict-origin-when-cross-origin`.
 3. **Cookie Attributes**: In production, `HttpOnly; SameSite=Lax; Secure` flags are strictly enforced.
 4. **Simulator Endpoints**: `/api/payment/simulate-webhook` and development admin tools return `404 Not Found` in production.
+
+---
+
+## 6. Transaction PIN Operations & Seed Safety (Phase 4 & 4B)
+
+### 6.1 Deterministic Demo Seed Production Guard
+- `prisma/seed.ts` imports a zero-dependency assertion `assertSeedEnvironmentIsSafe()` before any database connection or environment validation.
+- In `APP_ENV=production` or `NODE_ENV=production`, seed execution terminates immediately with exit code 1:
+  `CRITICAL ERROR: Cannot run deterministic seed in production environment!`
+- Parent environment flags (e.g. `ALLOW_DEMO_IN_PRODUCTION=true`) cannot bypass this guard.
+
+### 6.2 Default PIN Migration & Verification Runbook
+- Existing users with legacy default PIN hashes (`123456`) are migrated using:
+  ```bash
+  # Dry-run inspection
+  pnpm --filter web run db:migrate-default-pins --dry-run
+  
+  # Execute migration (resets default PIN to NULL, forcing fresh setup)
+  pnpm --filter web run db:migrate-default-pins
+  
+  # Verify zero accounts hold default PIN hash
+  pnpm --filter web run db:verify-default-pins
+  ```
+- Newly registered accounts default to `hashedPin = null` and require explicit PIN creation via `POST /api/wallet/pin`.
+

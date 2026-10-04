@@ -75,7 +75,7 @@ export function Footer() {
               terpercaya di Indonesia dengan proteksi pembayaran rekening bersama (Escrow).
             </p>
             <p className="text-[11px] text-text-muted mt-2">
-              PT NgeBekasin Nusantara • Kustodian Escrow Terdaftar & Diawasi
+              PT NgeBekasin Nusantara • Platform Rekber Gadget Secondhand
             </p>
           </div>
 

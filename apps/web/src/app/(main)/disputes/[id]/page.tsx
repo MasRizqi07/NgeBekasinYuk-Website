@@ -207,7 +207,7 @@ export default function DisputeDetailPage() {
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <p className="text-on-surface-variant mt-0.5 leading-relaxed">
-                Kustodian Resmi PT NgeBekasin Nusantara. Saldo dibekukan dan tidak akan cair ke penjual sampai investigasi selesai atau disepakati kedua pihak.
+                Rekening Penampung Rekber Platform PT NgeBekasin Nusantara. Saldo dibekukan dan tidak akan cair ke penjual sampai investigasi selesai atau disepakati kedua pihak.
               </p>
             </div>
           </div>

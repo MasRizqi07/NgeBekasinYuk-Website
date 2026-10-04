@@ -1,16 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { useSyncExternalStore } from "react";
-
-const emptySubscribe = () => () => {};
-
-export function useIsMounted(): boolean {
-  return useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
-  );
-}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -73,3 +62,11 @@ export function copyTextToClipboard(text: string): Promise<boolean> {
   }
   return Promise.resolve(false);
 }
+
+export function maskAccountNumber(accountNumber: string): string {
+  const cleaned = (accountNumber || "").trim();
+  if (cleaned.length <= 4) return cleaned;
+  const last4 = cleaned.slice(-4);
+  return `•••• •••• ${last4}`;
+}
+

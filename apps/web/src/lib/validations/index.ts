@@ -44,11 +44,13 @@ export const CreateOrderSchema = z
 
 export const WithdrawalRequestSchema = z.object({
   amount: z.number().int().positive().min(10000, "Minimal penarikan Rp 10.000"),
-  bankName: z.string().min(2).max(50).trim(),
-  accountNumber: z.string().min(5).max(30).trim(),
-  accountHolder: z.string().min(2).max(100).trim(),
+  bankAccountId: z.string().min(1, "ID Rekening tujuan penarikan wajib diisi"),
   pin: z.string().regex(/^\d{6}$/, "PIN harus berupa 6 digit angka"),
-  clientRequestId: z.string().min(16).max(100),
+  clientRequestId: z.string().min(16).max(100).optional(),
+  // Legacy fields accepted but ignored in favor of canonical PostgreSQL BankAccount snapshot:
+  bankName: z.string().optional(),
+  accountNumber: z.string().optional(),
+  accountHolder: z.string().optional(),
 });
 
 export const OpenDisputeSchema = z.object({

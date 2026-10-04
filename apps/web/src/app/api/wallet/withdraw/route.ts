@@ -28,15 +28,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const { amount, bankName, accountNumber, accountHolder, pin } = validated.data;
+    const { amount, bankAccountId, pin } = validated.data;
     const finalIdempotencyKey = headerIdempotencyKey || validated.data.clientRequestId;
 
     const result = await WalletLedgerService.requestWithdrawal({
       userId: session.id,
       amount,
-      bankName,
-      accountNumber,
-      accountHolder,
+      bankAccountId,
       pin,
       customIdempotencyKey: finalIdempotencyKey,
     });
@@ -51,6 +49,8 @@ export async function POST(request: Request) {
           ? 401
           : error.code === "INSUFFICIENT_BALANCE"
           ? 422
+          : error.code === "BANK_ACCOUNT_NOT_FOUND"
+          ? 404
           : 400;
 
       return NextResponse.json(

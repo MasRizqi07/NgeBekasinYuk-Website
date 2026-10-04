@@ -18,7 +18,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="max-w-md w-full mx-auto my-auto">{children}</div>
 
       <div className="text-center text-xs text-on-surface-variant pb-4">
-        &copy; 2026 PT NgeBekasin Nusantara • Kustodian Escrow Terdaftar OJK &amp; BI
+        &copy; 2026 PT NgeBekasin Nusantara • Platform Rekber Gadget Secondhand
       </div>
     </div>
   );

@@ -29,6 +29,7 @@ vi.mock("@/lib/auth/authoritativeSession", () => ({
 
 describe("Withdrawal Retry Idempotency Integration Tests (PostgreSQL)", () => {
   let sellerId: string;
+  let bankAccountId: string;
   const pin = "123456";
 
   beforeEach(async () => {
@@ -49,20 +50,29 @@ describe("Withdrawal Retry Idempotency Integration Tests (PostgreSQL)", () => {
             heldBalance: 0,
           },
         },
+        bankAccounts: {
+          create: {
+            bankCode: "BCA",
+            bankName: "BCA",
+            accountNumber: "1234567890",
+            accountHolder: "Idempotency Seller",
+            isDefault: true,
+          },
+        },
       },
+      include: { bankAccounts: true },
     });
 
     sellerId = seller.id;
     testUserId = seller.id;
+    bankAccountId = seller.bankAccounts[0].id;
   });
 
   it("1. Two withdrawal requests with the SAME clientRequestId -> wallet debited exactly once, second response has isDuplicate: true", async () => {
     const clientRequestId = `req-idemp-same-${Date.now()}-abc12345`;
     const payload = {
       amount: 100_000,
-      bankName: "BCA",
-      accountNumber: "1234567890",
-      accountHolder: "Idempotency Seller",
+      bankAccountId,
       pin,
       clientRequestId,
     };
@@ -116,18 +126,14 @@ describe("Withdrawal Retry Idempotency Integration Tests (PostgreSQL)", () => {
 
     const payload1 = {
       amount: 100_000,
-      bankName: "BCA",
-      accountNumber: "1234567890",
-      accountHolder: "Idempotency Seller",
+      bankAccountId,
       pin,
       clientRequestId: clientRequestId1,
     };
 
     const payload2 = {
       amount: 100_000,
-      bankName: "BCA",
-      accountNumber: "1234567890",
-      accountHolder: "Idempotency Seller",
+      bankAccountId,
       pin,
       clientRequestId: clientRequestId2,
     };
@@ -171,44 +177,39 @@ describe("Withdrawal Retry Idempotency Integration Tests (PostgreSQL)", () => {
     expect(withdrawals.length).toBe(2);
   });
 
-  it("3. Missing clientRequestId in request body -> 400 VALIDATION_ERROR (schema now requires it)", async () => {
-    const payloadWithoutKey = {
+  it("3. Missing bankAccountId in request body -> 400 VALIDATION_ERROR (schema requires it)", async () => {
+    const payloadWithoutAccount = {
       amount: 100_000,
-      bankName: "BCA",
-      accountNumber: "1234567890",
-      accountHolder: "Idempotency Seller",
       pin,
-      // clientRequestId omitted
+      // bankAccountId omitted
     };
 
     // Schema level verification
-    const schemaValidation = WithdrawalRequestSchema.safeParse(payloadWithoutKey);
+    const schemaValidation = WithdrawalRequestSchema.safeParse(payloadWithoutAccount);
     expect(schemaValidation.success).toBe(false);
     if (!schemaValidation.success) {
-      expect(schemaValidation.error.flatten().fieldErrors).toHaveProperty("clientRequestId");
+      expect(schemaValidation.error.flatten().fieldErrors).toHaveProperty("bankAccountId");
     }
 
     // Route handler HTTP response verification
     const req = new Request("http://localhost:3000/api/wallet/withdraw", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payloadWithoutKey),
+      body: JSON.stringify(payloadWithoutAccount),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
 
     const data = await res.json();
     expect(data.error).toBe("VALIDATION_ERROR");
-    expect(data.details).toHaveProperty("clientRequestId");
+    expect(data.details).toHaveProperty("bankAccountId");
   });
 
   it("4. Two withdrawal requests with the SAME Idempotency-Key HTTP HEADER -> wallet debited exactly once, second response has isDuplicate: true", async () => {
     const headerKey = `hdr-idemp-same-${Date.now()}-xyz98765`;
     const payload = {
       amount: 150_000,
-      bankName: "MANDIRI",
-      accountNumber: "9876543210",
-      accountHolder: "Idempotency Seller",
+      bankAccountId,
       pin,
       // clientRequestId omitted from JSON body — supplied via standard HTTP header!
     };

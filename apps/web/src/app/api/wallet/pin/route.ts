@@ -7,6 +7,10 @@ import bcrypt from "bcryptjs";
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
 
+/**
+ * @deprecated Use GET /api/wallet instead (Task 4B.2).
+ * Retained for backwards compatibility with existing clients and tests.
+ */
 export async function GET() {
   const session = await validateAuthoritativeSession();
   if (!session) {

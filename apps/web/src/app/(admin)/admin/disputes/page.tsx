@@ -135,7 +135,7 @@ export default function AdminDisputesPage() {
           </div>
           <div className="text-xl font-black text-on-surface">428 Transaksi</div>
           <div className="text-[11px] text-primary font-bold">
-            Rp 1.240.800.000 saldo kustodian
+            Rp 1.240.800.000 saldo escrow platform (simulasi)
           </div>
         </div>
 
@@ -257,7 +257,7 @@ export default function AdminDisputesPage() {
                   </span>
                   <p className="font-semibold text-on-surface mt-0.5">MIDTRANS-CHARG-998214-ID</p>
                   <p className="text-[11px] text-on-surface-variant">
-                    Kustodian BCA PT NgeBekasin Nusantara (OJK Monitored)
+                    Akun Escrow Platform BCA PT NgeBekasin Nusantara (Simulasi)
                   </p>
                 </div>
               </div>

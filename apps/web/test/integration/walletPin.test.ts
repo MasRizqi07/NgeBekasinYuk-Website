@@ -45,6 +45,7 @@ function assertNoSecrets(obj: unknown, path = ""): void {
 
 describe("Wallet PIN Management Integration Tests (Tasks 4.2 & 4.3)", () => {
   let userWithoutPin: { id: string; email: string };
+  let testBankAccountId: string;
 
   beforeEach(async () => {
     const ts = Date.now().toString().slice(-6);
@@ -64,10 +65,21 @@ describe("Wallet PIN Management Integration Tests (Tasks 4.2 & 4.3)", () => {
             heldBalance: 0,
           },
         },
+        bankAccounts: {
+          create: {
+            bankCode: "BCA",
+            bankName: "BCA",
+            accountNumber: "1234567890",
+            accountHolder: "PIN Test User",
+            isDefault: true,
+          },
+        },
       },
+      include: { bankAccounts: true },
     });
 
     userWithoutPin = { id: user.id, email: user.email };
+    testBankAccountId = user.bankAccounts[0].id;
     currentSessionUser = {
       id: user.id,
       email: user.email,
@@ -209,9 +221,7 @@ describe("Wallet PIN Management Integration Tests (Tasks 4.2 & 4.3)", () => {
       WalletLedgerService.requestWithdrawal({
         userId: userWithoutPin.id,
         amount: 50000,
-        bankName: "BCA",
-        accountNumber: "1234567890",
-        accountHolder: "PIN Test User",
+        bankAccountId: testBankAccountId,
         pin: "123456",
       })
     ).rejects.toThrowError(
@@ -223,9 +233,7 @@ describe("Wallet PIN Management Integration Tests (Tasks 4.2 & 4.3)", () => {
     const withdrawSuccess = await WalletLedgerService.requestWithdrawal({
       userId: userWithoutPin.id,
       amount: 50000,
-      bankName: "BCA",
-      accountNumber: "1234567890",
-      accountHolder: "PIN Test User",
+      bankAccountId: testBankAccountId,
       pin: newPin,
     });
     expect(withdrawSuccess.success).toBe(true);

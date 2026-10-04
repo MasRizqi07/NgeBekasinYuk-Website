@@ -34,7 +34,7 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
     id: "notif-3",
     type: "ESCROW",
     title: "Dana Rekber Aman Terkunci 🔐",
-    message: "Pembayaran STX-2026-0932 telah diverifikasi. Dana Anda aman berada di kustodian resmi.",
+    message: "Pembayaran STX-2026-0932 telah diverifikasi. Dana Anda aman berada di akun penampung rekber platform.",
     timestamp: "5 jam lalu",
     isRead: true,
     link: "/orders/STX-2026-0932",

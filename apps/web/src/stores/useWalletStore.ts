@@ -1,151 +1,187 @@
+// NgeBekasinYuk Server-Authoritative Wallet Store (Phase 4B)
+// Replaces client-authoritative state and localStorage persistence with PostgreSQL read-side query cache.
+
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { BankAccount, WalletTransaction } from "../types";
-import { SEED_BANK_ACCOUNTS, SEED_WALLET_TRANSACTIONS } from "../lib/seedData";
+import { formatRupiah, timeAgo } from "../lib/utils";
 
 interface WalletStore {
   saldoAktif: number;
   saldoTertahan: number;
+  hasPin: boolean;
   bankAccounts: BankAccount[];
   transactions: WalletTransaction[];
+  isLoading: boolean;
+  error: string | null;
 
+  fetchWallet: () => Promise<void>;
   withdrawFunds: (
     amount: number,
-    bankId: string,
+    bankAccountId: string,
     pin: string,
     clientRequestId: string
-  ) => Promise<{ success: boolean; status: "SUCCESS" | "FAILED" | "UNKNOWN"; message: string; code?: string; statusCode?: number }>;
-  releaseEscrowToWallet: (amount: number, orderId: string, itemTitle: string) => void;
-  holdEscrowFunds: (amount: number, orderId: string, itemTitle: string) => void;
+  ) => Promise<{
+    success: boolean;
+    status: "SUCCESS" | "FAILED" | "UNKNOWN";
+    message: string;
+    code?: string;
+    statusCode?: number;
+  }>;
 }
 
-export const useWalletStore = create<WalletStore>()(
-  persist(
-    (set, get) => ({
-      saldoAktif: 14250000,
-      saldoTertahan: 6800000,
-      bankAccounts: SEED_BANK_ACCOUNTS,
-      transactions: SEED_WALLET_TRANSACTIONS,
+export const useWalletStore = create<WalletStore>((set, get) => ({
+  // Non-persistent initial UI state: zero balances until hydrated from PostgreSQL
+  saldoAktif: 0,
+  saldoTertahan: 0,
+  hasPin: true,
+  bankAccounts: [],
+  transactions: [],
+  isLoading: false,
+  error: null,
 
-      withdrawFunds: async (amount, bankId, pin, clientRequestId) => {
-        const { saldoAktif, bankAccounts } = get();
-
-        // P0-04 FIX: Strict 6-digit numeric validation, never allowing arbitrary 6-digit numbers
-        if (!/^\d{6}$/.test(pin)) {
-          return { success: false, status: "FAILED", message: "PIN transaksi harus berupa 6 digit angka." };
+  fetchWallet: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await fetch("/api/wallet");
+      if (!res.ok) {
+        if (res.status === 401) {
+          set({ isLoading: false });
+          return;
         }
+        set({ isLoading: false, error: "Gagal memuat data dompet dari server." });
+        return;
+      }
 
-        if (amount < 10000) {
-          return { success: false, status: "FAILED", message: "Minimal penarikan saldo adalah Rp 10.000." };
-        }
-
-        if (amount > saldoAktif) {
-          return {
-            success: false,
-            status: "FAILED",
-            message: "Saldo tersedia tidak mencukupi untuk penarikan ini.",
-          };
-        }
-
-        const bank = bankAccounts.find((b) => b.id === bankId) || bankAccounts[0];
-
-        try {
-          const res = await fetch("/api/wallet/withdraw", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              amount,
-              bankName: bank.bankName,
-              accountNumber: bank.accountNumber,
-              accountHolder: bank.accountHolder,
-              pin,
-              clientRequestId,
-            }),
-          });
-
-          const data = await res.json();
-          if (!res.ok) {
-            return {
-              success: false,
-              status: "FAILED",
-              statusCode: res.status,
-              code: data.error,
-              message: data.message || "Gagal memproses penarikan saldo.",
-            };
-          }
-
-          const newTrx: WalletTransaction = {
-            id: data.withdrawalNumber || `WD-${Date.now().toString().slice(-6)}`,
-            type: "WITHDRAWAL",
-            amount,
-            referenceId: data.withdrawalId || `TF-${Math.floor(100000 + Math.random() * 900000)}`,
-            status: "SUCCESS",
-            timestamp: "Baru saja",
-            description: `Penarikan saldo ke Rekening ${bank.bankName} (${bank.accountNumber.slice(-4)}) [Simulasi BI-FAST]`,
-          };
-
-          set((state) => ({
-            saldoAktif: state.saldoAktif - amount,
-            transactions: [newTrx, ...state.transactions],
-          }));
-
-          return {
-            success: true,
-            status: "SUCCESS",
-            message: `Penarikan Rp ${amount.toLocaleString("id-ID")} ke ${bank.bankName} berhasil diproses! [Simulasi BI-FAST]`,
-          };
-        } catch (err) {
-          // SECURITY FIX: never fabricate a successful withdrawal client-side.
-          // A network/fetch failure means we do NOT know the server's true state,
-          // so local balance/transactions must stay untouched and the caller must
-          // be told the operation did not complete.
-          console.error("[useWalletStore] withdrawFunds request failed:", err);
-          return {
-            success: false,
-            status: "UNKNOWN",
-            message:
-              "Status penarikan belum bisa dipastikan (koneksi terputus/timeout). Cek mutasi saldo sebelum mencoba lagi — jika Anda mencoba lagi, permintaan ini menggunakan Idempotency-Key yang aman dan tidak akan memotong saldo dua kali.",
-          };
-        }
-      },
-
-      releaseEscrowToWallet: (amount, orderId, itemTitle) => {
-        const newTrx: WalletTransaction = {
-          id: `ESC-REL-${Date.now().toString().slice(-6)}`,
-          type: "ESCROW_RELEASE",
-          amount,
-          referenceId: orderId,
-          status: "SUCCESS",
-          timestamp: "Baru saja",
-          description: `Pencairan dana Escrow pesanan: ${itemTitle}`,
-        };
-
-        set((state) => ({
-          saldoAktif: state.saldoAktif + amount,
-          saldoTertahan: Math.max(0, state.saldoTertahan - amount),
-          transactions: [newTrx, ...state.transactions],
-        }));
-      },
-
-      holdEscrowFunds: (amount, orderId, itemTitle) => {
-        const newTrx: WalletTransaction = {
-          id: `ESC-HLD-${Date.now().toString().slice(-6)}`,
-          type: "ESCROW_HOLD",
-          amount,
-          referenceId: orderId,
-          status: "PENDING",
-          timestamp: "Baru saja",
-          description: `Dana Escrow tertahan masa inspeksi: ${itemTitle}`,
-        };
-
-        set((state) => ({
-          saldoTertahan: state.saldoTertahan + amount,
-          transactions: [newTrx, ...state.transactions],
-        }));
-      },
-    }),
-    {
-      name: "ngebekasinyuk-wallet-storage",
+      const data = await res.json();
+      set({
+        saldoAktif: data.wallet.activeBalance,
+        saldoTertahan: data.wallet.heldBalance,
+        hasPin: data.security.hasPin,
+        bankAccounts: (data.bankAccounts || []).map((b: {
+          id: string;
+          bankCode: string;
+          bankName: string;
+          accountHolder: string;
+          accountNumberMasked: string;
+          isDefault: boolean;
+        }) => ({
+          id: b.id,
+          bankName: b.bankName,
+          accountNumber: b.accountNumberMasked,
+          accountHolder: b.accountHolder,
+          isPrimary: b.isDefault,
+        })),
+        transactions: (data.ledgerEntries || []).map((e: {
+          id: string;
+          type: "ESCROW_HOLD" | "ESCROW_RELEASE" | "WITHDRAWAL" | "REFUND";
+          amount: number;
+          referenceId: string;
+          createdAt: string;
+          description: string;
+        }) => ({
+          id: e.id,
+          type: e.type,
+          amount: e.amount,
+          referenceId: e.referenceId,
+          status: "SUCCESS" as const,
+          timestamp: timeAgo(e.createdAt),
+          description: e.description,
+        })),
+        isLoading: false,
+        error: null,
+      });
+    } catch {
+      set({ isLoading: false, error: "Koneksi terputus saat memuat dompet." });
     }
-  )
-);
+  },
+
+  withdrawFunds: async (amount, bankAccountId, pin, clientRequestId) => {
+    const { saldoAktif } = get();
+
+    // Strict 6-digit numeric validation
+    if (!/^\d{6}$/.test(pin)) {
+      return { success: false, status: "FAILED", message: "PIN transaksi harus berupa 6 digit angka." };
+    }
+
+    if (amount < 10000) {
+      return { success: false, status: "FAILED", message: "Minimal penarikan saldo adalah Rp 10.000." };
+    }
+
+    if (amount > saldoAktif) {
+      return {
+        success: false,
+        status: "FAILED",
+        message: "Saldo tersedia tidak mencukupi untuk penarikan ini.",
+      };
+    }
+
+    try {
+      const res = await fetch("/api/wallet/withdraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": clientRequestId,
+        },
+        body: JSON.stringify({
+          amount,
+          bankAccountId,
+          pin,
+          clientRequestId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        return {
+          success: false,
+          status: "FAILED",
+          statusCode: res.status,
+          code: data.error,
+          message: data.message || "Gagal memproses penarikan saldo.",
+        };
+      }
+
+      // Authoritative balance reconciliation
+      const newActiveBalance =
+        typeof data.newActiveBalance === "number"
+          ? data.newActiveBalance
+          : get().saldoAktif - amount;
+
+      const newTrx: WalletTransaction = {
+        id: data.withdrawalNumber || data.withdrawalId || `WDR-${Date.now()}`,
+        type: "WITHDRAWAL",
+        amount,
+        referenceId: data.withdrawalNumber || data.withdrawalId || "WDR",
+        status: "SUCCESS",
+        timestamp: "Baru saja",
+        description: `Penarikan saldo [Simulasi Transfer]`,
+      };
+
+      set((state) => ({
+        saldoAktif: newActiveBalance,
+        transactions: [newTrx, ...state.transactions],
+      }));
+
+      // Asynchronously reconcile authoritative read snapshot from PostgreSQL
+      get().fetchWallet().catch(() => {});
+
+      return {
+        success: true,
+        status: "SUCCESS",
+        message: `Penarikan ${formatRupiah(amount)} berhasil diproses! [Simulasi Transfer]`,
+      };
+    } catch (err) {
+      // SECURITY FIX: never fabricate a successful withdrawal client-side.
+      // A network/fetch failure means we do NOT know the server's true state,
+      // so local balance/transactions must stay untouched and the caller must
+      // be told the operation did not complete.
+      console.error("[useWalletStore] withdrawFunds request failed:", err);
+      return {
+        success: false,
+        status: "UNKNOWN",
+        message:
+          "Status penarikan belum bisa dipastikan (koneksi terputus/timeout). Cek mutasi saldo sebelum mencoba lagi — jika Anda mencoba lagi, permintaan ini menggunakan Idempotency-Key yang aman dan tidak akan memotong saldo dua kali.",
+      };
+    }
+  },
+}));

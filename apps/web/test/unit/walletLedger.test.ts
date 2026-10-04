@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
   let userId: string;
   let walletId: string;
+  let bankAccountId: string;
 
   beforeEach(async () => {
     const ts = Date.now().toString().slice(-6);
@@ -25,12 +26,22 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
             heldBalance: 2000000,
           },
         },
+        bankAccounts: {
+          create: {
+            bankCode: "BCA",
+            bankName: "BCA",
+            accountNumber: "8271019281",
+            accountHolder: "Wallet Test User",
+            isDefault: true,
+          },
+        },
       },
-      include: { wallet: true },
+      include: { wallet: true, bankAccounts: true },
     });
 
     userId = user.id;
     walletId = user.wallet!.id;
+    bankAccountId = user.bankAccounts[0].id;
   });
 
   describe("P0-04 PIN Hardening & Rate-Limiting", () => {
@@ -88,9 +99,7 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
       const res = await WalletLedgerService.requestWithdrawal({
         userId,
         amount: 5000000,
-        bankName: "BCA",
-        accountNumber: "8271019281",
-        accountHolder: "Wallet Test User",
+        bankAccountId,
         pin: "123456",
       });
 
@@ -112,9 +121,7 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
         WalletLedgerService.requestWithdrawal({
           userId,
           amount: 25000000, // Balance is only 15000000
-          bankName: "BCA",
-          accountNumber: "8271019281",
-          accountHolder: "Wallet Test User",
+          bankAccountId,
           pin: "123456",
         })
       ).rejects.toThrow(WalletDomainError);
@@ -125,9 +132,7 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
         WalletLedgerService.requestWithdrawal({
           userId,
           amount: 1000000,
-          bankName: "BCA",
-          accountNumber: "8271019281",
-          accountHolder: "Wallet Test User",
+          bankAccountId,
           pin: "999999",
         })
       ).rejects.toThrow(WalletDomainError);
@@ -140,9 +145,7 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
       const first = await WalletLedgerService.requestWithdrawal({
         userId,
         amount: 2000000,
-        bankName: "BCA",
-        accountNumber: "8271019281",
-        accountHolder: "Wallet Test User",
+        bankAccountId,
         pin: "123456",
         customIdempotencyKey: key,
       });
@@ -153,9 +156,7 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
       const second = await WalletLedgerService.requestWithdrawal({
         userId,
         amount: 2000000,
-        bankName: "BCA",
-        accountNumber: "8271019281",
-        accountHolder: "Wallet Test User",
+        bankAccountId,
         pin: "123456",
         customIdempotencyKey: key,
       });
@@ -183,7 +184,16 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
               heldBalance: 0,
             },
           },
+          bankAccounts: {
+            create: {
+              bankCode: "BCA",
+              bankName: "BCA",
+              accountNumber: "1234567890",
+              accountHolder: "No PIN User",
+            },
+          },
         },
+        include: { bankAccounts: true },
       });
 
       // 1. verifyPin returns machine-readable reason PIN_NOT_SET
@@ -200,9 +210,7 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
         WalletLedgerService.requestWithdrawal({
           userId: noPinUser.id,
           amount: 50000,
-          bankName: "BCA",
-          accountNumber: "1234567890",
-          accountHolder: "No PIN User",
+          bankAccountId: noPinUser.bankAccounts[0].id,
           pin: "123456",
         })
       ).rejects.toThrowError(
@@ -231,16 +239,23 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
               heldBalance: 0,
             },
           },
+          bankAccounts: {
+            create: {
+              bankCode: "BCA",
+              bankName: "BCA",
+              accountNumber: "1234567890",
+              accountHolder: "Wrong PIN User",
+            },
+          },
         },
+        include: { bankAccounts: true },
       });
 
       await expect(
         WalletLedgerService.requestWithdrawal({
           userId: wrongPinUser.id,
           amount: 50000,
-          bankName: "BCA",
-          accountNumber: "1234567890",
-          accountHolder: "Wrong PIN User",
+          bankAccountId: wrongPinUser.bankAccounts[0].id,
           pin: "111222",
         })
       ).rejects.toThrowError(
