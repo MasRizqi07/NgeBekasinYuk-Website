@@ -128,6 +128,13 @@ export async function POST(
         },
       });
 
+      if ((toStatus as string) === "CANCELLED") {
+        await tx.productListing.update({
+          where: { id: order.listingId },
+          data: { status: "ACTIVE" },
+        });
+      }
+
       return await tx.order.findUnique({
         where: { id: order.id },
       });

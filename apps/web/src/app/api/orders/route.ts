@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 
         if (replayedOrder) {
           if (replayedOrder.buyerId === session.id || session.role === "ADMIN") {
-            return NextResponse.json(mapOrderToDto(replayedOrder), { status: 201 });
+            return NextResponse.json(mapOrderToDto(replayedOrder, session), { status: 201 });
           }
           return NextResponse.json(
             { error: "FORBIDDEN", message: "Anda tidak memiliki akses ke pesanan ini." },
@@ -98,13 +98,43 @@ export async function POST(request: Request) {
     }
 
     if (listing.status !== "ACTIVE") {
-      return NextResponse.json(
-        {
-          error: "LISTING_NOT_ACTIVE",
-          message: "Barang sudah tidak aktif atau sedang dalam transaksi lain.",
-        },
-        { status: 422 }
-      );
+      let canRevive = false;
+      if (listing.status === "RESERVED") {
+        const activeOrder = await prisma.order.findFirst({
+          where: {
+            listingId: listing.id,
+            status: { notIn: ["CANCELLED", "REFUNDED", "COMPLETED"] },
+          },
+          include: {
+            paymentAttempts: {
+              where: { status: "PENDING" },
+              orderBy: { createdAt: "desc" },
+              take: 1,
+            },
+          },
+        });
+
+        if (activeOrder) {
+          const latestAttempt = activeOrder.paymentAttempts[0];
+          const isExpired =
+            activeOrder.status === "PENDING_PAYMENT" &&
+            ((latestAttempt && new Date() > latestAttempt.expiresAt) ||
+              Date.now() - activeOrder.createdAt.getTime() > 2 * 60 * 60 * 1000);
+          if (isExpired) {
+            canRevive = true;
+          }
+        }
+      }
+
+      if (!canRevive) {
+        return NextResponse.json(
+          {
+            error: "LISTING_NOT_ACTIVE",
+            message: "Barang sudah tidak aktif atau sedang dalam transaksi lain.",
+          },
+          { status: 422 }
+        );
+      }
     }
 
     // 6. Anti-Self-Dealing: Seller cannot buy own listing
@@ -156,6 +186,60 @@ export async function POST(request: Request) {
     // 9. Atomic Postgres Transaction
     try {
       const createdDto = await prisma.$transaction(async (tx) => {
+        // Enforce I1 Defense (Decision D5: Reserve listing at order creation with lazy expiry)
+        const activeOrder = await tx.order.findFirst({
+          where: {
+            listingId: listing.id,
+            status: {
+              notIn: ["CANCELLED", "REFUNDED", "COMPLETED"],
+            },
+          },
+          include: {
+            paymentAttempts: {
+              where: { status: "PENDING" },
+              orderBy: { createdAt: "desc" },
+              take: 1,
+            },
+          },
+        });
+
+        if (activeOrder) {
+          const latestAttempt = activeOrder.paymentAttempts[0];
+          const isExpired =
+            activeOrder.status === "PENDING_PAYMENT" &&
+            ((latestAttempt && new Date() > latestAttempt.expiresAt) ||
+              Date.now() - activeOrder.createdAt.getTime() > 2 * 60 * 60 * 1000);
+
+          if (isExpired) {
+            // Lazily cancel the stale unpaid order
+            await tx.order.update({
+              where: { id: activeOrder.id },
+              data: {
+                status: "CANCELLED",
+                cancelledAt: new Date(),
+              },
+            });
+            await tx.orderStatusHistory.create({
+              data: {
+                orderId: activeOrder.id,
+                fromStatus: "PENDING_PAYMENT",
+                toStatus: "CANCELLED",
+                actorId: "SYSTEM",
+                actorRole: "SYSTEM",
+                reason: "Batas waktu pembayaran pesanan telah kadaluwarsa (lazy expiry).",
+              },
+            });
+          } else {
+            throw new Error("LISTING_ALREADY_RESERVED");
+          }
+        }
+
+        // Atomically transition listing to RESERVED
+        await tx.productListing.update({
+          where: { id: listing.id },
+          data: { status: "RESERVED" },
+        });
+
         // a. Create Order in PENDING_PAYMENT state
         const newOrder = await tx.order.create({
           data: {
@@ -220,7 +304,7 @@ export async function POST(request: Request) {
           select: orderSelectFields,
         });
 
-        const dto = mapOrderToDto(completeOrder);
+        const dto = mapOrderToDto(completeOrder, session);
 
         // f. Save Idempotency Key record (Task 3.6.2: store minimal reference without credentials)
         await tx.idempotencyKey.create({
@@ -265,7 +349,7 @@ export async function POST(request: Request) {
               select: orderSelectFields,
             });
             if (replayedOrder) {
-              return NextResponse.json(mapOrderToDto(replayedOrder), { status: 201 });
+              return NextResponse.json(mapOrderToDto(replayedOrder, session), { status: 201 });
             }
           }
         }
@@ -273,6 +357,19 @@ export async function POST(request: Request) {
       throw txError;
     }
   } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.message === "LISTING_NOT_ACTIVE" || error.message === "LISTING_ALREADY_RESERVED")
+    ) {
+      return NextResponse.json(
+        {
+          error: "LISTING_NOT_ACTIVE",
+          message: "Barang sudah tidak aktif atau sedang dalam transaksi lain.",
+        },
+        { status: 422 }
+      );
+    }
+
     console.error("POST /api/orders Error:", error);
     return NextResponse.json(
       { error: "INTERNAL_SERVER_ERROR", message: "Gagal membuat pesanan." },
@@ -327,7 +424,7 @@ export async function GET(request: Request) {
       prisma.order.count({ where: whereClause }),
     ]);
 
-    const mappedOrders = orders.map((order) => mapOrderToDto(order));
+    const mappedOrders = orders.map((order) => mapOrderToDto(order, session));
 
     return NextResponse.json({
       orders: mappedOrders,

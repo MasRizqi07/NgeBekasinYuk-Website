@@ -85,6 +85,21 @@ export const orderSelectFields = {
     },
   },
   paymentAttempts: {
+    select: {
+      id: true,
+      orderId: true,
+      paymentMethod: true,
+      amount: true,
+      status: true,
+      vaNumber: true,
+      qrString: true,
+      expiresAt: true,
+      settledAt: true,
+      providerName: true,
+      isSimulation: true,
+      createdAt: true,
+      updatedAt: true,
+    },
     orderBy: { createdAt: "desc" },
     take: 1,
   },
@@ -94,7 +109,13 @@ export type OrderWithAllowedRelations = Prisma.OrderGetPayload<{
   select: typeof orderSelectFields;
 }>;
 
-export function mapOrderToDto(order: OrderWithAllowedRelations) {
+export function mapOrderToDto(
+  order: OrderWithAllowedRelations,
+  viewer?: { id: string; role?: string }
+) {
+  const isBuyerOrAdmin =
+    !viewer || viewer.id === order.buyerId || viewer.role === "ADMIN";
+
   const latestPayment =
     order.paymentAttempts && order.paymentAttempts.length > 0
       ? order.paymentAttempts[0]
@@ -131,13 +152,13 @@ export function mapOrderToDto(order: OrderWithAllowedRelations) {
     updatedAt: order.updatedAt instanceof Date ? order.updatedAt.toISOString() : String(order.updatedAt),
 
     buyerName: order.buyer?.name || "Pembeli",
-    buyerPhone: order.buyer?.phone || "081234567890",
-    courier: order.shippingCourier || "SiCepat",
+    buyerPhone: order.buyer?.phone ?? null,
+    courier: order.shippingCourier || "",
     trackingNumber: order.shippingAirwayBill || "",
-    paymentMethod: latestPayment?.paymentMethod || "BCA_VA",
-    vaNumber: latestPayment?.vaNumber || "",
-    qrString: latestPayment?.qrString || undefined,
-    paymentAttemptId: latestPayment?.id,
+    paymentMethod: isBuyerOrAdmin ? (latestPayment?.paymentMethod || "BCA_VA") : "ESCROW",
+    vaNumber: isBuyerOrAdmin ? (latestPayment?.vaNumber || "") : "",
+    qrString: isBuyerOrAdmin ? (latestPayment?.qrString || undefined) : undefined,
+    paymentAttemptId: isBuyerOrAdmin ? latestPayment?.id : undefined,
     reviewGiven: false,
 
     buyer: order.buyer
@@ -190,7 +211,7 @@ export function mapOrderToDto(order: OrderWithAllowedRelations) {
         }
       : undefined,
 
-    paymentAttempts: order.paymentAttempts
+    paymentAttempts: isBuyerOrAdmin && order.paymentAttempts
       ? order.paymentAttempts.map((pa) => ({
           id: pa.id,
           orderId: pa.orderId,
@@ -203,7 +224,6 @@ export function mapOrderToDto(order: OrderWithAllowedRelations) {
           settledAt: pa.settledAt instanceof Date ? pa.settledAt.toISOString() : pa.settledAt ? String(pa.settledAt) : null,
           providerName: pa.providerName,
           isSimulation: pa.isSimulation,
-          idempotencyKey: pa.idempotencyKey,
           createdAt: pa.createdAt instanceof Date ? pa.createdAt.toISOString() : String(pa.createdAt),
           updatedAt: pa.updatedAt instanceof Date ? pa.updatedAt.toISOString() : String(pa.updatedAt),
         }))

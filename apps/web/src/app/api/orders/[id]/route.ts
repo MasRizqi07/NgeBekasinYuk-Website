@@ -29,7 +29,7 @@ export async function GET(
       return NextResponse.json({ error: "FORBIDDEN", message: "Anda tidak memiliki akses ke pesanan ini" }, { status: 403 });
     }
 
-    return NextResponse.json(mapOrderToDto(order));
+    return NextResponse.json(mapOrderToDto(order, session));
   } catch (error) {
     console.error("GET /api/orders/[id] Error:", error);
     return NextResponse.json(

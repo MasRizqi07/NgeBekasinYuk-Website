@@ -1,0 +1,26 @@
+Listing tests:
+  [chromium] ÔÇ║ admin-security.spec.ts:5:7 ÔÇ║ Admin Route Access Control & Cookie Tampering Defense (HP2-P0-01, HP2-P1-02) ÔÇ║ anonymous visitor attempting /admin/dashboard is redirected to /login
+  [chromium] ÔÇ║ admin-security.spec.ts:10:7 ÔÇ║ Admin Route Access Control & Cookie Tampering Defense (HP2-P0-01, HP2-P1-02) ÔÇ║ authenticated BUYER attempting /admin/dashboard is denied and redirected to /
+  [chromium] ÔÇ║ admin-security.spec.ts:33:7 ÔÇ║ Admin Route Access Control & Cookie Tampering Defense (HP2-P0-01, HP2-P1-02) ÔÇ║ ATTACK: forged unsigned ADMIN cookie is strictly denied and redirected to /login
+  [chromium] ÔÇ║ admin-security.spec.ts:60:7 ÔÇ║ Admin Route Access Control & Cookie Tampering Defense (HP2-P0-01, HP2-P1-02) ÔÇ║ ATTACK: tampered signed cookie (buyer signature with admin payload) is rejected
+  [chromium] ÔÇ║ admin-security.spec.ts:88:7 ÔÇ║ Admin Route Access Control & Cookie Tampering Defense (HP2-P0-01, HP2-P1-02) ÔÇ║ legitimate ADMIN with authentic cryptographically signed session is granted access
+  [chromium] ÔÇ║ auth.spec.ts:8:7 ÔÇ║ Authentication Journey E2E (HP2-P1-02) ÔÇ║ user registration, login, session persistence, and logout flow
+  [chromium] ÔÇ║ authorization.spec.ts:5:7 ÔÇ║ Object-Level Authorization & IDOR Defenses (HP2-P1-02) ÔÇ║ non-admin calling /api/disputes/[id]/verdict is rejected with 403 FORBIDDEN
+  [chromium] ÔÇ║ authorization.spec.ts:31:7 ÔÇ║ Object-Level Authorization & IDOR Defenses (HP2-P1-02) ÔÇ║ non-admin calling /api/admin/step-up is rejected with 403 FORBIDDEN
+  [chromium] ÔÇ║ authorization.spec.ts:53:7 ÔÇ║ Object-Level Authorization & IDOR Defenses (HP2-P1-02) ÔÇ║ seller attempting to self-release their own escrow is forbidden
+  [chromium] ÔÇ║ buyer-order.spec.ts:22:7 ÔÇ║ Buyer Authoritative Order Flow (Real PostgreSQL) ÔÇ║ buyer can browse product, checkout, pay escrow, inspect, and complete order
+  [chromium] ÔÇ║ buyer-order.spec.ts:181:7 ÔÇ║ Buyer Authoritative Order Flow (Real PostgreSQL) ÔÇ║ negative: tampered price or injected buyerId in order creation is rejected and never reaches DB
+  [chromium] ÔÇ║ buyer-order.spec.ts:256:7 ÔÇ║ Buyer Authoritative Order Flow (Real PostgreSQL) ÔÇ║ buyer session attempting seller/courier simulation transitions is rejected with 422
+  [chromium] ÔÇ║ checkout-navigation.spec.ts:5:7 ÔÇ║ Checkout Navigation State Persistence ÔÇ║ payment method is preserved after navigating away and back
+  [chromium] ÔÇ║ dispute-refund.spec.ts:23:7 ÔÇ║ Dispute Refund E2E Flow ÔÇ║ admin accesses disputes panel, reviews dispute, and executes buyer refund with TOTP
+  [chromium] ÔÇ║ dispute-seller-release.spec.ts:23:7 ÔÇ║ Dispute Seller Release E2E Flow ÔÇ║ admin executes seller release verdict with TOTP step-up and releases escrow
+  [chromium] ÔÇ║ pass3-certification.spec.ts:64:7 ÔÇ║ Hardening Pass #3 Final Certification E2E Suites ÔÇ║ STALE PRIVILEGE REVOCATION: role downgrade or sessionVersion increment revokes sensitive admin APIs immediately
+  [chromium] ÔÇ║ pass3-certification.spec.ts:144:7 ÔÇ║ Hardening Pass #3 Final Certification E2E Suites ÔÇ║ ONE-TIME STEP-UP GRANT: grant is consumable once for verdict, second use strictly rejected
+  [chromium] ÔÇ║ pass3-certification.spec.ts:198:7 ÔÇ║ Hardening Pass #3 Final Certification E2E Suites ÔÇ║ STEP-UP GRANT API: requesting DISPUTE_VERDICT without resourceId is rejected with 400 (AP4-P0-03)
+  [chromium] ÔÇ║ pass3-certification.spec.ts:229:7 ÔÇ║ Hardening Pass #3 Final Certification E2E Suites ÔÇ║ VERDICT API: raw 6-digit TOTP bypass attempt is strictly rejected with 401 (AP4-P0-04)
+  [chromium] ÔÇ║ pass3-certification.spec.ts:259:7 ÔÇ║ Hardening Pass #3 Final Certification E2E Suites ÔÇ║ VERDICT API: grant scoped to Dispute A cannot resolve Dispute B (AP4-P0-03)
+  [chromium] ÔÇ║ pass3-certification.spec.ts:296:7 ÔÇ║ Hardening Pass #3 Final Certification E2E Suites ÔÇ║ PRODUCTION SAFETY: demo payment webhook endpoint responds appropriately across runtime environments
+  [chromium] ÔÇ║ seller-flow.spec.ts:5:7 ÔÇ║ Seller Flow E2E Journey ÔÇ║ seller can access dashboard, listings, profile, and wallet view
+  [chromium] ÔÇ║ wallet-pin-lifecycle.spec.ts:12:7 ÔÇ║ Wallet PIN Lifecycle & Server-Authoritative Read E2E (Phase 4 & 4B) ÔÇ║ new user registers -> withdraw attempt -> set-PIN form appears -> set PIN -> withdraw succeeds -> reload preserves state
+  [chromium] ÔÇ║ wallet-pin-lifecycle.spec.ts:94:7 ÔÇ║ Wallet PIN Lifecycle & Server-Authoritative Read E2E (Phase 4 & 4B) ÔÇ║ negative scenario: arbitrary payout bank details / foreign bankAccountId cannot be used
+Total: 24 tests in 10 files
