@@ -1,0 +1,37 @@
+
+> web@0.1.0 test:e2e D:\MY CODE\NgeBekasinYuk-Web\apps\web
+> playwright test "--reporter=list"
+
+
+Running 24 tests using 1 worker
+
+  ok  1 [chromium] › test\e2e\admin-security.spec.ts:5:7 › Admin Route Access Control & Cookie Tampering Defense (HP2-P0-01, HP2-P1-02) › anonymous visitor attempting /admin/dashboard is redirected to /login (551ms)
+  ok  2 [chromium] › test\e2e\admin-security.spec.ts:10:7 › Admin Route Access Control & Cookie Tampering Defense (HP2-P0-01, HP2-P1-02) › authenticated BUYER attempting /admin/dashboard is denied and redirected to / (597ms)
+  ok  3 [chromium] › test\e2e\admin-security.spec.ts:33:7 › Admin Route Access Control & Cookie Tampering Defense (HP2-P0-01, HP2-P1-02) › ATTACK: forged unsigned ADMIN cookie is strictly denied and redirected to /login (423ms)
+  ok  4 [chromium] › test\e2e\admin-security.spec.ts:60:7 › Admin Route Access Control & Cookie Tampering Defense (HP2-P0-01, HP2-P1-02) › ATTACK: tampered signed cookie (buyer signature with admin payload) is rejected (513ms)
+  ok  5 [chromium] › test\e2e\admin-security.spec.ts:88:7 › Admin Route Access Control & Cookie Tampering Defense (HP2-P0-01, HP2-P1-02) › legitimate ADMIN with authentic cryptographically signed session is granted access (566ms)
+  ok  6 [chromium] › test\e2e\auth.spec.ts:8:7 › Authentication Journey E2E (HP2-P1-02) › user registration, login, session persistence, and logout flow (2.5s)
+  ok  7 [chromium] › test\e2e\authorization.spec.ts:5:7 › Object-Level Authorization & IDOR Defenses (HP2-P1-02) › non-admin calling /api/disputes/[id]/verdict is rejected with 403 FORBIDDEN (910ms)
+  ok  8 [chromium] › test\e2e\authorization.spec.ts:31:7 › Object-Level Authorization & IDOR Defenses (HP2-P1-02) › non-admin calling /api/admin/step-up is rejected with 403 FORBIDDEN (71ms)
+  ok  9 [chromium] › test\e2e\authorization.spec.ts:53:7 › Object-Level Authorization & IDOR Defenses (HP2-P1-02) › seller attempting to self-release their own escrow is forbidden (866ms)
+  ok 10 [chromium] › test\e2e\buyer-order.spec.ts:43:7 › Buyer Authoritative Order Flow (Real PostgreSQL) › buyer can browse product, checkout, pay escrow, inspect, and complete order (7.7s)
+  ok 11 [chromium] › test\e2e\buyer-order.spec.ts:177:7 › Buyer Authoritative Order Flow (Real PostgreSQL) › negative: tampered price or injected buyerId in order creation is rejected and never reaches DB (98ms)
+Buyer 'Simulasi Kirim Resi' HTTP Status: 422
+Buyer 'Simulasi Kirim Resi' Body: {"error":"INVALID_ORDER_TRANSITION","message":"Only seller owner or admin can mark order as shipped","fromStatus":"FUNDED","toStatus":"SHIPPED"}
+Buyer 'Simulasi Paket Tiba' HTTP Status: 422
+Buyer 'Simulasi Paket Tiba' Body: {"error":"INVALID_ORDER_TRANSITION","message":"Invalid transition path from FUNDED to INSPECTING","fromStatus":"FUNDED","toStatus":"INSPECTING"}
+  ok 12 [chromium] › test\e2e\buyer-order.spec.ts:252:7 › Buyer Authoritative Order Flow (Real PostgreSQL) › buyer session attempting seller/courier simulation transitions is rejected with 422 (80ms)
+  ok 13 [chromium] › test\e2e\checkout-navigation.spec.ts:5:7 › Checkout Navigation State Persistence › payment method is preserved after navigating away and back (1.1s)
+  ok 14 [chromium] › test\e2e\dispute-refund.spec.ts:23:7 › Dispute Refund E2E Flow › admin accesses disputes panel, reviews dispute, and executes buyer refund with TOTP (1.5s)
+  ok 15 [chromium] › test\e2e\dispute-seller-release.spec.ts:23:7 › Dispute Seller Release E2E Flow › admin executes seller release verdict with TOTP step-up and releases escrow (1.4s)
+  ok 16 [chromium] › test\e2e\pass3-certification.spec.ts:64:7 › Hardening Pass #3 Final Certification E2E Suites › STALE PRIVILEGE REVOCATION: role downgrade or sessionVersion increment revokes sensitive admin APIs immediately (116ms)
+  ok 17 [chromium] › test\e2e\pass3-certification.spec.ts:144:7 › Hardening Pass #3 Final Certification E2E Suites › ONE-TIME STEP-UP GRANT: grant is consumable once for verdict, second use strictly rejected (105ms)
+  ok 18 [chromium] › test\e2e\pass3-certification.spec.ts:198:7 › Hardening Pass #3 Final Certification E2E Suites › STEP-UP GRANT API: requesting DISPUTE_VERDICT without resourceId is rejected with 400 (AP4-P0-03) (47ms)
+  ok 19 [chromium] › test\e2e\pass3-certification.spec.ts:229:7 › Hardening Pass #3 Final Certification E2E Suites › VERDICT API: raw 6-digit TOTP bypass attempt is strictly rejected with 401 (AP4-P0-04) (60ms)
+  ok 20 [chromium] › test\e2e\pass3-certification.spec.ts:259:7 › Hardening Pass #3 Final Certification E2E Suites › VERDICT API: grant scoped to Dispute A cannot resolve Dispute B (AP4-P0-03) (84ms)
+  ok 21 [chromium] › test\e2e\pass3-certification.spec.ts:296:7 › Hardening Pass #3 Final Certification E2E Suites › PRODUCTION SAFETY: demo payment webhook endpoint responds appropriately across runtime environments (33ms)
+  ok 22 [chromium] › test\e2e\seller-flow.spec.ts:5:7 › Seller Flow E2E Journey › seller can access dashboard, listings, profile, and wallet view (1.0s)
+  ok 23 [chromium] › test\e2e\wallet-pin-lifecycle.spec.ts:12:7 › Wallet PIN Lifecycle & Server-Authoritative Read E2E (Phase 4 & 4B) › new user registers -> withdraw attempt -> set-PIN form appears -> set PIN -> withdraw succeeds -> reload preserves state (2.8s)
+  ok 24 [chromium] › test\e2e\wallet-pin-lifecycle.spec.ts:94:7 › Wallet PIN Lifecycle & Server-Authoritative Read E2E (Phase 4 & 4B) › negative scenario: arbitrary payout bank details / foreign bankAccountId cannot be used (1.1s)
+
+  24 passed (29.6s)

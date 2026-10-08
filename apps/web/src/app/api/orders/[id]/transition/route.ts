@@ -8,7 +8,7 @@ import {
   OrderStateTransitionError,
 } from "@/domain/order/OrderStateMachine";
 import { EscrowLedgerService } from "@/domain/escrow/EscrowLedgerService";
-import { LISTING_STATUS } from "@/domain/listing/listingStatus";
+import { executeOrderTransition } from "@/domain/order/orderTransitionService";
 
 export async function POST(
   request: Request,
@@ -92,53 +92,22 @@ export async function POST(
     }
 
     // For other transitions (SHIPPED, PROCESSING, etc.)
-    const updatedOrder = await prisma.$transaction(async (tx) => {
-      const updateData: Record<string, unknown> = {
-        status: toStatus,
-      };
-
-      if (toStatus === "SHIPPED") {
-        updateData.shippedAt = new Date();
-        if (shippingCourier) updateData.shippingCourier = shippingCourier;
-        if (shippingAirwayBill) updateData.shippingAirwayBill = shippingAirwayBill;
-      } else if (toStatus === "DELIVERED" || toStatus === "INSPECTING") {
-        if (!order.deliveredAt) updateData.deliveredAt = new Date();
-        if (!order.inspectionStartedAt) updateData.inspectionStartedAt = new Date();
-        if (!order.inspectionExpiresAt) {
-          updateData.inspectionExpiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
-        }
-      }
-
-      const updateResult = await tx.order.updateMany({
-        where: { id: order.id, status: order.status },
-        data: updateData,
-      });
-
-      if (updateResult.count !== 1) {
-        return null;
-      }
-
-      await tx.orderStatusHistory.create({
-        data: {
-          orderId: order.id,
-          fromStatus: order.status,
-          toStatus,
-          actorId: session.id,
-          actorRole: session.role,
-          reason: reason || `Status diubah menjadi ${toStatus} oleh ${session.name}`,
-        },
-      });
-
-      if ((toStatus as string) === "CANCELLED") {
-        await tx.productListing.update({
-          where: { id: order.listingId },
-          data: { status: LISTING_STATUS.ACTIVE },
-        });
-      }
-
-      return await tx.order.findUnique({
-        where: { id: order.id },
-      });
+    const updatedOrder = await executeOrderTransition({
+      orderId: order.id,
+      fromStatus: order.status as OrderStatus,
+      toStatus: toStatus as OrderStatus,
+      actor: {
+        id: session.id,
+        role: session.role,
+        name: session.name,
+      },
+      shippingCourier,
+      shippingAirwayBill,
+      reason,
+      listingId: order.listingId,
+      deliveredAt: order.deliveredAt,
+      inspectionStartedAt: order.inspectionStartedAt,
+      inspectionExpiresAt: order.inspectionExpiresAt,
     });
 
     if (!updatedOrder) {

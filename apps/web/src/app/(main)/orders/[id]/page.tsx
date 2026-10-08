@@ -630,48 +630,61 @@ export default function OrderDetailPage() {
           </div>
         </div>
 
-        {/* Interactive Dev Simulation Controls */}
-        <div className="rounded-2xl p-3.5 bg-surface-container-high border border-outline-variant/40 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-on-surface flex items-center gap-1">
-              <span>⚡ Panel Simulasi Siklus Escrow (Dev Tools)</span>
-            </span>
-            <span className="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded font-bold">
-              Prototype Mode
-            </span>
+        {/* Interactive Dev Simulation Controls (Gated by D4 / order.isSimulationAllowed) */}
+        {order.isSimulationAllowed && (
+          <div className="rounded-2xl p-3.5 bg-surface-container-high border border-outline-variant/40 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-on-surface flex items-center gap-1">
+                <span>⚡ Panel Simulasi Siklus Escrow (Dev Tools)</span>
+              </span>
+              <span className="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded font-bold">
+                Prototype Mode
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <button
+                onClick={async () => {
+                  const res = await fetch(`/api/orders/${order.id}/simulate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "SIMULATE_SHIPPED" }),
+                  });
+                  if (res.ok) {
+                    showToast("Simulasi: Penjual telah menginput resi kurir!", "info");
+                    window.location.reload();
+                  } else {
+                    const data = await res.json().catch(() => ({}));
+                    showToast(data.message || "Simulasi kirim resi gagal", "error");
+                  }
+                }}
+                className="p-2 bg-surface-container-lowest text-on-surface hover:bg-surface-container rounded-xl font-bold border border-outline-variant/30 text-left flex items-center gap-1.5"
+              >
+                <Truck className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span>1. Simulasi Kirim Resi</span>
+              </button>
+              <button
+                onClick={async () => {
+                  const res = await fetch(`/api/orders/${order.id}/simulate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "SIMULATE_DELIVERED" }),
+                  });
+                  if (res.ok) {
+                    showToast("Simulasi: Kurir konfirmasi paket telah tiba!", "success");
+                    window.location.reload();
+                  } else {
+                    const data = await res.json().catch(() => ({}));
+                    showToast(data.message || "Simulasi paket tiba gagal", "error");
+                  }
+                }}
+                className="p-2 bg-surface-container-lowest text-on-surface hover:bg-surface-container rounded-xl font-bold border border-outline-variant/30 text-left flex items-center gap-1.5"
+              >
+                <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span>2. Simulasi Paket Tiba</span>
+              </button>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <button
-              onClick={async () => {
-                await fetch(`/api/orders/${order.id}/transition`, {
-                  method: "POST",
-                  body: JSON.stringify({ toStatus: "SHIPPED", shippingCourier: "JT", shippingAirwayBill: "JT" + Math.floor(1000000000 + Math.random() * 9000000000) })
-                });
-                showToast("Simulasi: Penjual telah menginput resi kurir!", "info");
-                // Refresh the page to load updated data from API
-                window.location.reload();
-              }}
-              className="p-2 bg-surface-container-lowest text-on-surface hover:bg-surface-container rounded-xl font-bold border border-outline-variant/30 text-left flex items-center gap-1.5"
-            >
-              <Truck className="w-3.5 h-3.5 text-primary shrink-0" />
-              <span>1. Simulasi Kirim Resi</span>
-            </button>
-            <button
-              onClick={async () => {
-                await fetch(`/api/orders/${order.id}/transition`, {
-                  method: "POST",
-                  body: JSON.stringify({ toStatus: "INSPECTING" })
-                });
-                showToast("Simulasi: Kurir konfirmasi paket telah tiba!", "success");
-                window.location.reload();
-              }}
-              className="p-2 bg-surface-container-lowest text-on-surface hover:bg-surface-container rounded-xl font-bold border border-outline-variant/30 text-left flex items-center gap-1.5"
-            >
-              <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>2. Simulasi Paket Tiba</span>
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Sticky Bottom Contextual Action Panel */}

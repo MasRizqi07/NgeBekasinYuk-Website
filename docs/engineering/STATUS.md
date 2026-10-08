@@ -14,6 +14,7 @@
 | notifications | client simulation | client simulation |
 | KYC | client simulation | client simulation |
 | seller dashboard | client simulation | client simulation |
+| order simulation | demo-only (gated by DEMO_PAYMENT_PROVIDER, 404 in production) | `apps/web/src/app/api/orders/[id]/simulate/route.ts`, `apps/web/test/integration/orderSimulationD4.test.ts` |
 
 *Known limitation (Decision D7): After REFUND_BUYER, a listing transitions to ARCHIVED (non-buyable). No seller relist route currently exists.*
 

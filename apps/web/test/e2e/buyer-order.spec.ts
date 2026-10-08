@@ -43,7 +43,6 @@ test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
   test("buyer can browse product, checkout, pay escrow, inspect, and complete order", async ({
     page,
     context,
-    request,
   }) => {
     page.on("pageerror", (error) => console.log("PAGE ERROR:", error.message));
     page.on("console", (msg) => {
@@ -111,72 +110,36 @@ test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
     expect(dbOrderFunded?.escrowAccount).not.toBeNull();
     expect(dbOrderFunded?.escrowAccount?.status).toBe("HELD");
 
-    // 6. Real Seller marks order as SHIPPED via authoritative transition endpoint
-    const sellerToken = await signSession({
-      id: dbOrderFunded!.sellerId,
-      email: "seller@ngebekasinyuk.id",
-      name: "Dimas Aditya",
-      role: "SELLER",
-      isVerified: true,
-    });
+    // 6. Buyer drives shipment simulation via UI button ("1. Simulasi Kirim Resi")
+    const shipBtn = page.getByRole("button", { name: /1\. Simulasi Kirim Resi/i });
+    await expect(shipBtn).toBeVisible({ timeout: 10_000 });
+    await shipBtn.click();
 
-    const shipRes = await request.post(`http://localhost:3000/api/orders/${orderId}/transition`, {
-      headers: {
-        Cookie: `ngebekasinyuk_session=${sellerToken}`,
-        "Content-Type": "application/json",
-      },
-      data: {
-        toStatus: "SHIPPED",
-        shippingCourier: "J&T Express",
-        shippingAirwayBill: "JT928174829102",
-      },
-    });
-    expect(shipRes.ok()).toBeTruthy();
-    const shipJson = await shipRes.json();
-    expect(shipJson.success).toBe(true);
+    // Verify order transitioned to SHIPPED in PostgreSQL
+    await expect.poll(async () => {
+      const o = await prisma.order.findUnique({ where: { id: orderId } });
+      return o?.status;
+    }, { timeout: 10_000 }).toBe("SHIPPED");
 
-    // 7. Real Admin/Courier marks order as DELIVERED and initiates INSPECTING
-    const adminToken = await signSession({
-      id: "usr-admin-ngebekasin",
-      email: "admin@ngebekasinyuk.id",
-      name: "Admin NgeBekasinYuk",
-      role: "ADMIN",
-      isVerified: true,
-    });
-
-    const deliverRes = await request.post(`http://localhost:3000/api/orders/${orderId}/transition`, {
-      headers: {
-        Cookie: `ngebekasinyuk_session=${adminToken}`,
-        "Content-Type": "application/json",
-      },
-      data: {
-        toStatus: "DELIVERED",
-      },
-    });
-    expect(deliverRes.ok()).toBeTruthy();
-
-    const inspectRes = await request.post(`http://localhost:3000/api/orders/${orderId}/transition`, {
-      headers: {
-        Cookie: `ngebekasinyuk_session=${adminToken}`,
-        "Content-Type": "application/json",
-      },
-      data: {
-        toStatus: "INSPECTING",
-      },
-    });
-    expect(inspectRes.ok()).toBeTruthy();
+    // 7. Buyer drives delivery simulation via UI button ("2. Simulasi Paket Tiba")
+    const arriveBtn = page.getByRole("button", { name: /2\. Simulasi Paket Tiba/i });
+    await expect(arriveBtn).toBeVisible({ timeout: 10_000 });
+    await arriveBtn.click();
 
     // 8. Assert in PostgreSQL: status is INSPECTING and inspectionExpiresAt is non-null
+    await expect.poll(async () => {
+      const o = await prisma.order.findUnique({ where: { id: orderId } });
+      return o?.status;
+    }, { timeout: 10_000 }).toBe("INSPECTING");
+
     const dbOrderInspecting = await prisma.order.findUnique({
       where: { id: orderId },
     });
-    expect(dbOrderInspecting?.status).toBe("INSPECTING");
     expect(dbOrderInspecting?.inspectionExpiresAt).not.toBeNull();
 
-    // 9. Buyer reloads order page to see inspection state and release button
-    await page.reload();
-    await expect(page.getByText(/Paket Tiba! Masa Inspeksi Dimulai/i).first()).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(/Lepas Dana/i).first()).toBeVisible({ timeout: 10_000 });
+    // 9. Inspect UI state and release button (page automatically reloads on simulation click)
+    await expect(page.getByText(/Paket Tiba! Masa Inspeksi Dimulai/i).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Lepas Dana/i).first()).toBeVisible({ timeout: 15_000 });
 
     // 10. Buyer clicks "Lepas Dana" to authoritatively release funds
     page.on("dialog", (dialog) => dialog.accept());

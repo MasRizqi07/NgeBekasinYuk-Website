@@ -2,6 +2,7 @@
 // Field-by-field mapping to prevent credential or internal field leakage (Task 3.6.2)
 
 import type { Prisma } from "@prisma/client";
+import { env } from "@/lib/env";
 
 export const orderSelectFields = {
   id: true,
@@ -160,6 +161,7 @@ export function mapOrderToDto(
     qrString: isBuyerOrAdmin ? (latestPayment?.qrString || undefined) : undefined,
     paymentAttemptId: isBuyerOrAdmin ? latestPayment?.id : undefined,
     reviewGiven: false,
+    isSimulationAllowed: env.APP_ENV !== "production" && env.DEMO_PAYMENT_PROVIDER,
 
     buyer: order.buyer
       ? {

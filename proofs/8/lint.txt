@@ -1,0 +1,20 @@
+
+> ngebekasinyuk@ lint D:\MY CODE\NgeBekasinYuk-Web
+> turbo run lint
+
+• turbo 2.10.12
+
+   • Packages in scope: web
+   • Running lint in 1 packages
+   • Remote caching disabled
+
+web:lint: cache miss, executing 4aa202d99e76b170
+web:lint: 
+web:lint: > web@0.1.0 lint D:\MY CODE\NgeBekasinYuk-Web\apps\web
+web:lint: > eslint
+web:lint: 
+
+ Tasks:    1 successful, 1 total
+Cached:    0 cached, 1 total
+  Time:    19.012s 
+
