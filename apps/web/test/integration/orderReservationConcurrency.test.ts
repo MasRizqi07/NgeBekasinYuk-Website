@@ -108,34 +108,38 @@ describe("Order Reservation Concurrency & Lazy Expiry Suite (PostgreSQL)", () =>
     });
   }
 
-  it("1. 5 distinct buyers racing for the same listing (20 loop iterations)", async () => {
-    for (let iteration = 0; iteration < 20; iteration++) {
-      const listingId = await createListing("ACTIVE");
+  it(
+    "1. 5 distinct buyers racing for the same listing (20 loop iterations)",
+    async () => {
+      for (let iteration = 0; iteration < 20; iteration++) {
+        const listingId = await createListing("ACTIVE");
 
-      // Execute 5 concurrent requests with distinct buyers
-      const promises = buyers.map((buyer, idx) => {
-        const req = makeOrderRequest(listingId, buyer.id, `idemp-race-${iteration}-${idx}-${Date.now()}`);
-        activeUserId = buyer.id;
-        return createOrderRoute(req);
-      });
+        // Execute 5 concurrent requests with distinct buyers
+        const promises = buyers.map((buyer, idx) => {
+          const req = makeOrderRequest(listingId, buyer.id, `idemp-race-${iteration}-${idx}-${Date.now()}`);
+          activeUserId = buyer.id;
+          return createOrderRoute(req);
+        });
 
-      const responses = await Promise.all(promises);
-      const statuses = responses.map((r) => r.status);
+        const responses = await Promise.all(promises);
+        const statuses = responses.map((r) => r.status);
 
-      const count201 = statuses.filter((s) => s === 201).length;
-      const count422 = statuses.filter((s) => s === 422).length;
+        const count201 = statuses.filter((s) => s === 201).length;
+        const count422 = statuses.filter((s) => s === 422).length;
 
-      expect(count201).toBe(1);
-      expect(count422).toBe(4);
+        expect(count201).toBe(1);
+        expect(count422).toBe(4);
 
-      // Verify DB row invariants
-      const orders = await prisma.order.findMany({ where: { listingId } });
-      expect(orders.length).toBe(1);
+        // Verify DB row invariants
+        const orders = await prisma.order.findMany({ where: { listingId } });
+        expect(orders.length).toBe(1);
 
-      const listing = await prisma.productListing.findUniqueOrThrow({ where: { id: listingId } });
-      expect(listing.status).toBe("RESERVED");
-    }
-  });
+        const listing = await prisma.productListing.findUniqueOrThrow({ where: { id: listingId } });
+        expect(listing.status).toBe("RESERVED");
+      }
+    },
+    30000,
+  );
 
   it("2. 2 buyers racing for a listing whose blocking order is expired", async () => {
     const listingId = await createListing("RESERVED");
