@@ -4,6 +4,7 @@
 import { prisma } from "@/server/db/prisma";
 import { assertValidMoney, Money } from "@/domain/money";
 import { buildIdempotencyKey } from "@/domain/id";
+import { LISTING_STATUS } from "@/domain/listing/listingStatus";
 
 export class EscrowDomainError extends Error {
   public readonly code: string;
@@ -221,7 +222,7 @@ export class EscrowLedgerService {
 
         await tx.productListing.update({
           where: { id: order.listingId },
-          data: { status: "SOLD" },
+          data: { status: LISTING_STATUS.SOLD },
         });
 
         await tx.orderStatusHistory.create({
@@ -394,9 +395,10 @@ export class EscrowLedgerService {
         },
       });
 
+      // Decision D7: Listing transitions to ARCHIVED (non-buyable) after dispute refund
       await tx.productListing.update({
         where: { id: order.listingId },
-        data: { status: "ACTIVE" },
+        data: { status: LISTING_STATUS.ARCHIVED },
       });
 
       await tx.orderStatusHistory.create({

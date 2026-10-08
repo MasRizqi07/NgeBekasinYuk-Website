@@ -1,0 +1,83 @@
+
+> web@0.1.0 test D:\MY CODE\NgeBekasinYuk-Web\apps\web
+> vitest run "test/integration/orderReservationConcurrency.test.ts"
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/MY CODE/NgeBekasinYuk-Web/apps/web[39m
+
+ [31m❯[39m test/integration/orderReservationConcurrency.test.ts [2m([22m[2m6 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 1652[2mms[22m[39m
+[31m     [31m×[31m 1. 5 distinct buyers racing for the same listing (20 loop iterations)[39m[33m 582[2mms[22m[39m
+[31m     [31m×[31m 2. 2 buyers racing for a listing whose blocking order is expired[39m[32m 224[2mms[22m[39m
+[31m     [31m×[31m 3. Late POST /api/payment/simulate-webhook for an order cancelled by lazy expiry is rejected[39m[32m 233[2mms[22m[39m
+     [32m✓[39m 4. Same buyer, different Idempotency-Key, same listing: second order rejected with 422[32m 239[2mms[22m[39m
+     [32m✓[39m 5. Replay of same Idempotency-Key returns same order with single DB row[32m 197[2mms[22m[39m
+     [32m✓[39m 6. Decision D7: POST /api/orders on an ARCHIVED listing is rejected with 422 LISTING_NOT_ACTIVE[32m 174[2mms[22m[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/integration/orderReservationConcurrency.test.ts > Order Reservation Concurrency & Lazy Expiry Suite (PostgreSQL) > 1. 5 distinct buyers racing for the same listing (20 loop iterations)
+AssertionError: expected 5 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 5
+
+ ❯ test/integration/orderReservationConcurrency.test.ts:128:24
+    126|       const count422 = statuses.filter((s) => s === 422).length;
+    127|
+    128|       expect(count201).toBe(1);
+       |                        ^
+    129|       expect(count422).toBe(4);
+    130|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  test/integration/orderReservationConcurrency.test.ts > Order Reservation Concurrency & Lazy Expiry Suite (PostgreSQL) > 2. 2 buyers racing for a listing whose blocking order is expired
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ test/integration/orderReservationConcurrency.test.ts:190:54
+    188|
+    189|     const statuses = [res1.status, res2.status];
+    190|     expect(statuses.filter((s) => s === 201).length).toBe(1);
+       |                                                      ^
+    191|     expect(statuses.filter((s) => s === 422).length).toBe(1);
+    192|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  test/integration/orderReservationConcurrency.test.ts > Order Reservation Concurrency & Lazy Expiry Suite (PostgreSQL) > 3. Late POST /api/payment/simulate-webhook for an order cancelled by lazy expiry is rejected
+AssertionError: expected 200 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 200
+
+ ❯ test/integration/orderReservationConcurrency.test.ts:265:31
+    263|
+    264|     const webhookRes = await simulateWebhookRoute(webhookReq);
+    265|     expect(webhookRes.status).toBe(422);
+       |                               ^
+    266|
+    267|     const finalLedgerCount = await prisma.escrowLedgerEntry.count();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (6)[39m
+[2m   Start at [22m 17:18:55
+[2m   Duration [22m 2.73s[2m (transform 205ms, setup 0ms, import 726ms, tests 1.65s, environment 0ms)[22m
+
+D:\MY CODE\NgeBekasinYuk-Web\apps\web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  web@0.1.0 test: `vitest run "test/integration/orderReservationConcurrency.test.ts"`
+Exit status 1

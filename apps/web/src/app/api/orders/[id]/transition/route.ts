@@ -8,6 +8,7 @@ import {
   OrderStateTransitionError,
 } from "@/domain/order/OrderStateMachine";
 import { EscrowLedgerService } from "@/domain/escrow/EscrowLedgerService";
+import { LISTING_STATUS } from "@/domain/listing/listingStatus";
 
 export async function POST(
   request: Request,
@@ -131,7 +132,7 @@ export async function POST(
       if ((toStatus as string) === "CANCELLED") {
         await tx.productListing.update({
           where: { id: order.listingId },
-          data: { status: "ACTIVE" },
+          data: { status: LISTING_STATUS.ACTIVE },
         });
       }
 

@@ -31,6 +31,17 @@ export async function POST(request: Request) {
       amount,
     });
 
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: "PAYMENT_REJECTED",
+          message: result.message,
+          status: result.status,
+        },
+        { status: 422 }
+      );
+    }
+
     return NextResponse.json(result);
   } catch (error) {
     console.error("[Payment/SimulateWebhook] Error:", error);
