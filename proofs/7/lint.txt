@@ -1,0 +1,23 @@
+=== GREP LINT SCRIPTS ===
+apps/web/package.json:9:    "lint": "eslint",
+package.json:7:    "lint": "turbo run lint",
+
+=== PNPM ESLINT UNCACHED ===
+
+=== TURBO RUN LINT FORCE ===
+• turbo 2.10.12
+
+   • Packages in scope: web
+   • Running lint in 1 packages
+   • Remote caching disabled
+
+web:lint: cache bypass, force executing 351887b0f8bdd9df
+web:lint: 
+web:lint: > web@0.1.0 lint D:\MY CODE\NgeBekasinYuk-Web\apps\web
+web:lint: > eslint
+web:lint: 
+
+ Tasks:    1 successful, 1 total
+Cached:    0 cached, 1 total
+  Time:    7.194s 
+

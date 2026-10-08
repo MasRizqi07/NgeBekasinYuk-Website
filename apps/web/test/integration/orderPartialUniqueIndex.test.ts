@@ -117,7 +117,7 @@ describe("D8 Partial Unique Index Guarantee on Order(listingId) (PostgreSQL)", (
     });
 
     // Attempt raw second active order on same listing
-    let caughtError: any = null;
+    let caughtError: { code?: string } | null = null;
     try {
       await prisma.order.create({
         data: {
@@ -135,12 +135,12 @@ describe("D8 Partial Unique Index Guarantee on Order(listingId) (PostgreSQL)", (
         },
       });
     } catch (err) {
-      caughtError = err;
+      caughtError = err as { code?: string };
     }
 
     expect(caughtError).not.toBeNull();
     // Prisma maps Postgres 23505 unique violation to P2002
-    expect(caughtError.code).toBe("P2002");
+    expect(caughtError?.code).toBe("P2002");
   });
 
   it("3. Multiple terminal orders for the same listing do NOT violate the index", async () => {

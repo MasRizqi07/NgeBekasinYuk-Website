@@ -1,0 +1,209 @@
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│ critical            │ Next.js: Remote Code Execution in next/og              │
+│                     │ ImageResponse                                          │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Package             │ next                                                   │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Vulnerable versions │ >=16.2.0 <16.3.6                                       │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Patched versions    │ >=16.3.6                                               │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Paths               │ apps\web > next@16.3.4                                 │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ More info           │ https://github.com/advisories/GHSA-vcvr-r3jv-pc5j      │
+└─────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│ high                │ brace-expansion: DoS via uncontrolled recursion on     │
+│                     │ nested brace groups causing stack exhaustion           │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Package             │ brace-expansion                                        │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Vulnerable versions │ <1.1.20                                                │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Patched versions    │ >=1.1.20                                               │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Paths               │ apps\web > eslint@9.39.5 > @eslint/config-array@0.21.2 │
+│                     │ > minimatch@3.1.5 > brace-expansion@1.1.18             │
+│                     │                                                        │
+│                     │ apps\web > eslint@9.39.5 > @eslint/eslintrc@3.3.7 >    │
+│                     │ minimatch@3.1.5 > brace-expansion@1.1.18               │
+│                     │                                                        │
+│                     │ apps\web > eslint@9.39.5 > minimatch@3.1.5 >           │
+│                     │ brace-expansion@1.1.18                                 │
+│                     │                                                        │
+│                     │ ... Found 73 paths, run `pnpm why brace-expansion` for │
+│                     │ more information                                       │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ More info           │ https://github.com/advisories/GHSA-qhr7-859c-m2p7      │
+└─────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│ high                │ brace-expansion: DoS via uncontrolled recursion on     │
+│                     │ nested brace groups causing stack exhaustion           │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Package             │ brace-expansion                                        │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Vulnerable versions │ >=4.0.0 <5.0.11                                        │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Patched versions    │ >=5.0.11                                               │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Paths               │ apps\web > eslint-config-next@16.3.4 >                 │
+│                     │ eslint-import-resolver-typescript@3.10.1 >             │
+│                     │ eslint-plugin-import@2.32.0 >                          │
+│                     │ eslint-module-utils@2.14.0 >                           │
+│                     │ @typescript-eslint/parser@8.70.0 >                     │
+│                     │ @typescript-eslint/typescript-estree@8.70.0 >          │
+│                     │ minimatch@10.2.6 > brace-expansion@5.0.9               │
+│                     │                                                        │
+│                     │ apps\web > eslint-config-next@16.3.4 >                 │
+│                     │ eslint-import-resolver-typescript@3.10.1 >             │
+│                     │ eslint-plugin-import@2.32.0 >                          │
+│                     │ @typescript-eslint/parser@8.70.0 >                     │
+│                     │ @typescript-eslint/typescript-estree@8.70.0 >          │
+│                     │ minimatch@10.2.6 > brace-expansion@5.0.9               │
+│                     │                                                        │
+│                     │ apps\web > eslint-config-next@16.3.4 >                 │
+│                     │ eslint-plugin-import@2.32.0 >                          │
+│                     │ eslint-module-utils@2.14.0 >                           │
+│                     │ @typescript-eslint/parser@8.70.0 >                     │
+│                     │ @typescript-eslint/typescript-estree@8.70.0 >          │
+│                     │ minimatch@10.2.6 > brace-expansion@5.0.9               │
+│                     │                                                        │
+│                     │ ... Found 11 paths, run `pnpm why brace-expansion` for │
+│                     │ more information                                       │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ More info           │ https://github.com/advisories/GHSA-qhr7-859c-m2p7      │
+└─────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│ high                │ brace-expansion: DoS via uncontrolled recursion in     │
+│                     │ parseCommaParts causing stack exhaustion               │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Package             │ brace-expansion                                        │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Vulnerable versions │ <1.1.19                                                │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Patched versions    │ >=1.1.19                                               │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Paths               │ apps\web > eslint@9.39.5 > @eslint/config-array@0.21.2 │
+│                     │ > minimatch@3.1.5 > brace-expansion@1.1.18             │
+│                     │                                                        │
+│                     │ apps\web > eslint@9.39.5 > @eslint/eslintrc@3.3.7 >    │
+│                     │ minimatch@3.1.5 > brace-expansion@1.1.18               │
+│                     │                                                        │
+│                     │ apps\web > eslint@9.39.5 > minimatch@3.1.5 >           │
+│                     │ brace-expansion@1.1.18                                 │
+│                     │                                                        │
+│                     │ ... Found 73 paths, run `pnpm why brace-expansion` for │
+│                     │ more information                                       │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ More info           │ https://github.com/advisories/GHSA-6j4f-fj2g-mc7p      │
+└─────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│ high                │ brace-expansion: DoS via uncontrolled recursion in     │
+│                     │ parseCommaParts causing stack exhaustion               │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Package             │ brace-expansion                                        │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Vulnerable versions │ >=4.0.0 <5.0.10                                        │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Patched versions    │ >=5.0.10                                               │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Paths               │ apps\web > eslint-config-next@16.3.4 >                 │
+│                     │ eslint-import-resolver-typescript@3.10.1 >             │
+│                     │ eslint-plugin-import@2.32.0 >                          │
+│                     │ eslint-module-utils@2.14.0 >                           │
+│                     │ @typescript-eslint/parser@8.70.0 >                     │
+│                     │ @typescript-eslint/typescript-estree@8.70.0 >          │
+│                     │ minimatch@10.2.6 > brace-expansion@5.0.9               │
+│                     │                                                        │
+│                     │ apps\web > eslint-config-next@16.3.4 >                 │
+│                     │ eslint-import-resolver-typescript@3.10.1 >             │
+│                     │ eslint-plugin-import@2.32.0 >                          │
+│                     │ @typescript-eslint/parser@8.70.0 >                     │
+│                     │ @typescript-eslint/typescript-estree@8.70.0 >          │
+│                     │ minimatch@10.2.6 > brace-expansion@5.0.9               │
+│                     │                                                        │
+│                     │ apps\web > eslint-config-next@16.3.4 >                 │
+│                     │ eslint-plugin-import@2.32.0 >                          │
+│                     │ eslint-module-utils@2.14.0 >                           │
+│                     │ @typescript-eslint/parser@8.70.0 >                     │
+│                     │ @typescript-eslint/typescript-estree@8.70.0 >          │
+│                     │ minimatch@10.2.6 > brace-expansion@5.0.9               │
+│                     │                                                        │
+│                     │ ... Found 11 paths, run `pnpm why brace-expansion` for │
+│                     │ more information                                       │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ More info           │ https://github.com/advisories/GHSA-6j4f-fj2g-mc7p      │
+└─────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│ high                │ braces vulnerable to stack-exhaustion denial of        │
+│                     │ service through deeply nested patterns                 │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Package             │ braces                                                 │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Vulnerable versions │ <=3.0.3                                                │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Patched versions    │ <0.0.0                                                 │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Paths               │ . > lint-staged@15.5.2 > micromatch@4.0.8 >            │
+│                     │ braces@3.0.3                                           │
+│                     │                                                        │
+│                     │ apps\web > eslint-config-next@16.3.4 >                 │
+│                     │ @next/eslint-plugin-next@16.3.4 > fast-glob@3.3.1 >    │
+│                     │ micromatch@4.0.8 > braces@3.0.3                        │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ More info           │ https://github.com/advisories/GHSA-vfj7-8cjw-p6xm      │
+└─────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│ high                │ source-map-js allows event-loop denial of service      │
+│                     │ through indexed source-map section offsets             │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Package             │ source-map-js                                          │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Vulnerable versions │ >=1.0.0 <1.2.2                                         │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Patched versions    │ >=1.2.2                                                │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Paths               │ apps\web > next@16.3.4 > postcss@8.5.23 >              │
+│                     │ source-map-js@1.2.1                                    │
+│                     │                                                        │
+│                     │ apps\web > @tailwindcss/postcss@4.3.3 >                │
+│                     │ @tailwindcss/node@4.3.3 > source-map-js@1.2.1          │
+│                     │                                                        │
+│                     │ apps\web > @tailwindcss/postcss@4.3.3 > postcss@8.5.28 │
+│                     │ > source-map-js@1.2.1                                  │
+│                     │                                                        │
+│                     │ ... Found 14 paths, run `pnpm why source-map-js` for   │
+│                     │ more information                                       │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ More info           │ https://github.com/advisories/GHSA-68fv-2mgg-jv7q      │
+└─────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│ high                │ sharp : Vulnerability in librsvg dependency            │
+│                     │ CVE-2026-96889                                         │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Package             │ sharp                                                  │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Vulnerable versions │ <0.35.5                                                │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Patched versions    │ >=0.35.5                                               │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Paths               │ apps\web > next@16.3.4 > sharp@0.35.4                  │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ More info           │ https://github.com/advisories/GHSA-wq5f-xc86-pv6w      │
+└─────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│ high                │ Next.js has Server-Side Request Forgery in Image       │
+│                     │ Optimization                                           │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Package             │ next                                                   │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Vulnerable versions │ >=16.0.0 <16.3.8                                       │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Patched versions    │ >=16.3.8                                               │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Paths               │ apps\web > next@16.3.4                                 │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ More info           │ https://github.com/advisories/GHSA-cjq9-62q9-8jv4      │
+└─────────────────────┴────────────────────────────────────────────────────────┘
+16 vulnerabilities found
+Severity: 1 low | 6 moderate | 8 high | 1 critical

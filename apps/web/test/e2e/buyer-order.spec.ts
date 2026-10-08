@@ -10,20 +10,34 @@ import { prisma } from "@/server/db/prisma";
 // execute against real Next.js API route handlers backed by PostgreSQL transactions.
 // ==============================================================================
 
+/**
+ * Test Fixture Reset Helper for E2E Buyer Flow
+ *
+ * Scoped strictly to the fixture listing ('prod-ipad-air5').
+ * Why this is necessary: The marketplace UI product catalog on the client side
+ * relies on client-simulated catalog data (apps/web/src/lib/seedData.ts), where
+ * the product detail page and checkout specifically route to 'prod-ipad-air5'.
+ * To ensure hermetic end-to-end tests without test-order pollution from prior runs,
+ * any dangling active orders on this seed listing are cleaned up and the listing
+ * is restored to 'ACTIVE' before each test.
+ */
+async function resetSeedListingFixtureForE2E(listingId = "prod-ipad-air5"): Promise<void> {
+  await prisma.order.updateMany({
+    where: {
+      listingId,
+      status: { notIn: ["CANCELLED", "REFUNDED", "COMPLETED"] },
+    },
+    data: { status: "CANCELLED" },
+  });
+  await prisma.productListing.update({
+    where: { id: listingId },
+    data: { status: "ACTIVE" },
+  });
+}
+
 test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
   test.beforeEach(async () => {
-    // Ensure the seed listing is available and in ACTIVE status without conflicting test orders
-    await prisma.order.updateMany({
-      where: {
-        listingId: "prod-ipad-air5",
-        status: { notIn: ["CANCELLED", "REFUNDED", "COMPLETED"] },
-      },
-      data: { status: "CANCELLED" },
-    });
-    await prisma.productListing.update({
-      where: { id: "prod-ipad-air5" },
-      data: { status: "ACTIVE" },
-    });
+    await resetSeedListingFixtureForE2E("prod-ipad-air5");
   });
 
   test("buyer can browse product, checkout, pay escrow, inspect, and complete order", async ({
@@ -75,6 +89,12 @@ test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
     expect(orderIdMatch).not.toBeNull();
     const orderId = orderIdMatch![1];
     expect(orderId).toMatch(/^ord-/);
+
+    // Verify listing is atomically RESERVED in PostgreSQL after checkout
+    const dbListingReserved = await prisma.productListing.findUniqueOrThrow({
+      where: { id: "prod-ipad-air5" },
+    });
+    expect(dbListingReserved.status).toBe("RESERVED");
 
     // 5. Trigger Real Payment Webhook Simulation (POST /api/payment/simulate-webhook)
     await page.click('button:has-text("⚡ Simulasi Bayar Sekarang")');
@@ -172,6 +192,12 @@ test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
     });
     expect(dbOrderCompleted?.status).toBe("COMPLETED");
     expect(dbOrderCompleted?.escrowAccount?.status).toBe("RELEASED");
+
+    // Verify listing is marked SOLD in PostgreSQL upon escrow completion
+    const dbListingSold = await prisma.productListing.findUniqueOrThrow({
+      where: { id: "prod-ipad-air5" },
+    });
+    expect(dbListingSold.status).toBe("SOLD");
 
     const sellerLedger = await prisma.walletLedgerEntry.findFirst({
       where: {
