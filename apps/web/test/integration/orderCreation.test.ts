@@ -389,7 +389,7 @@ describe("Server-Authoritative Order Creation Integration Tests (PostgreSQL)", (
     expect(auditLogs[0].userId).toBe(buyerId);
   });
 
-  it("8. I1 Defense (Decision D5): Second order on already RESERVED listing is rejected with 409", async () => {
+  it("8. I1 Defense (Decision D5): Second order on already RESERVED listing is rejected with 422", async () => {
     testUserId = buyerId;
 
     // First order creation succeeds and reserves listing

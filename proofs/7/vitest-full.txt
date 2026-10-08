@@ -1,0 +1,245 @@
+
+> web@0.1.0 test D:\MY CODE\NgeBekasinYuk-Web\apps\web
+> vitest run "--reporter=verbose"
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mD:/MY CODE/NgeBekasinYuk-Web/apps/web[39m
+
+ [32m✓[39m test/integration/disputeResolution.test.ts[2m > [22mDispute Resolution Integration Test[2m > [22mbuyer opens dispute -> freezes escrow account and transitions order to DISPUTED[33m 373[2mms[22m[39m
+ [32m✓[39m test/unit/escrowLedger.test.ts[2m > [22mEscrow Ledger Financial Invariants Unit Tests[2m > [22mreleases escrow funds to seller wallet and records immutable ledger[33m 395[2mms[22m[39m
+ [32m✓[39m test/unit/walletLedger.test.ts[2m > [22mWallet Ledger & PIN Hardening Unit Tests[2m > [22mP0-04 PIN Hardening & Rate-Limiting[2m > [22maccepts the correct 6-digit PIN[33m 547[2mms[22m[39m
+ [32m✓[39m test/integration/walletPin.test.ts[2m > [22mWallet PIN Management Integration Tests (Tasks 4.2 & 4.3)[2m > [22m1. Rejects request without session with 401[32m 248[2mms[22m[39m
+ [32m✓[39m test/integration/orderPartialUniqueIndex.test.ts[2m > [22mD8 Partial Unique Index Guarantee on Order(listingId) (PostgreSQL)[2m > [22m1. pg_indexes contains order_single_active_listing_idx with exact terminal statuses matching code constant[33m 572[2mms[22m[39m
+ [32m✓[39m test/unit/escrowLedger.test.ts[2m > [22mEscrow Ledger Financial Invariants Unit Tests[2m > [22mP0-03 IDEMPOTENCY: calling release multiple times executes financial payout exactly once[32m 225[2mms[22m[39m
+ [32m✓[39m test/integration/disputeResolution.test.ts[2m > [22mDispute Resolution Integration Test[2m > [22madmin resolves dispute with REFUND_BUYER verdict -> executes refund and marks dispute RESOLVED_BUYER[32m 268[2mms[22m[39m
+[90mstdout[2m | test/integration/orderPartialUniqueIndex.test.ts[2m > [22m[2mD8 Partial Unique Index Guarantee on Order(listingId) (PostgreSQL)[2m > [22m[2m2. Raw second active order for the same listing fails with unique violation (P2002 / 23505)
+[22m[39mprisma:error 
+Invalid `prisma.order.create()` invocation in
+D:/MY CODE/NgeBekasinYuk-Web/apps/web/test/integration/orderPartialUniqueIndex.test.ts:122:26
+
+  119 // Attempt raw second active order on same listing
+  120 let caughtError: { code?: string } | null = null;
+  121 try {
+→ 122   await prisma.order.create(
+Unique constraint failed on the fields: (`listingId`)
+
+ [32m✓[39m test/integration/concurrency.test.ts[2m > [22mFinancial Concurrency & Mutation Atomicity Tests (PostgreSQL)[2m > [22mPARALLEL ESCROW RELEASE: Two simultaneous releases credit the seller wallet exactly once[33m 616[2mms[22m[39m
+ [32m✓[39m test/integration/orderCreation.test.ts[2m > [22mServer-Authoritative Order Creation Integration Tests (PostgreSQL)[2m > [22m1. Tampered itemPrice / totalAmount in body -> 400, no order row created[33m 453[2mms[22m[39m
+ [32m✓[39m test/integration/walletPin.test.ts[2m > [22mWallet PIN Management Integration Tests (Tasks 4.2 & 4.3)[2m > [22m2. Rejects wrong password with 401 and increments failed attempts (Task 4.2 brake)[32m 298[2mms[22m[39m
+ [32m✓[39m test/integration/walletAuthority.test.ts[2m > [22mServer-Authoritative Wallet Read Model & Payout Destination Security (PostgreSQL)[2m > [22mA. Authoritative Wallet Read Model (GET /api/wallet)[2m > [22m1. Returns 401 UNAUTHORIZED when no session exists[33m 462[2mms[22m[39m
+ [32m✓[39m test/integration/orderPartialUniqueIndex.test.ts[2m > [22mD8 Partial Unique Index Guarantee on Order(listingId) (PostgreSQL)[2m > [22m2. Raw second active order for the same listing fails with unique violation (P2002 / 23505)[33m 325[2mms[22m[39m
+ [32m✓[39m test/unit/walletLedger.test.ts[2m > [22mWallet Ledger & PIN Hardening Unit Tests[2m > [22mP0-04 PIN Hardening & Rate-Limiting[2m > [22mrejects an incorrect 6-digit PIN (fixes the original P0-04 bug)[33m 455[2mms[22m[39m
+ [32m✓[39m test/unit/escrowLedger.test.ts[2m > [22mEscrow Ledger Financial Invariants Unit Tests[2m > [22mMUTUAL EXCLUSION: cannot release escrow if already refunded[33m 304[2mms[22m[39m
+ [32m✓[39m test/integration/disputeResolution.test.ts[2m > [22mDispute Resolution Integration Test[2m > [22madmin resolves dispute with RELEASE_SELLER verdict -> unfreezes and releases funds to seller wallet[33m 432[2mms[22m[39m
+ [32m✓[39m test/integration/orderPartialUniqueIndex.test.ts[2m > [22mD8 Partial Unique Index Guarantee on Order(listingId) (PostgreSQL)[2m > [22m3. Multiple terminal orders for the same listing do NOT violate the index[33m 302[2mms[22m[39m
+ [32m✓[39m test/integration/withdrawalIdempotency.test.ts[2m > [22mWithdrawal Retry Idempotency Integration Tests (PostgreSQL)[2m > [22m1. Two withdrawal requests with the SAME clientRequestId -> wallet debited exactly once, second response has isDuplicate: true[33m 869[2mms[22m[39m
+ [32m✓[39m test/unit/escrowLedger.test.ts[2m > [22mEscrow Ledger Financial Invariants Unit Tests[2m > [22mMUTUAL EXCLUSION: cannot refund escrow if already released[32m 250[2mms[22m[39m
+ [32m✓[39m test/integration/orderCreation.test.ts[2m > [22mServer-Authoritative Order Creation Integration Tests (PostgreSQL)[2m > [22m2. Own listing purchase attempt -> 403, no order row created[33m 345[2mms[22m[39m
+ [32m✓[39m test/integration/walletAuthority.test.ts[2m > [22mServer-Authoritative Wallet Read Model & Payout Destination Security (PostgreSQL)[2m > [22mA. Authoritative Wallet Read Model (GET /api/wallet)[2m > [22m2. Returns canonical wallet state, hasPin=true, masked bank accounts, and scoped ledger[33m 328[2mms[22m[39m
+ [32m✓[39m test/integration/concurrency.test.ts[2m > [22mFinancial Concurrency & Mutation Atomicity Tests (PostgreSQL)[2m > [22mRELEASE VS REFUND RACE: Mutual exclusion guaranteed when release and refund collide[33m 413[2mms[22m[39m
+ [32m✓[39m test/unit/walletLedger.test.ts[2m > [22mWallet Ledger & PIN Hardening Unit Tests[2m > [22mP0-04 PIN Hardening & Rate-Limiting[2m > [22mrejects non-6-digit PIN format[32m 263[2mms[22m[39m
+ [32m✓[39m test/unit/escrowLedger.test.ts[2m > [22mEscrow Ledger Financial Invariants Unit Tests[2m > [22mDISPUTE FREEZE: cannot release funds while in FROZEN_DISPUTE status without override[32m 138[2mms[22m[39m
+ [32m✓[39m test/unit/escrowLedger.test.ts[2m > [22mEscrow Ledger Financial Invariants Unit Tests[2m > [22mFORBIDDEN: seller cannot release their own escrow[32m 183[2mms[22m[39m
+ [32m✓[39m test/integration/walletAuthority.test.ts[2m > [22mServer-Authoritative Wallet Read Model & Payout Destination Security (PostgreSQL)[2m > [22mA. Authoritative Wallet Read Model (GET /api/wallet)[2m > [22m3. Correctly reflects hasPin=false when user has no transaction PIN configured[33m 393[2mms[22m[39m
+ [32m✓[39m test/integration/orderCreation.test.ts[2m > [22mServer-Authoritative Order Creation Integration Tests (PostgreSQL)[2m > [22m3. Same Idempotency-Key twice -> exactly one order row created, identical response[33m 435[2mms[22m[39m
+ [32m✓[39m test/integration/walletPin.test.ts[2m > [22mWallet PIN Management Integration Tests (Tasks 4.2 & 4.3)[2m > [22m3. Locks account after 5 failed password attempts[33m 830[2mms[22m[39m
+ [32m✓[39m test/integration/withdrawalIdempotency.test.ts[2m > [22mWithdrawal Retry Idempotency Integration Tests (PostgreSQL)[2m > [22m2. Two withdrawal requests with DIFFERENT clientRequestId (same user, same amount) -> both succeed, wallet debited twice[33m 583[2mms[22m[39m
+ [32m✓[39m test/integration/concurrency.test.ts[2m > [22mFinancial Concurrency & Mutation Atomicity Tests (PostgreSQL)[2m > [22mPARALLEL WITHDRAWALS: Two simultaneous 800k withdrawals on a 1M balance only allow one deduction[33m 489[2mms[22m[39m
+ [32m✓[39m test/integration/orderCreation.test.ts[2m > [22mServer-Authoritative Order Creation Integration Tests (PostgreSQL)[2m > [22m4. Inactive or unknown listing -> 404/422, no order row created[33m 311[2mms[22m[39m
+ [32m✓[39m test/integration/walletAuthority.test.ts[2m > [22mServer-Authoritative Wallet Read Model & Payout Destination Security (PostgreSQL)[2m > [22mB. Payout Destination Integrity & IDOR Defense (POST /api/wallet/withdraw)[2m > [22m1. Allows withdrawal to User A's own registered bankAccountId and snapshots canonical details[33m 453[2mms[22m[39m
+ [32m✓[39m test/integration/withdrawalIdempotency.test.ts[2m > [22mWithdrawal Retry Idempotency Integration Tests (PostgreSQL)[2m > [22m3. Missing bankAccountId in request body -> 400 VALIDATION_ERROR (schema requires it)[32m 253[2mms[22m[39m
+ [32m✓[39m test/integration/concurrency.test.ts[2m > [22mFinancial Concurrency & Mutation Atomicity Tests (PostgreSQL)[2m > [22mCONFLICTING DISPUTE VERDICTS: Only one admin verdict can commit[33m 364[2mms[22m[39m
+ [32m✓[39m test/unit/walletLedger.test.ts[2m > [22mWallet Ledger & PIN Hardening Unit Tests[2m > [22mP0-04 PIN Hardening & Rate-Limiting[2m > [22mlocks user PIN after 5 consecutive failed attempts[33m 907[2mms[22m[39m
+ [32m✓[39m test/integration/orderCreation.test.ts[2m > [22mServer-Authoritative Order Creation Integration Tests (PostgreSQL)[2m > [22m5. Unauthenticated request -> 401, no order row created[32m 256[2mms[22m[39m
+ [32m✓[39m test/integration/orderEscrowLifecycle.test.ts[2m > [22mOrder & Escrow End-to-End Lifecycle Integration Test[2m > [22mexecutes full lifecycle: payment -> shipment -> inspection -> receipt confirmation -> escrow release[33m 452[2mms[22m[39m
+ [32m✓[39m test/integration/walletAuthority.test.ts[2m > [22mServer-Authoritative Wallet Read Model & Payout Destination Security (PostgreSQL)[2m > [22mB. Payout Destination Integrity & IDOR Defense (POST /api/wallet/withdraw)[2m > [22m2. IDOR REJECTION: User A submitting User B's bankAccountId is rejected with generic error and ZERO DB mutations[33m 430[2mms[22m[39m
+ [32m✓[39m test/unit/seedSafety.test.ts[2m > [22mDatabase Seed Production Refusal Safety Test (Task 4.7)[2m > [22mSubprocess execution guard[2m > [22mhard refuses to execute seed when APP_ENV=production[33m 2762[2mms[22m[39m
+ [32m✓[39m test/integration/orderSecretLeak.test.ts[2m > [22mP0 Data Exposure Guard: Order API Endpoints Must Never Leak Credentials[2m > [22mPOST /api/orders, replay, GET /api/orders/[id], and GET /api/orders never leak secrets or sentinels to buyer, seller, or admin[33m 366[2mms[22m[39m
+ [32m✓[39m test/integration/walletPin.test.ts[2m > [22mWallet PIN Management Integration Tests (Tasks 4.2 & 4.3)[2m > [22m4. Rejects trivially weak PINs with 422 PIN_TOO_WEAK[33m 1209[2mms[22m[39m
+ [32m✓[39m test/integration/orderCreation.test.ts[2m > [22mServer-Authoritative Order Creation Integration Tests (PostgreSQL)[2m > [22m6. Missing Idempotency-Key header -> 400 IDEMPOTENCY_KEY_REQUIRED[33m 728[2mms[22m[39m
+ [32m✓[39m test/integration/orderFullJourney.test.ts[2m > [22mFull Server-Authoritative Order Journey (Real PostgreSQL)[2m > [22mcompletes full end-to-end server journey: createOrder -> getOrders -> webhookFund -> ship -> deliver -> inspect -> release[33m 826[2mms[22m[39m
+ [32m✓[39m test/unit/totp.test.ts[2m > [22mRFC 6238 TOTP & Step-Up Grant Unit Tests[2m > [22mgenerates and verifies a valid 6-digit TOTP code[32m 3[2mms[22m[39m
+ [32m✓[39m test/unit/totp.test.ts[2m > [22mRFC 6238 TOTP & Step-Up Grant Unit Tests[2m > [22mrejects an incorrect 6-digit code[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/totp.test.ts[2m > [22mRFC 6238 TOTP & Step-Up Grant Unit Tests[2m > [22mrejects malformed codes (non-numeric, wrong length)[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/totp.test.ts[2m > [22mRFC 6238 TOTP & Step-Up Grant Unit Tests[2m > [22mREPLAY PREVENTION: rejects the same code when reused by the same admin in the same window[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/totp.test.ts[2m > [22mRFC 6238 TOTP & Step-Up Grant Unit Tests[2m > [22maccepts codes within +-1 time step drift window (30s)[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/totp.test.ts[2m > [22mRFC 6238 TOTP & Step-Up Grant Unit Tests[2m > [22mcreates and verifies a valid short-lived step-up grant[32m 51[2mms[22m[39m
+ [32m✓[39m test/unit/totp.test.ts[2m > [22mRFC 6238 TOTP & Step-Up Grant Unit Tests[2m > [22mrejects a step-up grant when presented by a different admin (binding defense)[32m 4[2mms[22m[39m
+ [32m✓[39m test/unit/totp.test.ts[2m > [22mRFC 6238 TOTP & Step-Up Grant Unit Tests[2m > [22mrejects a step-up grant when action scope does not match[32m 4[2mms[22m[39m
+ [32m✓[39m test/unit/totp.test.ts[2m > [22mRFC 6238 TOTP & Step-Up Grant Unit Tests[2m > [22mgenerates unique random secrets[32m 2[2mms[22m[39m
+ [32m✓[39m test/integration/withdrawalIdempotency.test.ts[2m > [22mWithdrawal Retry Idempotency Integration Tests (PostgreSQL)[2m > [22m4. Two withdrawal requests with the SAME Idempotency-Key HTTP HEADER -> wallet debited exactly once, second response has isDuplicate: true[33m 1660[2mms[22m[39m
+ [32m✓[39m test/unit/stepUpGrant.test.ts[2m > [22mOne-Time Admin Step-Up Authorization Grants (HP3-P0-04)[2m > [22msuccessfully consumes a valid single-use step-up grant on first use[32m 257[2mms[22m[39m
+ [32m✓[39m test/unit/stepUpGrant.test.ts[2m > [22mOne-Time Admin Step-Up Authorization Grants (HP3-P0-04)[2m > [22mstrictly rejects reusing the same step-up grant a second time (one-time invariant)[32m 17[2mms[22m[39m
+ [32m✓[39m test/unit/stepUpGrant.test.ts[2m > [22mOne-Time Admin Step-Up Authorization Grants (HP3-P0-04)[2m > [22mCONCURRENCY: simultaneous parallel consumption of the same grant allows exactly 1 execution[32m 108[2mms[22m[39m
+ [32m✓[39m test/unit/stepUpGrant.test.ts[2m > [22mOne-Time Admin Step-Up Authorization Grants (HP3-P0-04)[2m > [22mrejects grant issued to Admin A when submitted by Admin B[32m 21[2mms[22m[39m
+ [32m✓[39m test/unit/stepUpGrant.test.ts[2m > [22mOne-Time Admin Step-Up Authorization Grants (HP3-P0-04)[2m > [22mrejects grant scoped to Dispute A when used to execute verdict on Dispute B[32m 14[2mms[22m[39m
+ [32m✓[39m test/unit/stepUpGrant.test.ts[2m > [22mOne-Time Admin Step-Up Authorization Grants (HP3-P0-04)[2m > [22mrejects cryptographically tampered grant tokens[32m 13[2mms[22m[39m
+ [32m✓[39m test/unit/stepUpGrant.test.ts[2m > [22mOne-Time Admin Step-Up Authorization Grants (HP3-P0-04)[2m > [22mstrictly throws an error when creating DISPUTE_VERDICT grant without resourceId (AP4-P0-03)[32m 10[2mms[22m[39m
+ [32m✓[39m test/unit/stepUpGrant.test.ts[2m > [22mOne-Time Admin Step-Up Authorization Grants (HP3-P0-04)[2m > [22mstrictly forbids wildcard (resourceId: null) grant from consuming a resource-scoped verdict (AP4-P0-03)[32m 12[2mms[22m[39m
+ [32m✓[39m test/unit/stepUpGrant.test.ts[2m > [22mOne-Time Admin Step-Up Authorization Grants (HP3-P0-04)[2m > [22mstrictly forbids resource-scoped grant from being consumed by general un-scoped action[32m 12[2mms[22m[39m
+ [32m✓[39m test/integration/walletAuthority.test.ts[2m > [22mServer-Authoritative Wallet Read Model & Payout Destination Security (PostgreSQL)[2m > [22mB. Payout Destination Integrity & IDOR Defense (POST /api/wallet/withdraw)[2m > [22m3. Rejects nonexistent bankAccountId with generic error and zero mutations[33m 1460[2mms[22m[39m
+ [32m✓[39m test/integration/orderTransitionConcurrency.test.ts[2m > [22mH2: Order Transition Compare-and-Set Concurrency Guard (PostgreSQL)[2m > [22mfires two concurrent SHIPPED transitions from same seller: exactly one 200, one 409, and exactly one OrderStatusHistory row[32m 280[2mms[22m[39m
+ [32m✓[39m test/unit/walletLedger.test.ts[2m > [22mWallet Ledger & PIN Hardening Unit Tests[2m > [22mWithdrawal Workflows & Invariants[2m > [22msuccessfully creates withdrawal and deducts active balance with valid PIN[33m 2051[2mms[22m[39m
+[90mstdout[2m | test/integration/migrationUpgradeSafety.test.ts[2m > [22m[2mOperational Migration Upgrade Safety (FINAL-OPS-01)[2m > [22m[2mverifies clean preflight state on modern schema with dropped plaintext column
+[22m[39m[Preflight Safety Check] SUCCESS: Column 'totpSecret' does not exist or has already been dropped.
+
+stderr | test/integration/migrationUpgradeSafety.test.ts > Operational Migration Upgrade Safety (FINAL-OPS-01) > safely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[Preflight Safety Check] FAILED: Found 1 user(s) with plaintext TOTP seeds but no ciphertext! Do NOT apply drop-column migration.
+
+[90mstdout[2m | test/integration/migrationUpgradeSafety.test.ts[2m > [22m[2mOperational Migration Upgrade Safety (FINAL-OPS-01)[2m > [22m[2msafely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[22m[39m[Migration] Starting legacy TOTP encryption check...
+
+[90mstdout[2m | test/integration/migrationUpgradeSafety.test.ts[2m > [22m[2mOperational Migration Upgrade Safety (FINAL-OPS-01)[2m > [22m[2msafely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[22m[39m[Migration] Encrypted TOTP secret for user: usr-legacy-test-1791456018735
+[Migration] Completed: 1 migrated, 0 errors.
+
+[90mstdout[2m | test/integration/migrationUpgradeSafety.test.ts[2m > [22m[2mOperational Migration Upgrade Safety (FINAL-OPS-01)[2m > [22m[2msafely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[22m[39m[Preflight Safety Check] SUCCESS: 0 unmigrated plaintext TOTP records found.
+
+ [32m✓[39m test/integration/migrationUpgradeSafety.test.ts[2m > [22mOperational Migration Upgrade Safety (FINAL-OPS-01)[2m > [22mverifies clean preflight state on modern schema with dropped plaintext column[32m 129[2mms[22m[39m
+[90mstdout[2m | test/integration/migrationUpgradeSafety.test.ts[2m > [22m[2mOperational Migration Upgrade Safety (FINAL-OPS-01)[2m > [22m[2msafely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[22m[39m[Preflight Safety Check] SUCCESS: Column 'totpSecret' does not exist or has already been dropped.
+
+ [32m✓[39m test/integration/migrationUpgradeSafety.test.ts[2m > [22mOperational Migration Upgrade Safety (FINAL-OPS-01)[2m > [22msafely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column[32m 114[2mms[22m[39m
+ [32m✓[39m test/integration/orderReservationConcurrency.test.ts[2m > [22mOrder Reservation Concurrency & Lazy Expiry Suite (PostgreSQL)[2m > [22m1. 5 distinct buyers racing for the same listing (20 loop iterations)[33m 4139[2mms[22m[39m
+ [32m✓[39m test/integration/orderCreation.test.ts[2m > [22mServer-Authoritative Order Creation Integration Tests (PostgreSQL)[2m > [22m7. Written order has buyerId === session.id, status === PENDING_PAYMENT, and correct server breakdown[33m 1657[2mms[22m[39m
+ [32m✓[39m test/unit/sessionTampering.test.ts[2m > [22mSession Tampering & Cryptographic Integrity Tests[2m > [22maccepts a valid cryptographically signed admin session[32m 30[2mms[22m[39m
+ [32m✓[39m test/unit/sessionTampering.test.ts[2m > [22mSession Tampering & Cryptographic Integrity Tests[2m > [22mrejects a completely forged token with invalid HMAC signature[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/sessionTampering.test.ts[2m > [22mSession Tampering & Cryptographic Integrity Tests[2m > [22mrejects token when role is tampered from BUYER to ADMIN (privilege escalation attack)[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/sessionTampering.test.ts[2m > [22mSession Tampering & Cryptographic Integrity Tests[2m > [22mrejects token when userId is modified to impersonate another user[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/sessionTampering.test.ts[2m > [22mSession Tampering & Cryptographic Integrity Tests[2m > [22mrejects token when expiry timestamp is extended without resigning[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/sessionTampering.test.ts[2m > [22mSession Tampering & Cryptographic Integrity Tests[2m > [22mrejects truncated tokens[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/sessionTampering.test.ts[2m > [22mSession Tampering & Cryptographic Integrity Tests[2m > [22mrejects garbage strings and empty input[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/sessionTampering.test.ts[2m > [22mSession Tampering & Cryptographic Integrity Tests[2m > [22mrejects expired tokens even if signature was originally authentic[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/totpDistributedReplay.test.ts[2m > [22mDistributed Persistent TOTP Replay Prevention (HP3-P0-02)[2m > [22maccepts a valid TOTP code on first submission and records lastTotpStep in PostgreSQL[32m 141[2mms[22m[39m
+ [32m✓[39m test/unit/totpDistributedReplay.test.ts[2m > [22mDistributed Persistent TOTP Replay Prevention (HP3-P0-02)[2m > [22mstrictly rejects replaying the exact same TOTP code in the same timestep[32m 9[2mms[22m[39m
+ [32m✓[39m test/unit/totpDistributedReplay.test.ts[2m > [22mDistributed Persistent TOTP Replay Prevention (HP3-P0-02)[2m > [22msurvives process restart simulation because replay state is persisted in PostgreSQL[32m 9[2mms[22m[39m
+stderr | test/unit/walletFakeSuccess.test.ts > Phase 1.1 — Financial Fake-Success & Ambiguous State Hardening > Item A — Zustand Store: useWalletStore.withdrawFunds > returns status UNKNOWN on simulated network timeout/failure and preserves balance
+[useWalletStore] withdrawFunds request failed: TypeError: Failed to fetch
+    at D:/MY CODE/NgeBekasinYuk-Web/apps/web/test/unit/walletFakeSuccess.test.ts:24:48
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+ [32m✓[39m test/unit/totpDistributedReplay.test.ts[2m > [22mDistributed Persistent TOTP Replay Prevention (HP3-P0-02)[2m > [22mCONCURRENCY: two parallel simultaneous requests with the same TOTP result in exactly 1 success[32m 76[2mms[22m[39m
+ [32m✓[39m test/unit/totpDistributedReplay.test.ts[2m > [22mDistributed Persistent TOTP Replay Prevention (HP3-P0-02)[2m > [22maccepts a code from the next timestep and updates lastTotpStep forward[32m 10[2mms[22m[39m
+ [32m✓[39m test/unit/totpDistributedReplay.test.ts[2m > [22mDistributed Persistent TOTP Replay Prevention (HP3-P0-02)[2m > [22mrejects an older timestep if a newer timestep was already accepted[32m 8[2mms[22m[39m
+stderr | test/unit/walletFakeSuccess.test.ts > Phase 1.1 — Financial Fake-Success & Ambiguous State Hardening > Item A — Zustand Store: useWalletStore.withdrawFunds > UI Contract: preserves clientRequestId and triggers warning toast when status is UNKNOWN
+[useWalletStore] withdrawFunds request failed: Error: Network timeout after 10000ms
+    at D:/MY CODE/NgeBekasinYuk-Web/apps/web/test/unit/walletFakeSuccess.test.ts:98:48
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.11/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+ [32m✓[39m test/unit/walletFakeSuccess.test.ts[2m > [22mPhase 1.1 — Financial Fake-Success & Ambiguous State Hardening[2m > [22mItem A — Zustand Store: useWalletStore.withdrawFunds[2m > [22mreturns status UNKNOWN on simulated network timeout/failure and preserves balance[32m 9[2mms[22m[39m
+ [32m✓[39m test/unit/walletFakeSuccess.test.ts[2m > [22mPhase 1.1 — Financial Fake-Success & Ambiguous State Hardening[2m > [22mItem A — Zustand Store: useWalletStore.withdrawFunds[2m > [22mreturns status FAILED on deterministic business validation error (invalid PIN)[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/walletFakeSuccess.test.ts[2m > [22mPhase 1.1 — Financial Fake-Success & Ambiguous State Hardening[2m > [22mItem A — Zustand Store: useWalletStore.withdrawFunds[2m > [22mreturns status FAILED when server authoritatively rejects (e.g. 400 Bad Request)[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/walletFakeSuccess.test.ts[2m > [22mPhase 1.1 — Financial Fake-Success & Ambiguous State Hardening[2m > [22mItem A — Zustand Store: useWalletStore.withdrawFunds[2m > [22mreturns status SUCCESS only when server returns confirmed 200 OK[32m 16[2mms[22m[39m
+ [32m✓[39m test/unit/walletFakeSuccess.test.ts[2m > [22mPhase 1.1 — Financial Fake-Success & Ambiguous State Hardening[2m > [22mItem A — Zustand Store: useWalletStore.withdrawFunds[2m > [22mUI Contract: preserves clientRequestId and triggers warning toast when status is UNKNOWN[32m 2[2mms[22m[39m
+ [32m✓[39m test/unit/walletFakeSuccess.test.ts[2m > [22mPhase 1.1 — Financial Fake-Success & Ambiguous State Hardening[2m > [22mItem B — Order Detail: handleReleaseFunds Escrow Release[2m > [22mon failed/rejected fetch: does NOT call confirmOrderReceived, fires NO confetti, shows warning toast, and order status stays unchanged[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/walletFakeSuccess.test.ts[2m > [22mPhase 1.1 — Financial Fake-Success & Ambiguous State Hardening[2m > [22mItem B — Order Detail: handleReleaseFunds Escrow Release[2m > [22mon confirmed 200 OK: calls confirmOrderReceived, triggers confetti, shows success toast, and completes order[32m 2[2mms[22m[39m
+ [32m✓[39m test/unit/walletFakeSuccess.test.ts[2m > [22mPhase 1.1 — Financial Fake-Success & Ambiguous State Hardening[2m > [22mItem C — Admin Disputes: executeVerdict Ambiguous Network State[2m > [22mon rejected/thrown verdict submission: does NOT resolve dispute, triggers NO confetti, and shows unconfirmed warning toast instead of generic error[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/money.test.ts[2m > [22mMoney Domain Unit Tests[2m > [22massertValidMoney[2m > [22maccepts valid non-negative integer IDR[32m 4[2mms[22m[39m
+ [32m✓[39m test/unit/money.test.ts[2m > [22mMoney Domain Unit Tests[2m > [22massertValidMoney[2m > [22mrejects floating point values to prevent fractional penny corruption[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/money.test.ts[2m > [22mMoney Domain Unit Tests[2m > [22massertValidMoney[2m > [22mrejects negative monetary amounts[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/money.test.ts[2m > [22mMoney Domain Unit Tests[2m > [22massertValidMoney[2m > [22mrejects non-numeric types[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/money.test.ts[2m > [22mMoney Domain Unit Tests[2m > [22maddMoney & sumMoney[2m > [22madds integers without rounding error[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/money.test.ts[2m > [22mMoney Domain Unit Tests[2m > [22maddMoney & sumMoney[2m > [22msums an array of money values[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/money.test.ts[2m > [22mMoney Domain Unit Tests[2m > [22msubtractMoney[2m > [22msubtracts safely when minuend >= subtrahend[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/money.test.ts[2m > [22mMoney Domain Unit Tests[2m > [22msubtractMoney[2m > [22mthrows MoneyDomainError when insufficient funds (minuend < subtrahend)[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/money.test.ts[2m > [22mMoney Domain Unit Tests[2m > [22mcalculateEscrowBreakdown[2m > [22mcalculates buyer total and seller payout with 0% launch fee[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/money.test.ts[2m > [22mMoney Domain Unit Tests[2m > [22mcalculateEscrowBreakdown[2m > [22mcalculates buyer total with platform fee rate[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/money.test.ts[2m > [22mMoney Domain Unit Tests[2m > [22mformatMoneyIDR[2m > [22mformats integer IDR to Indonesian locale currency string[32m 24[2mms[22m[39m
+ [32m✓[39m test/unit/sessionRevocation.test.ts[2m > [22mAuthoritative Session Validation & Revocation (HP3-P0-01)[2m > [22mauthoritatively validates an active session when sessionVersion matches[32m 238[2mms[22m[39m
+ [32m✓[39m test/unit/sessionRevocation.test.ts[2m > [22mAuthoritative Session Validation & Revocation (HP3-P0-01)[2m > [22mrejects token immediately if sessionVersion was incremented in the database[32m 18[2mms[22m[39m
+ [32m✓[39m test/unit/sessionRevocation.test.ts[2m > [22mAuthoritative Session Validation & Revocation (HP3-P0-01)[2m > [22mrevokes privileged admin access immediately upon role demotion in DB even with signed token[32m 9[2mms[22m[39m
+ [32m✓[39m test/unit/sessionRevocation.test.ts[2m > [22mAuthoritative Session Validation & Revocation (HP3-P0-01)[2m > [22mrejects valid signed token if account is SUSPENDED or DISABLED[32m 12[2mms[22m[39m
+ [32m✓[39m test/unit/sessionRevocation.test.ts[2m > [22mAuthoritative Session Validation & Revocation (HP3-P0-01)[2m > [22mrejects valid signed token if user record was deleted[32m 7[2mms[22m[39m
+ [32m✓[39m test/unit/seedSafety.test.ts[2m > [22mDatabase Seed Production Refusal Safety Test (Task 4.7)[2m > [22mSubprocess execution guard[2m > [22mhard refuses to execute seed when NODE_ENV=production[33m 2638[2mms[22m[39m
+ [32m✓[39m test/integration/walletAuthority.test.ts[2m > [22mServer-Authoritative Wallet Read Model & Payout Destination Security (PostgreSQL)[2m > [22mB. Payout Destination Integrity & IDOR Defense (POST /api/wallet/withdraw)[2m > [22m4. Rejects request without session with 401 UNAUTHORIZED[33m 1334[2mms[22m[39m
+ [32m✓[39m test/unit/envValidation.test.ts[2m > [22mProduction Environment Validation Tests[2m > [22mpasses when valid production configuration is provided[32m 6[2mms[22m[39m
+ [32m✓[39m test/unit/envValidation.test.ts[2m > [22mProduction Environment Validation Tests[2m > [22mFAILS STARTUP if AUTH_SECRET is missing in production[32m 2[2mms[22m[39m
+ [32m✓[39m test/unit/envValidation.test.ts[2m > [22mProduction Environment Validation Tests[2m > [22mFAILS STARTUP if AUTH_SECRET is shorter than 32 characters in production[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/envValidation.test.ts[2m > [22mProduction Environment Validation Tests[2m > [22mFAILS STARTUP if AUTH_SECRET uses the development fallback secret in production[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/envValidation.test.ts[2m > [22mProduction Environment Validation Tests[2m > [22mFAILS STARTUP if DATABASE_URL is SQLite in production[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/envValidation.test.ts[2m > [22mProduction Environment Validation Tests[2m > [22mFAILS STARTUP if demo providers are enabled in production[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/envValidation.test.ts[2m > [22mProduction Environment Validation Tests[2m > [22mallows development defaults when NODE_ENV !== production[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/authorization.test.ts[2m > [22mAuthentication & Authorization Unit Tests[2m > [22msuccessfully signs and verifies a valid user session[32m 90[2mms[22m[39m
+ [32m✓[39m test/unit/authorization.test.ts[2m > [22mAuthentication & Authorization Unit Tests[2m > [22mtampering with payload or signature causes verification to return null[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/authorization.test.ts[2m > [22mAuthentication & Authorization Unit Tests[2m > [22mexpired token returns null[32m 2[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mPENDING_PAYMENT Transitions[2m > [22mallows SYSTEM or ADMIN to confirm payment (-> FUNDED)[32m 5[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mPENDING_PAYMENT Transitions[2m > [22mrejects BUYER or SELLER from unilaterally declaring payment funded[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mPENDING_PAYMENT Transitions[2m > [22mallows BUYER owner to cancel unpaid order[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mPENDING_PAYMENT Transitions[2m > [22mrejects non-owner buyer from cancelling unpaid order[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mFUNDED / PROCESSING / SHIPPED Transitions[2m > [22mallows SELLER owner to mark order as SHIPPED[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mFUNDED / PROCESSING / SHIPPED Transitions[2m > [22mrejects different seller from shipping another seller's order[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mFUNDED / PROCESSING / SHIPPED Transitions[2m > [22mallows SYSTEM to mark SHIPPED order as DELIVERED[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mINSPECTING Transitions[2m > [22mallows BUYER owner to confirm receipt and complete order[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mINSPECTING Transitions[2m > [22mrejects SELLER from confirming receipt on behalf of buyer[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mINSPECTING Transitions[2m > [22mallows BUYER owner to open dispute within inspection window[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mINSPECTING Transitions[2m > [22mrejects opening dispute after inspection expires[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mINSPECTING Transitions[2m > [22mallows SYSTEM auto-completion after inspection expired[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mDISPUTED & Terminal State Invariants[2m > [22mallows only ADMIN to decide dispute verdicts[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mDISPUTED & Terminal State Invariants[2m > [22mforbids altering terminal states (COMPLETED, REFUNDED, CANCELLED)[32m 0[2mms[22m[39m
+ [32m✓[39m test/unit/orderStateMachine.test.ts[2m > [22mOrder State Machine Unit Tests[2m > [22mDISPUTED & Terminal State Invariants[2m > [22massertTransition throws typed OrderStateTransitionError on invalid transition[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/environmentMatrix.test.ts[2m > [22mStrict Deployment Environment Semantics & Demo Guard (HP3-P1-03)[2m > [22mallows demo providers in APP_ENV=development[32m 3[2mms[22m[39m
+ [32m✓[39m test/unit/environmentMatrix.test.ts[2m > [22mStrict Deployment Environment Semantics & Demo Guard (HP3-P1-03)[2m > [22mallows demo providers in APP_ENV=test[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/environmentMatrix.test.ts[2m > [22mStrict Deployment Environment Semantics & Demo Guard (HP3-P1-03)[2m > [22mallows staging environment when demo providers are disabled[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/environmentMatrix.test.ts[2m > [22mStrict Deployment Environment Semantics & Demo Guard (HP3-P1-03)[2m > [22mrejects staging environment with demo providers when SANDBOX_MODE is false[32m 5[2mms[22m[39m
+ [32m✓[39m test/unit/environmentMatrix.test.ts[2m > [22mStrict Deployment Environment Semantics & Demo Guard (HP3-P1-03)[2m > [22mallows staging environment with demo providers when SANDBOX_MODE=true[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/environmentMatrix.test.ts[2m > [22mStrict Deployment Environment Semantics & Demo Guard (HP3-P1-03)[2m > [22mallows production startup when all secrets are secure and demo providers are false[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/environmentMatrix.test.ts[2m > [22mStrict Deployment Environment Semantics & Demo Guard (HP3-P1-03)[2m > [22mstrictly fails production startup if demo payment provider is true[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/environmentMatrix.test.ts[2m > [22mStrict Deployment Environment Semantics & Demo Guard (HP3-P1-03)[2m > [22mstrictly fails production startup even if ALLOW_DEMO_IN_PRODUCTION=true is passed[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/environmentMatrix.test.ts[2m > [22mStrict Deployment Environment Semantics & Demo Guard (HP3-P1-03)[2m > [22mfails production startup if any secret uses dev fallback[32m 3[2mms[22m[39m
+ [32m✓[39m test/unit/totpEncryption.test.ts[2m > [22mTOTP Application-Layer AES-256-GCM Encryption (HP3-P0-03)[2m > [22mencrypts and successfully decrypts a plaintext TOTP secret[32m 7[2mms[22m[39m
+ [32m✓[39m test/unit/totpEncryption.test.ts[2m > [22mTOTP Application-Layer AES-256-GCM Encryption (HP3-P0-03)[2m > [22mproduces different ciphertexts and IVs for identical plaintext (fresh random IV invariant)[32m 4[2mms[22m[39m
+ [32m✓[39m test/unit/totpEncryption.test.ts[2m > [22mTOTP Application-Layer AES-256-GCM Encryption (HP3-P0-03)[2m > [22mfails decryption when ciphertext is tampered with[32m 3[2mms[22m[39m
+ [32m✓[39m test/unit/totpEncryption.test.ts[2m > [22mTOTP Application-Layer AES-256-GCM Encryption (HP3-P0-03)[2m > [22mfails decryption when authentication tag is tampered with[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/totpEncryption.test.ts[2m > [22mTOTP Application-Layer AES-256-GCM Encryption (HP3-P0-03)[2m > [22mfails decryption when wrong key is provided[32m 1[2mms[22m[39m
+ [32m✓[39m test/unit/totpEncryption.test.ts[2m > [22mTOTP Application-Layer AES-256-GCM Encryption (HP3-P0-03)[2m > [22menforces fail-closed behavior in production if TOTP_ENCRYPTION_KEY uses dev fallback[32m 2[2mms[22m[39m
+ [32m✓[39m test/unit/totpEncryption.test.ts[2m > [22mTOTP Application-Layer AES-256-GCM Encryption (HP3-P0-03)[2m > [22menforces fail-closed behavior in production if TOTP_ENCRYPTION_KEY is missing or too short[32m 1[2mms[22m[39m
+ [32m✓[39m test/integration/orderCreation.test.ts[2m > [22mServer-Authoritative Order Creation Integration Tests (PostgreSQL)[2m > [22m8. I1 Defense (Decision D5): Second order on already RESERVED listing is rejected with 422[33m 1730[2mms[22m[39m
+ [32m✓[39m test/unit/walletLedger.test.ts[2m > [22mWallet Ledger & PIN Hardening Unit Tests[2m > [22mWithdrawal Workflows & Invariants[2m > [22mrejects withdrawal with insufficient active balance[33m 2044[2mms[22m[39m
+ [32m✓[39m test/integration/orderReservationConcurrency.test.ts[2m > [22mOrder Reservation Concurrency & Lazy Expiry Suite (PostgreSQL)[2m > [22m2. 2 buyers racing for a listing whose blocking order is expired[33m 1878[2mms[22m[39m
+ [32m✓[39m test/integration/walletAuthority.test.ts[2m > [22mServer-Authoritative Wallet Read Model & Payout Destination Security (PostgreSQL)[2m > [22mB. Payout Destination Integrity & IDOR Defense (POST /api/wallet/withdraw)[2m > [22m5. Rejects withdrawal with insufficient active balance and mutates nothing[33m 2419[2mms[22m[39m
+ [32m✓[39m test/integration/orderReservationConcurrency.test.ts[2m > [22mOrder Reservation Concurrency & Lazy Expiry Suite (PostgreSQL)[2m > [22m3. Late POST /api/payment/simulate-webhook for an order cancelled by lazy expiry is rejected[33m 1559[2mms[22m[39m
+ [32m✓[39m test/integration/walletPin.test.ts[2m > [22mWallet PIN Management Integration Tests (Tasks 4.2 & 4.3)[2m > [22m5. Successfully sets PIN, stores hash, writes AuditLog, and passes assertNoSecrets[33m 5128[2mms[22m[39m
+ [32m✓[39m test/unit/walletLedger.test.ts[2m > [22mWallet Ledger & PIN Hardening Unit Tests[2m > [22mWithdrawal Workflows & Invariants[2m > [22mrejects withdrawal with invalid PIN[33m 1775[2mms[22m[39m
+ [32m✓[39m test/unit/seedSafety.test.ts[2m > [22mDatabase Seed Production Refusal Safety Test (Task 4.7)[2m > [22mSubprocess execution guard[2m > [22mrefuses execution even with CI parent environment pollution (ALLOW_DEMO_IN_PRODUCTION=true)[33m 2979[2mms[22m[39m
+stderr | test/unit/seedSafety.test.ts > Database Seed Production Refusal Safety Test (Task 4.7) > assertSeedEnvironmentIsSafe synchronous assertion > throws immediately if APP_ENV=production
+CRITICAL ERROR: Cannot run deterministic seed in production environment!
+
+stderr | test/unit/seedSafety.test.ts > Database Seed Production Refusal Safety Test (Task 4.7) > assertSeedEnvironmentIsSafe synchronous assertion > throws immediately if NODE_ENV=production
+CRITICAL ERROR: Cannot run deterministic seed in production environment!
+
+ [32m✓[39m test/unit/seedSafety.test.ts[2m > [22mDatabase Seed Production Refusal Safety Test (Task 4.7)[2m > [22massertSeedEnvironmentIsSafe synchronous assertion[2m > [22mallows non-production environment without throwing[32m 4[2mms[22m[39m
+ [32m✓[39m test/unit/seedSafety.test.ts[2m > [22mDatabase Seed Production Refusal Safety Test (Task 4.7)[2m > [22massertSeedEnvironmentIsSafe synchronous assertion[2m > [22mthrows immediately if APP_ENV=production[32m 3[2mms[22m[39m
+ [32m✓[39m test/unit/seedSafety.test.ts[2m > [22mDatabase Seed Production Refusal Safety Test (Task 4.7)[2m > [22massertSeedEnvironmentIsSafe synchronous assertion[2m > [22mthrows immediately if NODE_ENV=production[32m 2[2mms[22m[39m
+ [32m✓[39m test/integration/walletPin.test.ts[2m > [22mWallet PIN Management Integration Tests (Tasks 4.2 & 4.3)[2m > [22m6. GET /api/wallet/pin returns hasPin accurately and passes assertNoSecrets[33m 887[2mms[22m[39m
+ [32m✓[39m test/integration/orderReservationConcurrency.test.ts[2m > [22mOrder Reservation Concurrency & Lazy Expiry Suite (PostgreSQL)[2m > [22m4. Same buyer, different Idempotency-Key, same listing: second order rejected with 422[33m 1014[2mms[22m[39m
+ [32m✓[39m test/integration/walletAuthority.test.ts[2m > [22mServer-Authoritative Wallet Read Model & Payout Destination Security (PostgreSQL)[2m > [22mB. Payout Destination Integrity & IDOR Defense (POST /api/wallet/withdraw)[2m > [22m6. Rejects withdrawal when user has not configured PIN (PIN_NOT_SET -> 409)[33m 1379[2mms[22m[39m
+ [32m✓[39m test/unit/walletLedger.test.ts[2m > [22mWallet Ledger & PIN Hardening Unit Tests[2m > [22mWithdrawal Workflows & Invariants[2m > [22mIDEMPOTENCY: duplicate withdrawal request does not double-debit active balance[33m 1377[2mms[22m[39m
+ [32m✓[39m test/integration/walletAuthority.test.ts[2m > [22mServer-Authoritative Wallet Read Model & Payout Destination Security (PostgreSQL)[2m > [22mB. Payout Destination Integrity & IDOR Defense (POST /api/wallet/withdraw)[2m > [22m7. Rejects malformed bankAccountId (empty string) with 400 VALIDATION_ERROR[33m 501[2mms[22m[39m
+ [32m✓[39m test/integration/orderReservationConcurrency.test.ts[2m > [22mOrder Reservation Concurrency & Lazy Expiry Suite (PostgreSQL)[2m > [22m5. Replay of same Idempotency-Key returns same order with single DB row[33m 600[2mms[22m[39m
+ [32m✓[39m test/integration/orderReservationConcurrency.test.ts[2m > [22mOrder Reservation Concurrency & Lazy Expiry Suite (PostgreSQL)[2m > [22m6. Decision D7: POST /api/orders on an ARCHIVED listing is rejected with 422 LISTING_NOT_ACTIVE[33m 509[2mms[22m[39m
+ [32m✓[39m test/unit/walletLedger.test.ts[2m > [22mWallet Ledger & PIN Hardening Unit Tests[2m > [22mTask 4.1 — Distinguish 'no PIN' from 'wrong PIN'[2m > [22mreturns PIN_NOT_SET without consuming failed attempts when hashedPin is null[33m 725[2mms[22m[39m
+ [32m✓[39m test/integration/walletAuthority.test.ts[2m > [22mServer-Authoritative Wallet Read Model & Payout Destination Security (PostgreSQL)[2m > [22mC. Canonical Idempotency (POST /api/wallet/withdraw)[2m > [22m1. Replaying exact same Idempotency-Key returns canonical response and debits active balance exactly once[33m 1066[2mms[22m[39m
+ [32m✓[39m test/unit/walletLedger.test.ts[2m > [22mWallet Ledger & PIN Hardening Unit Tests[2m > [22mTask 4.1 — Distinguish 'no PIN' from 'wrong PIN'[2m > [22mthrows INVALID_PIN and increments counter when PIN is wrong[33m 1094[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m28 passed[39m[22m[90m (28)[39m
+[2m      Tests [22m [1m[32m170 passed[39m[22m[90m (170)[39m
+[2m   Start at [22m 17:40:13
+[2m   Duration [22m 12.08s[2m (transform 4.71s, setup 0ms, import 12.62s, tests 66.93s, environment 5ms)[22m
+

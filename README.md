@@ -118,9 +118,11 @@ pnpm --filter web run test:e2e
 
 ## 6. Engineering Documentation
 
-Detailed technical design specifications are available in `docs/engineering/`:
-- [`STATUS.md`](docs/engineering/STATUS.md) - **Current Server-Authoritative Architecture Status Matrix**
-- [`HARDENING_PASS_3_FINAL_CERTIFICATION.md`](docs/engineering/HARDENING_PASS_3_FINAL_CERTIFICATION.md) - Hardening Pass #3 Final Certification Report
+For module status and staging operational validation, see:
+- [`STATUS.md`](docs/engineering/STATUS.md) - Architecture status matrix
+- [`STAGING_CHECKLIST.md`](docs/engineering/STAGING_CHECKLIST.md) - Staging verification checklist
+
+Detailed technical documentation:
 - [`HARDENING_PASS_2.md`](docs/engineering/HARDENING_PASS_2.md) - Hardening Pass #2 forensic audit report & gate evidence
 - [`ARCHITECTURE.md`](docs/engineering/ARCHITECTURE.md) - System architecture and server authority boundaries
 - [`DATA_MODEL.md`](docs/engineering/DATA_MODEL.md) - Normalized relational schema, indexes, and constraints

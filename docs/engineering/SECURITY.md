@@ -195,3 +195,9 @@ A formal triage of the 12 `HIGH` severity advisories identified by `pnpm audit` 
 ### 10.4 Canonical Idempotency & Network Uncertainty
 - `Idempotency-Key` HTTP header guarantees at-most-once financial debits.
 - Ambiguous network outcomes transition to `UNKNOWN/PENDING` rather than speculative client-side deductions or assumed success.
+
+### 10.5 Shared Lockout Counter Risk Disposition (Decision D6)
+- **Architecture**: `User.pinFailedAttempts` and `User.pinLockedUntil` serve as the common brute-force throttle for both failed password checks during PIN setup (`POST /api/wallet/pin`) and failed PIN attempts during withdrawal requests (`POST /api/wallet/withdraw`).
+- **Risk Assessment**: An attacker triggering repeated failed attempts on one endpoint also locks out operations on the other endpoint for that user account for 15 minutes.
+- **Disposition**: Accepted risk for current candidate deployment; documented here for future hardening. Prior to real financial transactions and fiat payment provider attachment, separate column counters (`passwordFailedAttempts` vs `pinFailedAttempts`) should be partitioned in the relational schema.
+

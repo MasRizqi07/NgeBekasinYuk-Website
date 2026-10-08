@@ -141,11 +141,13 @@ export class DemoPaymentProvider implements PaymentProvider {
     }
 
     // SERVER-SIDE EXPIRATION CHECK: Never accept payment if expired
-    if (new Date() > attempt.expiresAt) {
-      await prisma.paymentAttempt.update({
-        where: { id: attempt.id },
-        data: { status: "EXPIRED" },
-      });
+    if (attempt.status === "EXPIRED" || new Date() > attempt.expiresAt) {
+      if (attempt.status !== "EXPIRED") {
+        await prisma.paymentAttempt.update({
+          where: { id: attempt.id },
+          data: { status: "EXPIRED" },
+        });
+      }
       return {
         success: false,
         isDuplicate: false,
@@ -175,6 +177,18 @@ export class DemoPaymentProvider implements PaymentProvider {
 
     if (!order) {
       throw new Error("Order not found");
+    }
+
+    // If order was cancelled (e.g. by lazy expiry or buyer cancellation), reject late payment
+    if (order.status === "CANCELLED") {
+      return {
+        success: false,
+        isDuplicate: false,
+        orderId,
+        amount,
+        status: "CANCELLED",
+        message: "Order has already been cancelled",
+      };
     }
 
     // If order already funded/shipped/completed, return idempotent success

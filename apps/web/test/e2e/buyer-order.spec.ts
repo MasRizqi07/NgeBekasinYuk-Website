@@ -10,26 +10,39 @@ import { prisma } from "@/server/db/prisma";
 // execute against real Next.js API route handlers backed by PostgreSQL transactions.
 // ==============================================================================
 
+/**
+ * Test Fixture Reset Helper for E2E Buyer Flow
+ *
+ * Scoped strictly to the fixture listing ('prod-ipad-air5').
+ * Why this is necessary: The marketplace UI product catalog on the client side
+ * relies on client-simulated catalog data (apps/web/src/lib/seedData.ts), where
+ * the product detail page and checkout specifically route to 'prod-ipad-air5'.
+ * To ensure hermetic end-to-end tests without test-order pollution from prior runs,
+ * any dangling active orders on this seed listing are cleaned up and the listing
+ * is restored to 'ACTIVE' before each test.
+ */
+async function resetSeedListingFixtureForE2E(listingId = "prod-ipad-air5"): Promise<void> {
+  await prisma.order.updateMany({
+    where: {
+      listingId,
+      status: { notIn: ["CANCELLED", "REFUNDED", "COMPLETED"] },
+    },
+    data: { status: "CANCELLED" },
+  });
+  await prisma.productListing.update({
+    where: { id: listingId },
+    data: { status: "ACTIVE" },
+  });
+}
+
 test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
   test.beforeEach(async () => {
-    // Ensure the seed listing is available and in ACTIVE status without conflicting test orders
-    await prisma.order.updateMany({
-      where: {
-        listingId: "prod-ipad-air5",
-        status: { notIn: ["CANCELLED", "REFUNDED", "COMPLETED"] },
-      },
-      data: { status: "CANCELLED" },
-    });
-    await prisma.productListing.update({
-      where: { id: "prod-ipad-air5" },
-      data: { status: "ACTIVE" },
-    });
+    await resetSeedListingFixtureForE2E("prod-ipad-air5");
   });
 
   test("buyer can browse product, checkout, pay escrow, inspect, and complete order", async ({
     page,
     context,
-    request,
   }) => {
     page.on("pageerror", (error) => console.log("PAGE ERROR:", error.message));
     page.on("console", (msg) => {
@@ -76,6 +89,12 @@ test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
     const orderId = orderIdMatch![1];
     expect(orderId).toMatch(/^ord-/);
 
+    // Verify listing is atomically RESERVED in PostgreSQL after checkout
+    const dbListingReserved = await prisma.productListing.findUniqueOrThrow({
+      where: { id: "prod-ipad-air5" },
+    });
+    expect(dbListingReserved.status).toBe("RESERVED");
+
     // 5. Trigger Real Payment Webhook Simulation (POST /api/payment/simulate-webhook)
     await page.click('button:has-text("⚡ Simulasi Bayar Sekarang")');
     await page.waitForURL(new RegExp(`/orders/${orderId}`), { timeout: 15_000 });
@@ -91,72 +110,36 @@ test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
     expect(dbOrderFunded?.escrowAccount).not.toBeNull();
     expect(dbOrderFunded?.escrowAccount?.status).toBe("HELD");
 
-    // 6. Real Seller marks order as SHIPPED via authoritative transition endpoint
-    const sellerToken = await signSession({
-      id: dbOrderFunded!.sellerId,
-      email: "seller@ngebekasinyuk.id",
-      name: "Dimas Aditya",
-      role: "SELLER",
-      isVerified: true,
-    });
+    // 6. Buyer drives shipment simulation via UI button ("1. Simulasi Kirim Resi")
+    const shipBtn = page.getByRole("button", { name: /1\. Simulasi Kirim Resi/i });
+    await expect(shipBtn).toBeVisible({ timeout: 10_000 });
+    await shipBtn.click();
 
-    const shipRes = await request.post(`http://localhost:3000/api/orders/${orderId}/transition`, {
-      headers: {
-        Cookie: `ngebekasinyuk_session=${sellerToken}`,
-        "Content-Type": "application/json",
-      },
-      data: {
-        toStatus: "SHIPPED",
-        shippingCourier: "J&T Express",
-        shippingAirwayBill: "JT928174829102",
-      },
-    });
-    expect(shipRes.ok()).toBeTruthy();
-    const shipJson = await shipRes.json();
-    expect(shipJson.success).toBe(true);
+    // Verify order transitioned to SHIPPED in PostgreSQL
+    await expect.poll(async () => {
+      const o = await prisma.order.findUnique({ where: { id: orderId } });
+      return o?.status;
+    }, { timeout: 10_000 }).toBe("SHIPPED");
 
-    // 7. Real Admin/Courier marks order as DELIVERED and initiates INSPECTING
-    const adminToken = await signSession({
-      id: "usr-admin-ngebekasin",
-      email: "admin@ngebekasinyuk.id",
-      name: "Admin NgeBekasinYuk",
-      role: "ADMIN",
-      isVerified: true,
-    });
-
-    const deliverRes = await request.post(`http://localhost:3000/api/orders/${orderId}/transition`, {
-      headers: {
-        Cookie: `ngebekasinyuk_session=${adminToken}`,
-        "Content-Type": "application/json",
-      },
-      data: {
-        toStatus: "DELIVERED",
-      },
-    });
-    expect(deliverRes.ok()).toBeTruthy();
-
-    const inspectRes = await request.post(`http://localhost:3000/api/orders/${orderId}/transition`, {
-      headers: {
-        Cookie: `ngebekasinyuk_session=${adminToken}`,
-        "Content-Type": "application/json",
-      },
-      data: {
-        toStatus: "INSPECTING",
-      },
-    });
-    expect(inspectRes.ok()).toBeTruthy();
+    // 7. Buyer drives delivery simulation via UI button ("2. Simulasi Paket Tiba")
+    const arriveBtn = page.getByRole("button", { name: /2\. Simulasi Paket Tiba/i });
+    await expect(arriveBtn).toBeVisible({ timeout: 10_000 });
+    await arriveBtn.click();
 
     // 8. Assert in PostgreSQL: status is INSPECTING and inspectionExpiresAt is non-null
+    await expect.poll(async () => {
+      const o = await prisma.order.findUnique({ where: { id: orderId } });
+      return o?.status;
+    }, { timeout: 10_000 }).toBe("INSPECTING");
+
     const dbOrderInspecting = await prisma.order.findUnique({
       where: { id: orderId },
     });
-    expect(dbOrderInspecting?.status).toBe("INSPECTING");
     expect(dbOrderInspecting?.inspectionExpiresAt).not.toBeNull();
 
-    // 9. Buyer reloads order page to see inspection state and release button
-    await page.reload();
-    await expect(page.getByText(/Paket Tiba! Masa Inspeksi Dimulai/i).first()).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(/Lepas Dana/i).first()).toBeVisible({ timeout: 10_000 });
+    // 9. Inspect UI state and release button (page automatically reloads on simulation click)
+    await expect(page.getByText(/Paket Tiba! Masa Inspeksi Dimulai/i).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Lepas Dana/i).first()).toBeVisible({ timeout: 15_000 });
 
     // 10. Buyer clicks "Lepas Dana" to authoritatively release funds
     page.on("dialog", (dialog) => dialog.accept());
@@ -172,6 +155,12 @@ test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
     });
     expect(dbOrderCompleted?.status).toBe("COMPLETED");
     expect(dbOrderCompleted?.escrowAccount?.status).toBe("RELEASED");
+
+    // Verify listing is marked SOLD in PostgreSQL upon escrow completion
+    const dbListingSold = await prisma.productListing.findUniqueOrThrow({
+      where: { id: "prod-ipad-air5" },
+    });
+    expect(dbListingSold.status).toBe("SOLD");
 
     const sellerLedger = await prisma.walletLedgerEntry.findFirst({
       where: {

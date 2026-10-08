@@ -88,6 +88,7 @@ export interface Order {
   reviewGiven?: boolean;
   paymentAttemptId?: string;
   paymentAttempts?: Array<{ id: string; amount: number; paymentMethod: string; status: string; vaNumber?: string | null; qrString?: string | null }>;
+  isSimulationAllowed?: boolean;
   createdAt: string;
 }
 

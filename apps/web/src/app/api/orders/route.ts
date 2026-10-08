@@ -7,6 +7,11 @@ import { calculateEscrowBreakdown } from "@/domain/money";
 import { generateInternalId, generateOrderNumber } from "@/domain/id";
 import { defaultPaymentProvider } from "@/domain/payment/PaymentProvider";
 import { mapOrderToDto, orderSelectFields } from "@/domain/order/orderDto";
+import {
+  LISTING_STATUS,
+  TERMINAL_ORDER_STATUSES,
+  isPendingOrderExpired,
+} from "@/domain/listing/listingStatus";
 
 export async function POST(request: Request) {
   try {
@@ -97,46 +102,6 @@ export async function POST(request: Request) {
       );
     }
 
-    if (listing.status !== "ACTIVE") {
-      let canRevive = false;
-      if (listing.status === "RESERVED") {
-        const activeOrder = await prisma.order.findFirst({
-          where: {
-            listingId: listing.id,
-            status: { notIn: ["CANCELLED", "REFUNDED", "COMPLETED"] },
-          },
-          include: {
-            paymentAttempts: {
-              where: { status: "PENDING" },
-              orderBy: { createdAt: "desc" },
-              take: 1,
-            },
-          },
-        });
-
-        if (activeOrder) {
-          const latestAttempt = activeOrder.paymentAttempts[0];
-          const isExpired =
-            activeOrder.status === "PENDING_PAYMENT" &&
-            ((latestAttempt && new Date() > latestAttempt.expiresAt) ||
-              Date.now() - activeOrder.createdAt.getTime() > 2 * 60 * 60 * 1000);
-          if (isExpired) {
-            canRevive = true;
-          }
-        }
-      }
-
-      if (!canRevive) {
-        return NextResponse.json(
-          {
-            error: "LISTING_NOT_ACTIVE",
-            message: "Barang sudah tidak aktif atau sedang dalam transaksi lain.",
-          },
-          { status: 422 }
-        );
-      }
-    }
-
     // 6. Anti-Self-Dealing: Seller cannot buy own listing
     if (listing.sellerId === session.id) {
       return NextResponse.json(
@@ -186,59 +151,79 @@ export async function POST(request: Request) {
     // 9. Atomic Postgres Transaction
     try {
       const createdDto = await prisma.$transaction(async (tx) => {
-        // Enforce I1 Defense (Decision D5: Reserve listing at order creation with lazy expiry)
-        const activeOrder = await tx.order.findFirst({
+        // Atomic Listing Reservation (Task 7.1 / I1 Concurrency Defense)
+        // 1. Normal path: Attempt atomic reservation on ACTIVE listing
+        const reserveAttempt = await tx.productListing.updateMany({
           where: {
-            listingId: listing.id,
-            status: {
-              notIn: ["CANCELLED", "REFUNDED", "COMPLETED"],
-            },
+            id: listing.id,
+            status: LISTING_STATUS.ACTIVE,
           },
-          include: {
-            paymentAttempts: {
-              where: { status: "PENDING" },
-              orderBy: { createdAt: "desc" },
-              take: 1,
-            },
+          data: {
+            status: LISTING_STATUS.RESERVED,
           },
         });
 
-        if (activeOrder) {
-          const latestAttempt = activeOrder.paymentAttempts[0];
-          const isExpired =
-            activeOrder.status === "PENDING_PAYMENT" &&
-            ((latestAttempt && new Date() > latestAttempt.expiresAt) ||
-              Date.now() - activeOrder.createdAt.getTime() > 2 * 60 * 60 * 1000);
+        if (reserveAttempt.count !== 1) {
+          // 2. Expiry recovery path: Check if listing is RESERVED by a stale expired unpaid order
+          const blockingOrder = await tx.order.findFirst({
+            where: {
+              listingId: listing.id,
+              status: { notIn: [...TERMINAL_ORDER_STATUSES] },
+            },
+            include: {
+              paymentAttempts: {
+                where: { status: "PENDING" },
+                orderBy: { createdAt: "desc" },
+                take: 1,
+              },
+            },
+          });
 
-          if (isExpired) {
-            // Lazily cancel the stale unpaid order
-            await tx.order.update({
-              where: { id: activeOrder.id },
-              data: {
-                status: "CANCELLED",
-                cancelledAt: new Date(),
-              },
-            });
-            await tx.orderStatusHistory.create({
-              data: {
-                orderId: activeOrder.id,
-                fromStatus: "PENDING_PAYMENT",
-                toStatus: "CANCELLED",
-                actorId: "SYSTEM",
-                actorRole: "SYSTEM",
-                reason: "Batas waktu pembayaran pesanan telah kadaluwarsa (lazy expiry).",
-              },
-            });
-          } else {
-            throw new Error("LISTING_ALREADY_RESERVED");
+          if (!blockingOrder || !isPendingOrderExpired(blockingOrder)) {
+            throw new Error("LISTING_NOT_ACTIVE");
           }
-        }
 
-        // Atomically transition listing to RESERVED
-        await tx.productListing.update({
-          where: { id: listing.id },
-          data: { status: "RESERVED" },
-        });
+          // Compare-and-set cancel on stale order
+          const cancelResult = await tx.order.updateMany({
+            where: {
+              id: blockingOrder.id,
+              status: "PENDING_PAYMENT",
+            },
+            data: {
+              status: "CANCELLED",
+              cancelledAt: new Date(),
+            },
+          });
+
+          if (cancelResult.count !== 1) {
+            throw new Error("LISTING_NOT_ACTIVE");
+          }
+
+          // Record status history strictly when CAS wins
+          await tx.orderStatusHistory.create({
+            data: {
+              orderId: blockingOrder.id,
+              fromStatus: "PENDING_PAYMENT",
+              toStatus: "CANCELLED",
+              actorId: "SYSTEM",
+              actorRole: "SYSTEM",
+              reason: "Batas waktu pembayaran pesanan telah kadaluwarsa (lazy expiry).",
+            },
+          });
+
+          // Mark stale pending payment attempts as EXPIRED
+          await tx.paymentAttempt.updateMany({
+            where: {
+              orderId: blockingOrder.id,
+              status: "PENDING",
+            },
+            data: {
+              status: "EXPIRED",
+            },
+          });
+
+          // Listing remains RESERVED and passes directly to new order without ACTIVE flicker
+        }
 
         // a. Create Order in PENDING_PAYMENT state
         const newOrder = await tx.order.create({
@@ -353,6 +338,15 @@ export async function POST(request: Request) {
             }
           }
         }
+
+        // Database-level uniqueness collision (e.g. D8 partial unique index on Order.listingId)
+        return NextResponse.json(
+          {
+            error: "LISTING_NOT_ACTIVE",
+            message: "Barang sudah tidak aktif atau sedang dalam transaksi lain.",
+          },
+          { status: 422 }
+        );
       }
       throw txError;
     }
