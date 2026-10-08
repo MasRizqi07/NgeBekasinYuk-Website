@@ -2,13 +2,6 @@
 ### C2C Secondhand Tech Marketplace with Escrow (Rekening Bersama)
 
 [![Verification CI](https://github.com/MasRizqi07/NgeBekasinYuk-Website/actions/workflows/ci.yml/badge.svg)](https://github.com/MasRizqi07/NgeBekasinYuk-Website/actions)
-![Maturity](https://img.shields.io/badge/Maturity-Production_Candidate-blue)
-![TypeScript](https://img.shields.io/badge/TypeScript-Strict_5.x-green)
-![Next.js](https://img.shields.io/badge/Next.js-16.3.4_App_Router-black)
-![Database](https://img.shields.io/badge/Prisma_ORM-6.4.1_PostgreSQL-indigo)
-![Tests](https://img.shields.io/badge/Vitest-160_Passed_100%25-success)
-![E2E](https://img.shields.io/badge/Playwright-24_Passed_100%25-success)
-![ESLint](https://img.shields.io/badge/ESLint-0_Errors_0_Warnings-brightgreen)
 
 ---
 
@@ -41,8 +34,8 @@ Security & Auth    : Web Crypto HMAC-SHA256 Signed HttpOnly Session Cookies, Bcr
                      Database-Authoritative Session Revocation, AES-256-GCM Encrypted TOTP Secrets,
                      Persistent PostgreSQL-backed TOTP Replay Defense, Single-Use Step-Up Grants,
                      Payout Destination Integrity & Cross-Account IDOR Defense
-Test Runners       : Vitest v4.1.x (160 unit, integration & concurrency tests across 26 suites),
-                     Playwright v1.50+ (24 browser & security regression E2E tests)
+Test Runners       : Vitest v4.1.x (unit, integration & concurrency test suites),
+                     Playwright v1.50+ (browser & security regression E2E test suites)
 Quality Gate       : ESLint (0 errors, 0 warnings), Strict TypeScript (0 errors)
 ```
 
@@ -111,13 +104,13 @@ pnpm run lint
 # 2. Strict TypeScript Typecheck (0 errors)
 pnpm --filter web run typecheck
 
-# 3. Unit, Integration & Concurrency Test Suite (108 passing tests)
+# 3. Unit, Integration & Concurrency Test Suite
 pnpm --filter web run test
 
-# 4. Production App Router Build (27 routes generated, 0 warnings)
+# 4. Production App Router Build
 pnpm --filter web run build
 
-# 5. Playwright Browser E2E Test Suite (16 passing tests)
+# 5. Playwright Browser E2E Test Suite
 pnpm --filter web run test:e2e
 ```
 
@@ -126,7 +119,8 @@ pnpm --filter web run test:e2e
 ## 6. Engineering Documentation
 
 Detailed technical design specifications are available in `docs/engineering/`:
-- [`HARDENING_PASS_3_FINAL_CERTIFICATION.md`](docs/engineering/HARDENING_PASS_3_FINAL_CERTIFICATION.md) - **Hardening Pass #3 Final Production Candidate Certification Report**
+- [`STATUS.md`](docs/engineering/STATUS.md) - **Current Server-Authoritative Architecture Status Matrix**
+- [`HARDENING_PASS_3_FINAL_CERTIFICATION.md`](docs/engineering/HARDENING_PASS_3_FINAL_CERTIFICATION.md) - Hardening Pass #3 Final Certification Report
 - [`HARDENING_PASS_2.md`](docs/engineering/HARDENING_PASS_2.md) - Hardening Pass #2 forensic audit report & gate evidence
 - [`ARCHITECTURE.md`](docs/engineering/ARCHITECTURE.md) - System architecture and server authority boundaries
 - [`DATA_MODEL.md`](docs/engineering/DATA_MODEL.md) - Normalized relational schema, indexes, and constraints
