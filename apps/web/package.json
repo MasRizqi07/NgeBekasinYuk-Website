@@ -21,6 +21,7 @@
     "db:verify-scrub-order-idempotency": "tsx ./scripts/verify-scrub-order-idempotency.ts",
     "db:migrate-default-pins": "tsx ./scripts/migrate-default-pins.ts",
     "db:verify-default-pins": "tsx ./scripts/verify-default-pins.ts",
+    "db:check-active-order-duplicates": "tsx ./scripts/check-active-order-duplicates.ts",
     "db:seed": "tsx ./prisma/seed.ts",
     "prisma:generate": "prisma generate"
   },
