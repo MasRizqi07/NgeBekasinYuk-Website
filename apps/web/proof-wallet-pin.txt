@@ -1,0 +1,24 @@
+=== 1. POST /api/wallet/pin WITHOUT SESSION (EXPECT 401 UNAUTHORIZED) ===
+{"error":"UNAUTHORIZED","message":"Silakan login terlebih dahulu."}
+HTTP_STATUS: 401
+
+=== REGISTER NEW SELLER (HAS NULL PIN PER TASK 4.6) ===
+Seller registered.
+
+=== 2. POST /api/wallet/pin WITH WRONG PASSWORD (EXPECT 401 INVALID_CREDENTIALS) ===
+{"error":"INVALID_CREDENTIALS","message":"Password tidak sesuai. Sisa kesempatan: 4 kali sebelum akun terkunci."}
+HTTP_STATUS: 401
+
+=== 3. POST /api/wallet/pin WITH TRIVIALLY WEAK PIN (EXPECT 422 PIN_TOO_WEAK) ===
+{"error":"PIN_TOO_WEAK","message":"Kombinasi PIN terlalu mudah ditebak. Hindari angka berurutan atau berulang."}
+HTTP_STATUS: 422
+
+=== 4. POST /api/wallet/pin SUCCESS (EXPECT 200 OK) ===
+{"success":true,"message":"PIN transaksi berhasil diatur."}
+HTTP_STATUS: 200
+
+=== 5. POST /api/wallet/pin SECOND CALL (EXPECT 409 PIN_ALREADY_SET) ===
+{"error":"PIN_ALREADY_SET","message":"PIN transaksi sudah pernah dibuat."}
+HTTP_STATUS: 409
+
+=== WALLET PIN PROOF COMPLETE ===

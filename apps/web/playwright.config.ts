@@ -1,4 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "path";
+import fs from "fs";
+
+// Load .env so Playwright test runner shares identical secrets with Next.js webServer
+const envPath = path.resolve(__dirname, ".env");
+if (fs.existsSync(envPath) && typeof process.loadEnvFile === "function") {
+  process.loadEnvFile(envPath);
+}
 
 export default defineConfig({
   testDir: "./test/e2e",

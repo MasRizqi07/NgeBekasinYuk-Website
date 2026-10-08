@@ -172,3 +172,26 @@ A formal triage of the 12 `HIGH` severity advisories identified by `pnpm audit` 
 - `AuditLog` records are strictly append-only; no APIs support mutation or deletion.
 - Captures `userId`, `action`, `targetType`, `targetId`, `ipAddress`, `userAgent`, and sanitized JSON `details`.
 - Sensitive credentials (`password`, `pin`, `AUTH_SECRET`, `totpSecret`, `stepUpCode`, encryption keys) are scrubbed before persistence. Bank accounts are masked.
+
+---
+
+## 10. Server-Authoritative Wallet & Payout Destination Security (Phase 4 & 4B)
+
+### 10.1 Authoritative Read Model & Client Non-Authority
+- `GET /api/wallet` serves as the authoritative read model, returning canonical PostgreSQL balances, boolean `hasPin`, masked bank accounts, and scoped ledger entries.
+- Client state in `useWalletStore` is non-persistent and acts purely as a UI cache. All local financial mutations and fake transaction generation have been eliminated.
+
+### 10.2 Payout Destination Integrity & IDOR Defense
+- Client-submitted bank details (`bankName`, `accountNumber`, `accountHolder`) are rejected.
+- Withdrawals mandate `bankAccountId` which is resolved with strict database ownership: `WHERE id = bankAccountId AND userId = session.id`.
+- Foreign or nonexistent accounts receive a generic 404 `BANK_ACCOUNT_NOT_FOUND` with zero database mutations.
+
+### 10.3 Transaction PIN Lifecycle & Rate Limiting
+- New accounts have `hashedPin: null` (no default PIN).
+- PIN setup (`POST /api/wallet/pin`) requires account password re-verification and rejects trivially weak PINs.
+- 5 consecutive failed attempts trigger a 15-minute account lockout.
+- PIN is never logged, exposed in audit details, or returned in API responses.
+
+### 10.4 Canonical Idempotency & Network Uncertainty
+- `Idempotency-Key` HTTP header guarantees at-most-once financial debits.
+- Ambiguous network outcomes transition to `UNKNOWN/PENDING` rather than speculative client-side deductions or assumed success.

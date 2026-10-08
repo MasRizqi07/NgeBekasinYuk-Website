@@ -67,11 +67,14 @@ PostgreSQL Database (EscrowLedgerEntry, WalletLedgerEntry, AuditLog, AdminStepUp
   - Dispute freeze: Active disputes freeze escrow releases until authorized admin verdict.
 
 ### 3.3 Wallet & Withdrawal Subsystem (`src/domain/wallet/`)
-- Server-side bcrypt PIN verification with rate limiting (5 failed attempts trigger 15-minute lock).
+- Server-authoritative read model via `GET /api/wallet` providing canonical active/held balances, boolean `hasPin`, masked registered bank accounts, and scoped ledger entries.
+- Client state non-authority: `useWalletStore` acts purely as a non-persistent UI cache hydrated from PostgreSQL; all client-side balance mutations and fake transactions are eliminated.
+- Server-side bcrypt PIN verification with rate limiting (5 failed attempts trigger 15-minute lock). No default PIN for newly registered accounts.
+- Payout destination integrity: Client submits registered `bankAccountId` instead of arbitrary bank details. Server resolves destination with strict ownership checking (`WHERE id = bankAccountId AND userId = session.id`).
 - Concurrency & Lost Update Protection (`HP2-P0-05`):
   - In-transaction conditional balance decrement (`where: { activeBalance: { gte: amount } }`).
-  - Scoped request UUID idempotency keys prevent replay while allowing legitimate future withdrawals.
-- Transparent labeling: Marked honestly as `isSimulation: true` ("Simulasi BI-FAST").
+  - Standard `Idempotency-Key` HTTP header with canonical duplicate response caching.
+- Transparent labeling: Marked honestly as `isSimulation: true` ("Simulasi Transfer Demo").
 
 ### 3.4 Dispute Mediation Subsystem (`src/domain/dispute/`)
 - Persisted dispute tickets with evidence uploads and tri-party chat messages.

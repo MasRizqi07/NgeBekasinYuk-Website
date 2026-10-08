@@ -657,7 +657,7 @@ export default function PendingPaymentPage() {
         <div className="text-center pt-2">
           <div className="inline-flex items-center gap-1.5 text-on-surface-variant text-xs">
             <ShieldCheck className="w-4 h-4 text-secondary" />
-            <span>Dana Anda ditampung di Rekening Kustodian Resmi Terdaftar OJK &amp; BI</span>
+            <span>Dana Anda ditampung di Akun Rekber / Escrow Platform (Simulasi Demo)</span>
           </div>
         </div>
       </div>

@@ -680,7 +680,7 @@ export default function OrderDetailPage() {
           <div className="flex items-center justify-between px-1 text-xs text-on-surface-variant">
             <div className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-secondary" />
-              <span>Dana dilindungi garansi rekber OJK &amp; BI</span>
+              <span>Dana dilindungi alur rekber / escrow platform</span>
             </div>
             <Link href="/help/escrow" className="font-semibold text-primary hover:underline">
               SOP Rekber

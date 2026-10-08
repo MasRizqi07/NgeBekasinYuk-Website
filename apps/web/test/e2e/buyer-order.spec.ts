@@ -12,7 +12,14 @@ import { prisma } from "@/server/db/prisma";
 
 test.describe("Buyer Authoritative Order Flow (Real PostgreSQL)", () => {
   test.beforeEach(async () => {
-    // Ensure the seed listing is available and in ACTIVE status
+    // Ensure the seed listing is available and in ACTIVE status without conflicting test orders
+    await prisma.order.updateMany({
+      where: {
+        listingId: "prod-ipad-air5",
+        status: { notIn: ["CANCELLED", "REFUNDED", "COMPLETED"] },
+      },
+      data: { status: "CANCELLED" },
+    });
     await prisma.productListing.update({
       where: { id: "prod-ipad-air5" },
       data: { status: "ACTIVE" },

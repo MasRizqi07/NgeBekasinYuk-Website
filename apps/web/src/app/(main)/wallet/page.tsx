@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -15,6 +15,7 @@ import {
   ArrowUpRight,
   KeyRound,
   Info,
+  Loader2,
 } from "lucide-react";
 import { useWalletStore } from "@/stores/useWalletStore";
 import { formatRupiah } from "@/lib/utils";
@@ -24,21 +25,89 @@ import confetti from "canvas-confetti";
 type LedgerTab = "ALL" | "IN" | "OUT" | "HOLD";
 
 export default function WalletPage() {
-  const { saldoAktif, saldoTertahan, bankAccounts, transactions, withdrawFunds } =
-    useWalletStore();
+  const {
+    saldoAktif,
+    saldoTertahan,
+    hasPin: storeHasPin,
+    bankAccounts,
+    transactions,
+    isLoading,
+    fetchWallet,
+    withdrawFunds,
+  } = useWalletStore();
   const { showToast } = useToast();
 
   const [showBalance, setShowBalance] = useState(true);
-  const [withdrawAmount, setWithdrawAmount] = useState<number>(14250000);
-  const [selectedBankId, setSelectedBankId] = useState(bankAccounts[0]?.id || "bca-1");
-  const [pin, setPin] = useState("123456");
+  const [userWithdrawAmount, setUserWithdrawAmount] = useState<number | null>(null);
+  const [selectedBankId, setSelectedBankId] = useState<string>("");
+  const [pin, setPin] = useState("");
+  const [setPinPassword, setSetPinPassword] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [isSettingPin, setIsSettingPin] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<LedgerTab>("ALL");
   const [clientRequestId, setClientRequestId] = useState<string | null>(null);
 
+  // Authoritative hydration on mount
+  useEffect(() => {
+    fetchWallet();
+  }, [fetchWallet]);
+
+  // Derived state directly from authoritative store
+  const hasPin = storeHasPin;
+  const activeBank =
+    bankAccounts.find((b) => b.id === selectedBankId) ||
+    bankAccounts.find((b) => b.isPrimary) ||
+    bankAccounts[0];
+  const targetBankId = selectedBankId || activeBank?.id || "";
+
+  const withdrawAmount =
+    userWithdrawAmount !== null
+      ? userWithdrawAmount
+      : saldoAktif > 0
+      ? Math.min(500000, saldoAktif)
+      : 0;
+
   const handleQuickChip = (val: number) => {
-    setWithdrawAmount(val);
+    setUserWithdrawAmount(val);
     setClientRequestId(null);
+  };
+
+  const handleSetPin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPin !== confirmPin) {
+      showToast("Konfirmasi PIN tidak cocok dengan PIN baru.", "error");
+      return;
+    }
+    if (!/^\d{6}$/.test(newPin)) {
+      showToast("PIN harus berupa 6 digit angka.", "error");
+      return;
+    }
+    setIsSettingPin(true);
+    try {
+      const res = await fetch("/api/wallet/pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: setPinPassword, pin: newPin }),
+      });
+      const data = await res.json();
+      setIsSettingPin(false);
+      if (res.ok) {
+        setSetPinPassword("");
+        setNewPin("");
+        setConfirmPin("");
+        setPin(newPin);
+        showToast("PIN transaksi berhasil diatur! Silakan lanjutkan penarikan dana.", "success");
+        // Reconcile authoritative state from PostgreSQL
+        await fetchWallet();
+      } else {
+        showToast(data.message || "Gagal mengatur PIN transaksi.", "error");
+      }
+    } catch {
+      setIsSettingPin(false);
+      showToast("Gagal terhubung ke server. Silakan coba lagi.", "error");
+    }
   };
 
   const handleWithdraw = async (e: React.FormEvent) => {
@@ -51,7 +120,7 @@ export default function WalletPage() {
     }
 
     try {
-      const res = await withdrawFunds(withdrawAmount, selectedBankId, pin, requestId);
+      const res = await withdrawFunds(withdrawAmount, targetBankId, pin, requestId);
       setIsProcessing(false);
 
       if (res.success) {
@@ -62,13 +131,21 @@ export default function WalletPage() {
           origin: { y: 0.6 },
         });
         showToast(res.message, "success");
+        // Reconcile latest balance and ledger from PostgreSQL
+        await fetchWallet();
       } else if (res.status === "UNKNOWN") {
         // AMBIGUOUS / PENDING: server state unconfirmed due to timeout/network error
         // Retain clientRequestId so subsequent retry reuses identical Idempotency-Key
         showToast(res.message, "warning", "Status Penarikan Belum Dipastikan");
       } else {
         setClientRequestId(null);
-        showToast(res.message, "error", "Penarikan Gagal");
+        if (res.code === "PIN_NOT_SET" || res.statusCode === 409) {
+          // Reconcile authoritative state from PostgreSQL
+          await fetchWallet();
+          showToast("PIN transaksi belum dibuat. Silakan atur PIN transaksi Anda terlebih dahulu.", "info");
+        } else {
+          showToast(res.message, "error", "Penarikan Gagal");
+        }
       }
     } catch {
       setIsProcessing(false);
@@ -97,7 +174,7 @@ export default function WalletPage() {
           <div className="flex items-center gap-2.5 min-w-0">
             <ShieldCheck className="w-5 h-5 text-secondary shrink-0" />
             <p className="text-xs font-semibold text-on-surface truncate">
-              Proteksi Rekber Aktif • Garansi Transaksi 100% Aman
+              Proteksi Rekber Aktif • Transaksi Terlindungi Alur Escrow Platform
             </p>
           </div>
           <Link
@@ -116,10 +193,10 @@ export default function WalletPage() {
           <div className="flex items-center justify-between relative z-10 text-xs">
             <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md px-3 py-1 rounded-full text-white font-medium">
               <Lock className="w-3.5 h-3.5" />
-              <span>Rekening Escrow PT NgeBekasin</span>
+              <span>Akun Penampung Rekber Platform</span>
             </div>
             <span className="bg-secondary-fixed text-on-secondary-fixed px-2.5 py-1 rounded-full font-bold text-[11px] shadow-xs">
-              Kustodian BI Terdaftar
+              Simulasi Escrow Platform
             </span>
           </div>
 
@@ -130,12 +207,21 @@ export default function WalletPage() {
               <button
                 onClick={() => setShowBalance(!showBalance)}
                 className="hover:text-white transition-colors"
+                aria-label="Toggle tampilan saldo"
               >
                 {showBalance ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
               </button>
             </div>
-            <div className="text-2xl md:text-3xl font-black tracking-tight">
-              {showBalance ? formatRupiah(saldoAktif) : "Rp ••••••••"}
+            <div className="text-2xl md:text-3xl font-black tracking-tight flex items-center gap-2">
+              {isLoading && saldoAktif === 0 ? (
+                <div className="flex items-center gap-2 text-base font-normal text-white/80">
+                  <Loader2 className="w-5 h-5 animate-spin" /> Memuat saldo dari server...
+                </div>
+              ) : showBalance ? (
+                formatRupiah(saldoAktif)
+              ) : (
+                "Rp ••••••••"
+              )}
             </div>
           </div>
 
@@ -161,20 +247,20 @@ export default function WalletPage() {
         {/* Quick Stats Strip */}
         <div className="grid grid-cols-3 gap-2 bg-surface-container-lowest p-3 rounded-2xl border border-outline-variant/30 shadow-xs text-center text-xs">
           <div className="p-1">
-            <span className="text-[11px] text-on-surface-variant block">Selesai Bulan Ini</span>
-            <span className="font-bold text-sm text-on-surface mt-0.5 block">18 Gadget</span>
+            <span className="text-[11px] text-on-surface-variant block">Alur Rekber</span>
+            <span className="font-bold text-sm text-on-surface mt-0.5 block">Otomatis</span>
           </div>
           <div className="p-1 bg-surface-container-low rounded-xl">
-            <span className="text-[11px] text-on-surface-variant block">Pencairan Sukses</span>
-            <span className="font-bold text-sm text-secondary mt-0.5 block">100%</span>
+            <span className="text-[11px] text-on-surface-variant block">Pencairan Platform</span>
+            <span className="font-bold text-sm text-secondary mt-0.5 block">Simulasi Demo</span>
           </div>
           <div className="p-1">
-            <span className="text-[11px] text-on-surface-variant block">Kecepatan Rata-rata</span>
-            <span className="font-bold text-sm text-primary mt-0.5 block">&lt; 3 Mnt</span>
+            <span className="text-[11px] text-on-surface-variant block">Kecepatan Transfer</span>
+            <span className="font-bold text-sm text-primary mt-0.5 block">Instan</span>
           </div>
         </div>
 
-        {/* Linked Bank Account (KYC Verified) */}
+        {/* Linked Bank Account (Registered Destination) */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs px-1">
             <div className="flex items-center gap-1.5 font-bold text-on-surface">
@@ -183,161 +269,254 @@ export default function WalletPage() {
             </div>
             <span className="text-secondary font-bold text-[11px] flex items-center gap-0.5">
               <CheckCircle2 className="w-3 h-3" />
-              <span>KYC Match</span>
+              <span>Terverifikasi</span>
             </span>
           </div>
 
           <div className="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/30 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-10 rounded-xl bg-primary-fixed flex items-center justify-center font-black text-primary text-sm">
-                  BCA
-                </div>
-                <div className="text-xs">
-                  <div className="font-bold text-on-surface flex items-center gap-1.5">
-                    <span>Bank Central Asia (BCA)</span>
-                    <span className="bg-secondary-fixed text-on-secondary-fixed text-[10px] px-1.5 py-0.2 rounded font-bold">
-                      UTAMA
-                    </span>
+            {activeBank ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-10 rounded-xl bg-primary-fixed flex items-center justify-center font-black text-primary text-sm">
+                    {activeBank.bankName.slice(0, 4).toUpperCase()}
                   </div>
-                  <p className="font-mono text-on-surface-variant mt-0.5">8271 •••• 9102</p>
-                  <p className="text-[11px] text-on-surface-variant font-medium">
-                    a.n. Achmad Rizqi Mubarok
-                  </p>
+                  <div className="text-xs">
+                    <div className="font-bold text-on-surface flex items-center gap-1.5">
+                      <span>{activeBank.bankName}</span>
+                      {activeBank.isPrimary && (
+                        <span className="bg-secondary-fixed text-on-secondary-fixed text-[10px] px-1.5 py-0.2 rounded font-bold">
+                          UTAMA
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-mono text-on-surface-variant mt-0.5">{activeBank.accountNumber}</p>
+                    <p className="text-[11px] text-on-surface-variant font-medium">
+                      a.n. {activeBank.accountHolder}
+                    </p>
+                  </div>
                 </div>
+                <CheckCircle2 className="w-5 h-5 text-secondary shrink-0" />
               </div>
-              <CheckCircle2 className="w-5 h-5 text-secondary shrink-0" />
-            </div>
+            ) : (
+              <div className="text-xs text-on-surface-variant py-2">
+                Belum ada rekening bank terdaftar pada akun Anda.
+              </div>
+            )}
 
             <div className="p-2.5 bg-surface-container-low rounded-xl text-[11px] text-on-surface-variant flex items-start gap-2">
               <Info className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
               <span>
-                Nama rekening 100% identik dengan e-KTP KYC terverifikasi demi kepatuhan anti-fraud &amp; regulasi Bank Indonesia.
+                Pencairan dana dikirimkan ke rekening bank terdaftar Anda melalui sistem transfer platform (Simulasi Demo).
               </span>
             </div>
           </div>
         </div>
 
-        {/* Interactive Withdrawal Form */}
-        <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-4 shadow-xs space-y-4">
-          <div className="flex items-center justify-between text-xs border-b border-outline-variant/20 pb-2.5">
-            <div className="flex items-center gap-1.5 font-bold text-on-surface">
-              <Wallet className="w-4 h-4 text-primary" />
-              <span>Formulir Tarik Dana</span>
+        {/* Interactive Withdrawal Form or Set PIN Form */}
+        {hasPin === false ? (
+          <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-4 shadow-xs space-y-4">
+            <div className="flex items-center justify-between text-xs border-b border-outline-variant/20 pb-2.5">
+              <div className="flex items-center gap-1.5 font-bold text-on-surface">
+                <KeyRound className="w-4 h-4 text-primary" />
+                <span>Atur PIN Transaksi Baru</span>
+              </div>
+              <span className="bg-amber-500/10 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-semibold">
+                Wajib untuk Penarikan
+              </span>
             </div>
-            <span className="bg-surface-container text-on-surface-variant text-[10px] px-2 py-0.5 rounded-full font-semibold">
-              BI-FAST 24/7 (Bebas Biaya)
-            </span>
-          </div>
 
-          <form onSubmit={handleWithdraw} className="space-y-3.5 text-xs">
-            <div className="space-y-1.5">
-              <label className="font-bold text-on-surface">Nominal Penarikan</label>
-              <div className="relative flex items-center">
-                <span className="absolute left-3.5 text-on-surface-variant font-bold text-sm">
-                  Rp
-                </span>
+            <form onSubmit={handleSetPin} className="space-y-3.5 text-xs">
+              <p className="text-on-surface-variant text-[11px] leading-relaxed">
+                Untuk keamanan akun dan transaksi penarikan dana Anda, silakan buat 6 digit PIN transaksi baru dan masukkan password akun Anda untuk verifikasi.
+              </p>
+
+              {/* Account Password */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-on-surface" htmlFor="account-password">
+                  Password Akun
+                </label>
                 <input
-                  type="number"
-                  value={withdrawAmount}
-                  onChange={(e) => {
-                    setWithdrawAmount(Number(e.target.value));
-                    setClientRequestId(null);
-                  }}
-                  className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface font-bold text-base focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
+                  id="account-password"
+                  type="password"
+                  aria-label="Password Akun"
+                  value={setPinPassword}
+                  onChange={(e) => setSetPinPassword(e.target.value)}
+                  placeholder="Masukkan password akun Anda"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
                 />
               </div>
 
-              {/* Quick chips */}
-              <div className="grid grid-cols-4 gap-1.5 pt-1">
-                {[
-                  { label: "500 Rb", val: 500000 },
-                  { label: "2 Juta", val: 2000000 },
-                  { label: "5 Juta", val: 5000000 },
-                  { label: "Semua", val: saldoAktif },
-                ].map((chip, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleQuickChip(chip.val)}
-                    className="py-1.5 bg-surface-container-low hover:bg-primary-fixed rounded-lg text-xs font-semibold text-on-surface text-center transition-colors"
-                  >
-                    {chip.label}
-                  </button>
-                ))}
+              {/* New 6-digit PIN */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-on-surface" htmlFor="new-pin">
+                  PIN Transaksi Baru (6 Digit)
+                </label>
+                <input
+                  id="new-pin"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  aria-label="PIN Transaksi Baru 6 Digit"
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="6 digit angka (contoh: 849201)"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-on-surface text-xs font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
+                />
               </div>
-            </div>
 
-            {/* Destination Bank Account */}
-            <div className="space-y-1.5">
-              <label className="font-bold text-on-surface">Rekening Tujuan</label>
-              <select
-                value={selectedBankId}
-                onChange={(e) => {
-                  setSelectedBankId(e.target.value);
-                  setClientRequestId(null);
-                }}
-                className="w-full p-3 bg-surface-container-low rounded-xl border border-outline-variant/30 text-on-surface font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+              {/* Confirm PIN */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-on-surface" htmlFor="confirm-pin">
+                  Konfirmasi PIN Transaksi
+                </label>
+                <input
+                  id="confirm-pin"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  aria-label="Konfirmasi PIN Transaksi"
+                  value={confirmPin}
+                  onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="Ulangi 6 digit PIN transaksi baru"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-on-surface text-xs font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isSettingPin || !setPinPassword || newPin.length !== 6 || confirmPin.length !== 6}
+                className="w-full py-3 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-xs hover:bg-primary/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {bankAccounts.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.bankName} - {b.accountNumber} ({b.accountHolder})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Security PIN Input */}
-            <div className="p-3 bg-surface-container-low rounded-xl text-center space-y-1.5 border border-outline-variant/30">
-              <div className="flex items-center justify-center gap-1 text-on-surface-variant font-medium">
-                <KeyRound className="w-3.5 h-3.5" />
-                <span>Otorisasi PIN Transaksi (6 Digit)</span>
+                <Lock className="w-3.5 h-3.5" />
+                <span>{isSettingPin ? "Menyimpan PIN..." : "Simpan & Aktifkan PIN Transaksi"}</span>
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-4 shadow-xs space-y-4">
+            <div className="flex items-center justify-between text-xs border-b border-outline-variant/20 pb-2.5">
+              <div className="flex items-center gap-1.5 font-bold text-on-surface">
+                <Wallet className="w-4 h-4 text-primary" />
+                <span>Formulir Tarik Dana</span>
               </div>
-              <div className="flex items-center justify-center gap-2 pt-1">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div
-                    key={i}
-                    className={`w-3 h-3 rounded-full ${
-                      pin.length >= i ? "bg-primary" : "bg-surface-container-highest"
-                    }`}
-                  ></div>
-                ))}
-              </div>
-              <input
-                type="password"
-                maxLength={6}
-                value={pin}
-                onChange={(e) => {
-                  setPin(e.target.value.replace(/\D/g, "").slice(0, 6));
-                  setClientRequestId(null);
-                }}
-                placeholder="Masukkan 6 digit PIN"
-                className="w-40 mx-auto text-center font-mono tracking-widest text-xs py-1.5 px-3 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-              <p className="text-[10px] text-on-surface-variant">Default simulator PIN: 123456</p>
-            </div>
-
-            {/* Submit Payout Button */}
-            <button
-              type="submit"
-              disabled={isProcessing || withdrawAmount <= 0}
-              className="w-full py-3 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-xs hover:bg-primary/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>
-                {isProcessing
-                  ? "Mentransfer via BI-FAST..."
-                  : `Konfirmasi & Tarik ${formatRupiah(withdrawAmount)} Sekarang`}
+              <span className="bg-surface-container text-on-surface-variant text-[10px] px-2 py-0.5 rounded-full font-semibold">
+                Pencairan Dana (Simulasi Transfer)
               </span>
-            </button>
-          </form>
-        </div>
+            </div>
+
+            <form onSubmit={handleWithdraw} className="space-y-3.5 text-xs">
+              <div className="space-y-1.5">
+                <label className="font-bold text-on-surface">Nominal Penarikan</label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3.5 text-on-surface-variant font-bold text-sm">
+                    Rp
+                  </span>
+                  <input
+                    type="number"
+                    value={withdrawAmount || ""}
+                    onChange={(e) => {
+                      setUserWithdrawAmount(Number(e.target.value));
+                      setClientRequestId(null);
+                    }}
+                    className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface font-bold text-base focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
+                  />
+                </div>
+
+                {/* Quick chips */}
+                <div className="grid grid-cols-4 gap-1.5 pt-1">
+                  {[
+                    { label: "500 Rb", val: 500000 },
+                    { label: "2 Juta", val: 2000000 },
+                    { label: "5 Juta", val: 5000000 },
+                    { label: "Semua", val: saldoAktif },
+                  ].map((chip, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleQuickChip(chip.val)}
+                      className="py-1.5 bg-surface-container-low hover:bg-primary-fixed rounded-lg text-xs font-semibold text-on-surface text-center transition-colors"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Destination Bank Account */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-on-surface">Rekening Tujuan</label>
+                <select
+                  value={targetBankId}
+                  onChange={(e) => {
+                    setSelectedBankId(e.target.value);
+                    setClientRequestId(null);
+                  }}
+                  className="w-full p-3 bg-surface-container-low rounded-xl border border-outline-variant/30 text-on-surface font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {bankAccounts.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.bankName} - {b.accountNumber} ({b.accountHolder})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Security PIN Input */}
+              <div className="p-3 bg-surface-container-low rounded-xl text-center space-y-1.5 border border-outline-variant/30">
+                <div className="flex items-center justify-center gap-1 text-on-surface-variant font-medium">
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>Otorisasi PIN Transaksi (6 Digit)</span>
+                </div>
+                <div className="flex items-center justify-center gap-2 pt-1">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div
+                      key={i}
+                      className={`w-3 h-3 rounded-full ${
+                        pin.length >= i ? "bg-primary" : "bg-surface-container-highest"
+                      }`}
+                    ></div>
+                  ))}
+                </div>
+                <input
+                  type="password"
+                  maxLength={6}
+                  aria-label="PIN Transaksi 6 Digit"
+                  value={pin}
+                  onChange={(e) => {
+                    setPin(e.target.value.replace(/\D/g, "").slice(0, 6));
+                    setClientRequestId(null);
+                  }}
+                  placeholder="Masukkan 6 digit PIN"
+                  className="w-40 mx-auto text-center font-mono tracking-widest text-xs py-1.5 px-3 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              {/* Submit Payout Button */}
+              <button
+                type="submit"
+                disabled={isProcessing || withdrawAmount <= 0 || !targetBankId}
+                className="w-full py-3 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-xs hover:bg-primary/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>
+                  {isProcessing
+                    ? "Memproses pencairan..."
+                    : `Konfirmasi & Tarik ${formatRupiah(withdrawAmount)} Sekarang`}
+                </span>
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Transaction Ledger */}
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between text-xs px-1">
             <h3 className="font-bold text-on-surface">Riwayat &amp; Mutasi Saldo</h3>
-            <span className="text-on-surface-variant">Oktober 2026</span>
+            <span className="text-on-surface-variant">Buku Kas Platform</span>
           </div>
 
           {/* Filter Pills */}
@@ -364,52 +543,58 @@ export default function WalletPage() {
 
           {/* Ledger Entries */}
           <div className="space-y-2.5">
-            {filteredTransactions.map((trx) => (
-              <div
-                key={trx.id}
-                className="bg-surface-container-lowest p-3.5 rounded-2xl border border-outline-variant/30 shadow-xs space-y-2 text-xs"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2.5 min-w-0">
-                    <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+            {filteredTransactions.length === 0 ? (
+              <div className="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/30 text-center text-xs text-on-surface-variant">
+                Belum ada riwayat mutasi transaksi.
+              </div>
+            ) : (
+              filteredTransactions.map((trx) => (
+                <div
+                  key={trx.id}
+                  className="bg-surface-container-lowest p-3.5 rounded-2xl border border-outline-variant/30 shadow-xs space-y-2 text-xs"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      <div
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                          trx.type === "ESCROW_RELEASE"
+                            ? "bg-secondary-fixed text-on-secondary-fixed"
+                            : trx.type === "WITHDRAWAL"
+                            ? "bg-surface-container-high text-on-surface"
+                            : "bg-amber-500/10 text-amber-700"
+                        }`}
+                      >
+                        {trx.type === "ESCROW_RELEASE" ? (
+                          <ArrowDownLeft className="w-4 h-4" />
+                        ) : trx.type === "WITHDRAWAL" ? (
+                          <ArrowUpRight className="w-4 h-4" />
+                        ) : (
+                          <Clock className="w-4 h-4" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-on-surface truncate">{trx.description}</h4>
+                        <p className="text-[11px] text-on-surface-variant mt-0.5">
+                          Ref: {trx.referenceId} • {trx.timestamp}
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={`font-mono font-bold shrink-0 text-sm ${
                         trx.type === "ESCROW_RELEASE"
-                          ? "bg-secondary-fixed text-on-secondary-fixed"
+                          ? "text-secondary"
                           : trx.type === "WITHDRAWAL"
-                          ? "bg-surface-container-high text-on-surface"
-                          : "bg-amber-500/10 text-amber-700"
+                          ? "text-on-surface"
+                          : "text-amber-700"
                       }`}
                     >
-                      {trx.type === "ESCROW_RELEASE" ? (
-                        <ArrowDownLeft className="w-4 h-4" />
-                      ) : trx.type === "WITHDRAWAL" ? (
-                        <ArrowUpRight className="w-4 h-4" />
-                      ) : (
-                        <Clock className="w-4 h-4" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="font-bold text-on-surface truncate">{trx.description}</h4>
-                      <p className="text-[11px] text-on-surface-variant mt-0.5">
-                        Ref: {trx.referenceId} • {trx.timestamp}
-                      </p>
-                    </div>
+                      {trx.type === "WITHDRAWAL" ? "-" : "+"}
+                      {formatRupiah(trx.amount)}
+                    </span>
                   </div>
-                  <span
-                    className={`font-mono font-bold shrink-0 text-sm ${
-                      trx.type === "ESCROW_RELEASE"
-                        ? "text-secondary"
-                        : trx.type === "WITHDRAWAL"
-                        ? "text-on-surface"
-                        : "text-amber-700"
-                    }`}
-                  >
-                    {trx.type === "WITHDRAWAL" ? "-" : "+"}
-                    {formatRupiah(trx.amount)}
-                  </span>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

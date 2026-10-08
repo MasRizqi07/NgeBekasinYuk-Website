@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 describe("Financial Concurrency & Mutation Atomicity Tests (PostgreSQL)", () => {
   let buyerId: string;
   let sellerId: string;
+  let sellerBankAccountId: string;
   let adminId: string;
   const pin = "123456";
 
@@ -44,9 +45,20 @@ describe("Financial Concurrency & Mutation Atomicity Tests (PostgreSQL)", () => 
             heldBalance: 0,
           },
         },
+        bankAccounts: {
+          create: {
+            bankCode: "BCA",
+            bankName: "BCA",
+            accountNumber: "1234567890",
+            accountHolder: "Seller Test",
+            isDefault: true,
+          },
+        },
       },
+      include: { bankAccounts: true },
     });
     sellerId = seller.id;
+    sellerBankAccountId = seller.bankAccounts[0].id;
 
     const encryptedTotp = encryptSensitiveSecret("JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP");
     const admin = await prisma.user.create({
@@ -197,18 +209,14 @@ describe("Financial Concurrency & Mutation Atomicity Tests (PostgreSQL)", () => 
       WalletLedgerService.requestWithdrawal({
         userId: sellerId,
         amount: withdrawalAmount,
-        bankName: "BCA",
-        accountNumber: "1234567890",
-        accountHolder: "Seller Test",
+        bankAccountId: sellerBankAccountId,
         pin,
         customIdempotencyKey: `WDR-REQ-1-${Date.now()}`,
       }),
       WalletLedgerService.requestWithdrawal({
         userId: sellerId,
         amount: withdrawalAmount,
-        bankName: "BCA",
-        accountNumber: "1234567890",
-        accountHolder: "Seller Test",
+        bankAccountId: sellerBankAccountId,
         pin,
         customIdempotencyKey: `WDR-REQ-2-${Date.now()}`,
       }),

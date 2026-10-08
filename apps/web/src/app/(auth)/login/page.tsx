@@ -54,7 +54,7 @@ export default function LoginPage() {
       <div className="text-center space-y-1">
         <h1 className="text-xl font-black text-on-surface">Masuk ke Akun</h1>
         <p className="text-on-surface-variant">
-          Jual beli gadget secondhand dengan garansi rekening bersama 100% aman
+          Jual beli gadget secondhand dengan proteksi rekening bersama platform
         </p>
       </div>
 

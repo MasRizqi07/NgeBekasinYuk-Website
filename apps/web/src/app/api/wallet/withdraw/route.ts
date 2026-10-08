@@ -28,15 +28,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const { amount, bankName, accountNumber, accountHolder, pin } = validated.data;
+    const { amount, bankAccountId, pin } = validated.data;
     const finalIdempotencyKey = headerIdempotencyKey || validated.data.clientRequestId;
 
     const result = await WalletLedgerService.requestWithdrawal({
       userId: session.id,
       amount,
-      bankName,
-      accountNumber,
-      accountHolder,
+      bankAccountId,
       pin,
       customIdempotencyKey: finalIdempotencyKey,
     });
@@ -45,10 +43,14 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof WalletDomainError) {
       const statusCode =
-        error.code === "INVALID_PIN"
+        error.code === "PIN_NOT_SET"
+          ? 409
+          : error.code === "INVALID_PIN"
           ? 401
           : error.code === "INSUFFICIENT_BALANCE"
           ? 422
+          : error.code === "BANK_ACCOUNT_NOT_FOUND"
+          ? 404
           : 400;
 
       return NextResponse.json(

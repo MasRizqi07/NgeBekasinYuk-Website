@@ -219,6 +219,11 @@ export class EscrowLedgerService {
           },
         });
 
+        await tx.productListing.update({
+          where: { id: order.listingId },
+          data: { status: "SOLD" },
+        });
+
         await tx.orderStatusHistory.create({
           data: {
             orderId: order.id,
@@ -387,6 +392,11 @@ export class EscrowLedgerService {
         data: {
           status: "REFUNDED",
         },
+      });
+
+      await tx.productListing.update({
+        where: { id: order.listingId },
+        data: { status: "ACTIVE" },
       });
 
       await tx.orderStatusHistory.create({

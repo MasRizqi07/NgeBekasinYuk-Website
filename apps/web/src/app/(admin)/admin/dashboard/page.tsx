@@ -70,7 +70,7 @@ export default function AdminDashboardPage() {
             <Lock className="w-4 h-4 text-primary" />
           </div>
           <div className="text-xl font-black text-primary">Rp 1.240.800.000</div>
-          <span className="text-on-surface-variant text-[11px]">Rekening Kustodian BCA &amp; Mandiri</span>
+          <span className="text-on-surface-variant text-[11px]">Akun Penampung Escrow Platform (Simulasi)</span>
         </div>
 
         <div className="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/30 shadow-xs space-y-2">

@@ -9,7 +9,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useChatStore } from "@/stores/useChatStore";
-import { formatRupiah, timeAgo, useIsMounted } from "@/lib/utils";
+import { formatRupiah, timeAgo } from "@/lib/utils";
+import { useIsMounted } from "@/lib/hooks/useIsMounted";
 
 export default function ChatInboxPage() {
   const { conversations } = useChatStore();
@@ -36,7 +37,7 @@ export default function ChatInboxPage() {
         <div className="p-3 rounded-2xl bg-secondary-fixed/30 border border-secondary/20 flex items-start gap-2.5 text-xs text-on-secondary-fixed">
           <ShieldCheck className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
           <p className="leading-relaxed">
-            <strong>Tips Keamanan:</strong> Jangan pernah bertukar nomor WhatsApp pribadi atau mentransfer dana di luar sistem NgeBekasinYuk. Garansi pengembalian dana 100% hanya berlaku untuk transaksi di dalam aplikasi.
+            <strong>Tips Keamanan:</strong> Jangan pernah bertukar nomor WhatsApp pribadi atau mentransfer dana di luar sistem NgeBekasinYuk. Proteksi pengembalian dana hanya berlaku untuk transaksi di dalam alur rekening bersama platform.
           </p>
         </div>
 

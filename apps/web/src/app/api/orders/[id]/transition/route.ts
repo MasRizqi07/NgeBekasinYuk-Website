@@ -108,10 +108,14 @@ export async function POST(
         }
       }
 
-      const ord = await tx.order.update({
-        where: { id: order.id },
+      const updateResult = await tx.order.updateMany({
+        where: { id: order.id, status: order.status },
         data: updateData,
       });
+
+      if (updateResult.count !== 1) {
+        return null;
+      }
 
       await tx.orderStatusHistory.create({
         data: {
@@ -124,8 +128,27 @@ export async function POST(
         },
       });
 
-      return ord;
+      if ((toStatus as string) === "CANCELLED") {
+        await tx.productListing.update({
+          where: { id: order.listingId },
+          data: { status: "ACTIVE" },
+        });
+      }
+
+      return await tx.order.findUnique({
+        where: { id: order.id },
+      });
     });
+
+    if (!updatedOrder) {
+      return NextResponse.json(
+        {
+          error: "ORDER_STATE_CHANGED",
+          message: "Status pesanan telah berubah atau sedang diproses oleh permintaan lain. Silakan muat ulang.",
+        },
+        { status: 409 }
+      );
+    }
 
     return NextResponse.json({
       success: true,

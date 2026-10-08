@@ -20,7 +20,7 @@ export default function CartPage() {
         </div>
         <h2 className="font-extrabold text-xl text-on-surface">Keranjang Belanja Kosong</h2>
         <p className="text-xs text-text-secondary max-w-sm">
-          Yuk cari gadget idamanmu dengan garansi pembayaran rekening bersama (Escrow) 100% aman.
+          Yuk cari gadget idamanmu dengan proteksi pembayaran rekening bersama (Escrow) platform.
         </p>
         <Link href="/search">
           <Button variant="primary" size="md" className="font-bold">

@@ -56,10 +56,10 @@ erDiagram
 - `role`: "BUYER" | "SELLER" | "ADMIN"
 - `sessionVersion`: Int (Default 1, used for server-side session revocation)
 - `hashedPassword`: String (Bcrypt, cost 10)
-- `hashedPin`: String? (Bcrypt, 6-digit transaction PIN)
-- `pinFailedAttempts`: Int (Default 0)
+- `hashedPin`: String? (Bcrypt, 6-digit transaction PIN; null by default for new registrations)
+- `pinFailedAttempts`: Int (Default 0, max 5 before lock)
 - `pinLockedUntil`: DateTime? (Null if active, timestamp if locked)
-- `totpSecret`: String? (Per-admin base32 secret for RFC 6238 2FA step-up)
+- `totpSecretCiphertext`, `totpSecretIv`, `totpSecretTag`, `totpSecretKeyVersion`: Encrypted AES-256-GCM envelope for admin step-up 2FA
 - `isVerified`: Boolean (KYC status)
 
 ### 3.2 `Order`
@@ -89,9 +89,30 @@ erDiagram
   - `newBalance`: Int
   - `idempotencyKey`: String (Unique constraint prevents duplicate entries)
 
-### 3.4 `Wallet` & `WalletLedgerEntry`
-- `activeBalance`: Int (Derived from ledger / updated conditionally)
-- `heldBalance`: Int (Escrow funds in transit or inspection)
+### 3.4 `Wallet`, `BankAccount`, `Withdrawal` & `WalletLedgerEntry`
+- `Wallet`:
+  - `activeBalance`: Int (Authoritative active balance in PostgreSQL)
+  - `heldBalance`: Int (Escrow funds in transit or inspection)
+- `BankAccount`:
+  - `id`: String (UUID, primary key)
+  - `userId`: String (Indexed foreign key to User; ownership enforced on resolution)
+  - `bankCode`: String (e.g. BCA, MANDIRI, BRI, BNI)
+  - `bankName`: String
+  - `accountNumber`: String (Encrypted/canonical in DB; masked as `•••• •••• XXXX` in client DTOs)
+  - `accountHolder`: String
+  - `isDefault`: Boolean
+- `Withdrawal`:
+  - `id`: String (UUID, primary key)
+  - `withdrawalNumber`: String (Unique, e.g. `WD-2026-X7K9P2`)
+  - `walletId`: String (Indexed foreign key to Wallet)
+  - `amount`: Int (Safe integer IDR)
+  - `fee`: Int (Rp 0 in demo simulation)
+  - `bankName`: String (Snapshotted from canonical BankAccount)
+  - `accountNumber`: String (Snapshotted from canonical BankAccount)
+  - `accountHolder`: String (Snapshotted from canonical BankAccount)
+  - `status`: `PENDING` | `PROCESSING` | `SUCCESS` | `FAILED`
+  - `isSimulation`: Boolean (Explicitly labeled as simulation)
+  - `idempotencyKey`: String (Unique, bound to client request or Idempotency-Key header)
 - `WalletLedgerEntry`:
   - `walletId`: String (Indexed)
   - `type`: `ESCROW_RELEASE` | `WITHDRAWAL` | `REFUND`

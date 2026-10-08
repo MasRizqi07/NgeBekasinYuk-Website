@@ -1,0 +1,68 @@
+====================================================================
+PHASE 4B TEST SUITE: AUTHORITATIVE WALLET READ & PAYOUT INTEGRITY
+====================================================================
+
+--------------------------------------------------------------------
+TEST FIXTURES INITIALIZED:
+User A ID: cmutuxya40000gubgqx2065mf | BankAccount A: cmutuxya50002gubgh2q7kgt8
+User B ID: cmutuxybp0003gubgauj8bryj | BankAccount B: cmutuxybp0005gubg1zg1rabj
+--------------------------------------------------------------------
+
+>>> 1. GET /api/wallet WITHOUT SESSION
+HTTP Status: 401
+Response: {"error":"UNAUTHORIZED","message":"Silakan login terlebih dahulu."}
+Ô£à [ASSERTION PASSED] Scenario 1 HTTP status is 401: 401
+
+>>> 2. GET /api/wallet AUTHENTICATED (hasPin=false before setup)
+HTTP Status: 200
+Response: {"wallet":{"activeBalance":5000000,"heldBalance":500000},"security":{"hasPin":false},"bankAccounts":[{"id":"cmutuxya50002gubgh2q7kgt8","bankCode":"BCA","bankName":"Bank Central Asia","accountHolder":"Proof User A","accountNumberMasked":"ÔÇóÔÇóÔÇóÔÇó ÔÇóÔÇóÔÇóÔÇó 7890","isDefault":true}],"ledgerEntries":[]}
+Ô£à [ASSERTION PASSED] Scenario 2 HTTP status is 200: 200
+Ô£à [ASSERTION PASSED] Scenario 2 hasPin is false before setup: false
+Ô£à [ASSERTION PASSED] Scenario 2 activeBalance matches DB 5M: 5000000
+Ô£à [ASSERTION PASSED] Scenario 2 bank account masked: "ÔÇóÔÇóÔÇóÔÇó ÔÇóÔÇóÔÇóÔÇó 7890"
+
+>>> 3. POST /api/wallet/pin INVALID PASSWORD
+HTTP Status: 401
+Response: {"error":"INVALID_CREDENTIALS","message":"Password tidak sesuai. Sisa kesempatan: 4 kali sebelum akun terkunci."}
+Ô£à [ASSERTION PASSED] Scenario 3 HTTP status is 401: 401
+
+>>> 4. POST /api/wallet/pin WEAK PIN (123456)
+HTTP Status: 422
+Response: {"error":"PIN_TOO_WEAK","message":"Kombinasi PIN terlalu mudah ditebak. Hindari angka berurutan atau berulang."}
+Ô£à [ASSERTION PASSED] Scenario 4 HTTP status is 422: 422
+
+>>> 5. POST /api/wallet/pin SUCCESS (strong PIN 741852)
+HTTP Status: 200
+Response: {"success":true,"message":"PIN transaksi berhasil diatur."}
+Ô£à [ASSERTION PASSED] Scenario 5 HTTP status is 200: 200
+Ô£à [ASSERTION PASSED] Scenario 5 response success is true: true
+
+>>> 6. POST /api/wallet/withdraw IDOR ATTACK (foreign bankAccountId)
+HTTP Status: 404
+Response: {"error":"BANK_ACCOUNT_NOT_FOUND","message":"Rekening tujuan penarikan tidak ditemukan atau bukan milik akun Anda."}
+Ô£à [ASSERTION PASSED] Scenario 6 HTTP status is 404: 404
+Ô£à [ASSERTION PASSED] Scenario 6 User A balance unchanged: 5000000
+Ô£à [ASSERTION PASSED] Scenario 6 User A withdrawal count unchanged: 0
+Ô£à [ASSERTION PASSED] Scenario 6 User A ledger entries count unchanged: 0
+
+>>> 7. POST /api/wallet/withdraw OWN BANK ACCOUNT (1,000,000 IDR)
+HTTP Status: 200
+Response: {"success":true,"isDuplicate":false,"withdrawalId":"cmutuxywb0017guq8h9vq7m6r","withdrawalNumber":"WDR-2026-092209","amount":1000000,"fee":0,"newActiveBalance":4000000,"status":"SUCCESS","isSimulation":true,"idempotencyKey":"idemp-proof-1791120572542"}
+Ô£à [ASSERTION PASSED] Scenario 7 HTTP status is 200: 200
+Ô£à [ASSERTION PASSED] Scenario 7 isDuplicate is false: false
+Ô£à [ASSERTION PASSED] Scenario 7 balance debited by 1,000,000: 4000000
+Ô£à [ASSERTION PASSED] Scenario 7 withdrawal rows incremented by 1: 1
+Ô£à [ASSERTION PASSED] Scenario 7 ledger rows incremented by 1: 1
+
+>>> 8. POST /api/wallet/withdraw EXACT DUPLICATE RETRY (Same Idempotency-Key)
+HTTP Status: 200
+Response: {"success":true,"isDuplicate":true,"withdrawalId":"cmutuxywb0017guq8h9vq7m6r","withdrawalNumber":"WDR-2026-092209","amount":1000000,"fee":0,"newActiveBalance":4000000,"status":"SUCCESS","isSimulation":true,"idempotencyKey":"idemp-proof-1791120572542"}
+Ô£à [ASSERTION PASSED] Scenario 8 HTTP status is 200: 200
+Ô£à [ASSERTION PASSED] Scenario 8 isDuplicate is true: true
+Ô£à [ASSERTION PASSED] Scenario 8 activeBalance unchanged on duplicate: 4000000
+Ô£à [ASSERTION PASSED] Scenario 8 withdrawal rows unchanged on duplicate: 1
+Ô£à [ASSERTION PASSED] Scenario 8 ledger rows unchanged on duplicate: 1
+
+====================================================================
+ALL 8 SCENARIOS VERIFIED SUCCESSFULLY WITH DB INVARIANTS!
+====================================================================

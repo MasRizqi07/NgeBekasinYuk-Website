@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { validateAuthoritativeSession } from "@/lib/auth/authoritativeSession";
-import { mapOrderToDto } from "@/domain/order/orderDto";
+import { mapOrderToDto, orderSelectFields } from "@/domain/order/orderDto";
 
 export async function GET(
   request: Request,
@@ -17,20 +17,7 @@ export async function GET(
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: {
-        buyer: true,
-        seller: true,
-        listing: {
-          include: {
-            seller: true,
-            images: true,
-          }
-        },
-        paymentAttempts: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
-      }
+      select: orderSelectFields,
     });
 
     if (!order) {
@@ -42,7 +29,7 @@ export async function GET(
       return NextResponse.json({ error: "FORBIDDEN", message: "Anda tidak memiliki akses ke pesanan ini" }, { status: 403 });
     }
 
-    return NextResponse.json(mapOrderToDto(order));
+    return NextResponse.json(mapOrderToDto(order, session));
   } catch (error) {
     console.error("GET /api/orders/[id] Error:", error);
     return NextResponse.json(

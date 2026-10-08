@@ -21,6 +21,7 @@ export class WalletDomainError extends Error {
 export interface PinVerificationResult {
   valid: boolean;
   locked: boolean;
+  reason?: "PIN_NOT_SET" | "INVALID_FORMAT" | "LOCKED" | "INCORRECT";
   remainingAttempts?: number;
   lockUntil?: Date | null;
   message?: string;
@@ -85,7 +86,8 @@ export class WalletLedgerService {
       return {
         valid: false,
         locked: false,
-        message: "PIN transaksi belum dibuat. Silakan atur PIN di profil.",
+        reason: "PIN_NOT_SET",
+        message: "PIN transaksi belum dibuat. Silakan atur PIN terlebih dahulu.",
       };
     }
 
@@ -160,18 +162,14 @@ export class WalletLedgerService {
   static async requestWithdrawal(params: {
     userId: string;
     amount: Money;
-    bankName: string;
-    accountNumber: string;
-    accountHolder: string;
+    bankAccountId: string;
     pin: string;
     customIdempotencyKey?: string;
   }): Promise<WithdrawalRequestResult> {
     const {
       userId,
       amount,
-      bankName,
-      accountNumber,
-      accountHolder,
+      bankAccountId,
       pin,
       customIdempotencyKey,
     } = params;
@@ -184,13 +182,36 @@ export class WalletLedgerService {
       );
     }
 
-    // 1. Server-side PIN verification
+    // 1. Resolve canonical bank account destination with ownership check (Task 4B.4 & 4B.5)
+    // Must query with BOTH id AND userId to prevent cross-account IDOR attacks
+    const bankAccount = await prisma.bankAccount.findFirst({
+      where: {
+        id: bankAccountId,
+        userId,
+      },
+    });
+
+    if (!bankAccount) {
+      throw new WalletDomainError(
+        "BANK_ACCOUNT_NOT_FOUND",
+        "Rekening tujuan penarikan tidak ditemukan atau bukan milik akun Anda."
+      );
+    }
+
+    const resolvedBankName = bankAccount.bankName;
+    const resolvedAccountNumber = bankAccount.accountNumber;
+    const resolvedAccountHolder = bankAccount.accountHolder;
+
+    // 2. Server-side PIN verification
     const pinCheck = await this.verifyPin(userId, pin);
     if (!pinCheck.valid) {
+      if (pinCheck.reason === "PIN_NOT_SET") {
+        throw new WalletDomainError("PIN_NOT_SET", pinCheck.message || "PIN belum diatur");
+      }
       throw new WalletDomainError("INVALID_PIN", pinCheck.message || "PIN tidak valid");
     }
 
-    // 2. Fetch wallet
+    // 3. Fetch wallet
     const wallet = await prisma.wallet.findUnique({
       where: { userId },
     });
@@ -214,7 +235,7 @@ export class WalletLedgerService {
       customIdempotencyKey ||
       buildIdempotencyKey("WITHDRAWAL", wallet.id, withdrawalNumber);
 
-    const fee = 0; // Rp 0 BI-FAST launch promo
+    const fee = 0; // Rp 0 (Simulasi platform)
 
     // ATOMIC DATABASE TRANSACTION WITH CONCURRENCY BALANCE PROTECTION
     return await prisma.$transaction(async (tx) => {
@@ -272,9 +293,9 @@ export class WalletLedgerService {
           walletId: wallet.id,
           amount,
           fee,
-          bankName,
-          accountNumber,
-          accountHolder,
+          bankName: resolvedBankName,
+          accountNumber: resolvedAccountNumber,
+          accountHolder: resolvedAccountHolder,
           status: "SUCCESS", // Demo/Simulation completes immediately
           providerRef: `SIM-BOD-${Date.now().toString().slice(-6)}`,
           isSimulation: true,
@@ -294,7 +315,7 @@ export class WalletLedgerService {
           referenceType: "WITHDRAWAL",
           referenceId: withdrawal.id,
           idempotencyKey,
-          description: `Penarikan saldo ke ${bankName} (${accountNumber}) [Simulasi BI-FAST]`,
+          description: `Penarikan saldo ke ${resolvedBankName} (${resolvedAccountNumber.slice(-4)}) [Simulasi Transfer]`,
         },
       });
 
@@ -308,8 +329,8 @@ export class WalletLedgerService {
           details: JSON.stringify({
             withdrawalNumber,
             amount,
-            bankName,
-            accountNumber,
+            bankName: resolvedBankName,
+            accountNumberMasked: `****${resolvedAccountNumber.slice(-4)}`,
             isSimulation: true,
             idempotencyKey,
           }),

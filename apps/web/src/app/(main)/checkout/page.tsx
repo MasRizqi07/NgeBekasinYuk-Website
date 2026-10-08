@@ -29,10 +29,8 @@ export default function CheckoutPage() {
   // If cart is empty, fallback to demo item (e.g. iPad Air 5 or first listing)
   const activeListing =
     items.length > 0 ? items[0].listing : listings[1] || listings[0];
-  const activePrice =
-    items.length > 0 && items[0].negotiatedPrice
-      ? items[0].negotiatedPrice
-      : activeListing.price;
+  // Server-authoritative: always use listing price until offerId is supported in Phase 5
+  const activePrice = activeListing.price;
 
   type PaymentMethod = "BCA_VA" | "MANDIRI_VA" | "BRI_VA" | "BNI_VA" | "QRIS";
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("BCA_VA");

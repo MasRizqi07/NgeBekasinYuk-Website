@@ -388,4 +388,56 @@ describe("Server-Authoritative Order Creation Integration Tests (PostgreSQL)", (
     expect(auditLogs[0].action).toBe("ORDER_CREATED");
     expect(auditLogs[0].userId).toBe(buyerId);
   });
+
+  it("8. I1 Defense (Decision D5): Second order on already RESERVED listing is rejected with 409", async () => {
+    testUserId = buyerId;
+
+    // First order creation succeeds and reserves listing
+    const idemp1 = `idemp-i1-first-${Date.now()}`;
+    const req1 = new Request("http://localhost:3000/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idemp1,
+      },
+      body: JSON.stringify({
+        listingId,
+        shippingAddress: "Jl. Sudirman No. 1, Jakarta",
+        courier: "J&T Express",
+        paymentMethod: "BCA_VA",
+      }),
+    });
+
+    const res1 = await POST(req1);
+    expect(res1.status).toBe(201);
+
+    // Verify listing is now RESERVED
+    const dbListing = await prisma.productListing.findUniqueOrThrow({ where: { id: listingId } });
+    expect(dbListing.status).toBe("RESERVED");
+
+    // Second order on same listing with DIFFERENT idempotency key (or another buyer)
+    const idemp2 = `idemp-i1-second-${Date.now()}`;
+    const req2 = new Request("http://localhost:3000/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idemp2,
+      },
+      body: JSON.stringify({
+        listingId,
+        shippingAddress: "Jl. Gatot Subroto No. 2, Jakarta",
+        courier: "J&T Express",
+        paymentMethod: "BCA_VA",
+      }),
+    });
+
+    const res2 = await POST(req2);
+    expect(res2.status).toBe(422);
+    const json2 = await res2.json();
+    expect(json2.error).toBe("LISTING_NOT_ACTIVE");
+
+    // Database row count invariant: exactly 1 order row exists
+    const orderCount = await prisma.order.count({ where: { listingId } });
+    expect(orderCount).toBe(1);
+  });
 });

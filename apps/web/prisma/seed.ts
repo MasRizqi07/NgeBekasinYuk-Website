@@ -1,10 +1,19 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { encryptSensitiveSecret } from "../src/lib/security/encryption";
+import { assertSeedEnvironmentIsSafe } from "./seedSafety";
+
+// Immediate guard at module evaluation before any connections or setup:
+assertSeedEnvironmentIsSafe();
 
 const prisma = new PrismaClient();
 
 async function main() {
+  assertSeedEnvironmentIsSafe();
+
+  const { encryptSensitiveSecret } = await import("../src/lib/security/encryption");
+
+  // WARNING: Default demo PIN "123456" is for local development and CI testing ONLY.
+  // It is NEVER permitted in production environments. Production seed execution is blocked above.
   console.log("🌱 Starting deterministic database seeding for NgeBekasinYuk...");
 
   // Clean existing records in reverse dependency order

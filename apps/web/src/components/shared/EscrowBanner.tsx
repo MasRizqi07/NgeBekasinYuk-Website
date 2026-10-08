@@ -99,7 +99,7 @@ export function EscrowBanner({ variant = "compact", className }: EscrowBannerPro
       <div className="relative z-10 flex flex-col gap-3 max-w-xl">
         <div className="inline-flex items-center gap-1.5 self-start rounded-full bg-white/20 backdrop-blur-md px-3 py-1 text-xs font-semibold shadow-xs">
           <ShieldCheck className="w-4 h-4 text-secondary-container" />
-          <span className="tracking-wide uppercase text-[11px]">Garansi Rekber Resmi Kustodian BI</span>
+          <span className="tracking-wide uppercase text-[11px]">Proteksi Alur Escrow / Rekber Platform</span>
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
@@ -107,7 +107,7 @@ export function EscrowBanner({ variant = "compact", className }: EscrowBannerPro
         </h1>
 
         <p className="text-sm sm:text-base text-white/90 leading-relaxed">
-          Dana ditahan aman di escrow resmi. Penjual baru menerima pembayaran setelah kamu
+          Dana ditahan aman di sistem rekber platform. Penjual baru menerima pembayaran setelah kamu
           menguji fisik dan fungsi unit selama 2x24 jam.
         </p>
 

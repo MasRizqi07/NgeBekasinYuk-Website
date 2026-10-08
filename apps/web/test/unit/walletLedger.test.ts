@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
   let userId: string;
   let walletId: string;
+  let bankAccountId: string;
 
   beforeEach(async () => {
     const ts = Date.now().toString().slice(-6);
@@ -25,12 +26,22 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
             heldBalance: 2000000,
           },
         },
+        bankAccounts: {
+          create: {
+            bankCode: "BCA",
+            bankName: "BCA",
+            accountNumber: "8271019281",
+            accountHolder: "Wallet Test User",
+            isDefault: true,
+          },
+        },
       },
-      include: { wallet: true },
+      include: { wallet: true, bankAccounts: true },
     });
 
     userId = user.id;
     walletId = user.wallet!.id;
+    bankAccountId = user.bankAccounts[0].id;
   });
 
   describe("P0-04 PIN Hardening & Rate-Limiting", () => {
@@ -88,9 +99,7 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
       const res = await WalletLedgerService.requestWithdrawal({
         userId,
         amount: 5000000,
-        bankName: "BCA",
-        accountNumber: "8271019281",
-        accountHolder: "Wallet Test User",
+        bankAccountId,
         pin: "123456",
       });
 
@@ -112,9 +121,7 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
         WalletLedgerService.requestWithdrawal({
           userId,
           amount: 25000000, // Balance is only 15000000
-          bankName: "BCA",
-          accountNumber: "8271019281",
-          accountHolder: "Wallet Test User",
+          bankAccountId,
           pin: "123456",
         })
       ).rejects.toThrow(WalletDomainError);
@@ -125,9 +132,7 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
         WalletLedgerService.requestWithdrawal({
           userId,
           amount: 1000000,
-          bankName: "BCA",
-          accountNumber: "8271019281",
-          accountHolder: "Wallet Test User",
+          bankAccountId,
           pin: "999999",
         })
       ).rejects.toThrow(WalletDomainError);
@@ -140,9 +145,7 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
       const first = await WalletLedgerService.requestWithdrawal({
         userId,
         amount: 2000000,
-        bankName: "BCA",
-        accountNumber: "8271019281",
-        accountHolder: "Wallet Test User",
+        bankAccountId,
         pin: "123456",
         customIdempotencyKey: key,
       });
@@ -153,9 +156,7 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
       const second = await WalletLedgerService.requestWithdrawal({
         userId,
         amount: 2000000,
-        bankName: "BCA",
-        accountNumber: "8271019281",
-        accountHolder: "Wallet Test User",
+        bankAccountId,
         pin: "123456",
         customIdempotencyKey: key,
       });
@@ -164,6 +165,108 @@ describe("Wallet Ledger & PIN Hardening Unit Tests", () => {
       // Verify wallet was deducted only once
       const wallet = await prisma.wallet.findUnique({ where: { id: walletId } });
       expect(wallet?.activeBalance).toBe(13000000);
+    });
+  });
+
+  describe("Task 4.1 — Distinguish 'no PIN' from 'wrong PIN'", () => {
+    it("returns PIN_NOT_SET without consuming failed attempts when hashedPin is null", async () => {
+      // Create user with null hashedPin
+      const noPinUser = await prisma.user.create({
+        data: {
+          email: `no-pin-${Date.now()}@test.id`,
+          name: "No PIN User",
+          role: "SELLER",
+          hashedPassword: await bcrypt.hash("Password123!", 10),
+          hashedPin: null,
+          wallet: {
+            create: {
+              activeBalance: 5000000,
+              heldBalance: 0,
+            },
+          },
+          bankAccounts: {
+            create: {
+              bankCode: "BCA",
+              bankName: "BCA",
+              accountNumber: "1234567890",
+              accountHolder: "No PIN User",
+            },
+          },
+        },
+        include: { bankAccounts: true },
+      });
+
+      // 1. verifyPin returns machine-readable reason PIN_NOT_SET
+      const check = await WalletLedgerService.verifyPin(noPinUser.id, "123456");
+      expect(check.valid).toBe(false);
+      expect(check.reason).toBe("PIN_NOT_SET");
+
+      // Verify pinFailedAttempts is untouched
+      const dbUser1 = await prisma.user.findUnique({ where: { id: noPinUser.id } });
+      expect(dbUser1?.pinFailedAttempts).toBe(0);
+
+      // 2. requestWithdrawal throws PIN_NOT_SET
+      await expect(
+        WalletLedgerService.requestWithdrawal({
+          userId: noPinUser.id,
+          amount: 50000,
+          bankAccountId: noPinUser.bankAccounts[0].id,
+          pin: "123456",
+        })
+      ).rejects.toThrowError(
+        expect.objectContaining({
+          name: "WalletDomainError",
+          code: "PIN_NOT_SET",
+        })
+      );
+
+      // Verify pinFailedAttempts remains 0 after withdrawal attempt
+      const dbUser2 = await prisma.user.findUnique({ where: { id: noPinUser.id } });
+      expect(dbUser2?.pinFailedAttempts).toBe(0);
+    });
+
+    it("throws INVALID_PIN and increments counter when PIN is wrong", async () => {
+      const wrongPinUser = await prisma.user.create({
+        data: {
+          email: `wrong-pin-${Date.now()}@test.id`,
+          name: "Wrong PIN User",
+          role: "SELLER",
+          hashedPassword: await bcrypt.hash("Password123!", 10),
+          hashedPin: await bcrypt.hash("654321", 10),
+          wallet: {
+            create: {
+              activeBalance: 5000000,
+              heldBalance: 0,
+            },
+          },
+          bankAccounts: {
+            create: {
+              bankCode: "BCA",
+              bankName: "BCA",
+              accountNumber: "1234567890",
+              accountHolder: "Wrong PIN User",
+            },
+          },
+        },
+        include: { bankAccounts: true },
+      });
+
+      await expect(
+        WalletLedgerService.requestWithdrawal({
+          userId: wrongPinUser.id,
+          amount: 50000,
+          bankAccountId: wrongPinUser.bankAccounts[0].id,
+          pin: "111222",
+        })
+      ).rejects.toThrowError(
+        expect.objectContaining({
+          name: "WalletDomainError",
+          code: "INVALID_PIN",
+        })
+      );
+
+      const dbUser = await prisma.user.findUnique({ where: { id: wrongPinUser.id } });
+      expect(dbUser?.pinFailedAttempts).toBe(1);
     });
   });
 });

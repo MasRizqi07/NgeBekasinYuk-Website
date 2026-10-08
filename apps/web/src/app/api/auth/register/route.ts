@@ -30,8 +30,6 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    // Default demo hashed PIN 123456
-    const hashedPin = await bcrypt.hash("123456", 10);
 
     const user = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
@@ -41,7 +39,7 @@ export async function POST(request: Request) {
           phone,
           role,
           hashedPassword,
-          hashedPin,
+          hashedPin: null,
           wallet: {
             create: {
               activeBalance: 0,

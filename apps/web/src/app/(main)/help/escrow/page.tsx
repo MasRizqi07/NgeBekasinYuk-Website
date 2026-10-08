@@ -22,7 +22,7 @@ export default function EscrowEducationPage() {
   const faqs = [
     {
       q: "Bagaimana cara kerja rekening escrow rekber di NgeBekasinYuk?",
-      a: "Saat kamu membayar pesanan, uangmu tidak langsung masuk ke rekening pribadi penjual, melainkan disimpan dengan aman di rekening kustodian resmi PT NgeBekasin Nusantara. Penjual diwajibkan mengirim barang terlebih dahulu. Setelah barang kamu terima dan diuji selama 2x24 jam dalam kondisi baik, barulah dana dicairkan ke penjual.",
+      a: "Saat kamu membayar pesanan, uangmu tidak langsung masuk ke rekening pribadi penjual, melainkan disimpan dengan aman di rekening penampung rekber platform PT NgeBekasin Nusantara. Penjual diwajibkan mengirim barang terlebih dahulu. Setelah barang kamu terima dan diuji selama 2x24 jam dalam kondisi baik, barulah dana dicairkan ke penjual.",
     },
     {
       q: "Berapa lama masa inspeksi pengujian gadget bekas?",
@@ -52,7 +52,7 @@ export default function EscrowEducationPage() {
           </div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed text-xs font-bold shadow-xs">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>100% Rekber Terlindungi</span>
+            <span>Alur Rekber Terlindungi</span>
           </div>
         </div>
 
@@ -60,7 +60,7 @@ export default function EscrowEducationPage() {
         <div className="space-y-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed text-xs font-bold shadow-xs">
             <Lock className="w-3.5 h-3.5 text-primary" />
-            <span>Garansi Perlindungan Pembeli 100%</span>
+            <span>Proteksi Alur Escrow Pembeli</span>
           </div>
 
           <h1 className="text-2xl md:text-3xl font-black text-on-surface tracking-tight leading-snug">
@@ -69,7 +69,7 @@ export default function EscrowEducationPage() {
           </h1>
 
           <p className="text-xs md:text-sm text-on-surface-variant leading-relaxed">
-            Uang kamu tersimpan aman di rekening penampung kustodian resmi kami. Penjual nakal tidak akan pernah menerima uang sepeser pun sebelum kamu puas dan mengonfirmasi kelayakan fisik gadget.
+            Uang kamu tersimpan aman di rekening penampung rekber platform kami. Penjual nakal tidak akan pernah menerima uang sepeser pun sebelum kamu puas dan mengonfirmasi kelayakan fisik gadget.
           </p>
 
           {/* Highlights */}
@@ -86,8 +86,8 @@ export default function EscrowEducationPage() {
             </div>
             <div className="bg-surface-container-lowest p-3 rounded-2xl border border-outline-variant/30 shadow-xs">
               <Gavel className="w-5 h-5 text-amber-700 mx-auto mb-1" />
-              <div className="font-bold text-on-surface">Kustodian BI</div>
-              <span className="text-[10px] text-on-surface-variant">Regulasi Resmi</span>
+              <div className="font-bold text-on-surface">Rekber Platform</div>
+              <span className="text-[10px] text-on-surface-variant">Alur Terverifikasi</span>
             </div>
           </div>
 
