@@ -3,24 +3,55 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Trash2, ShoppingBag, ArrowRight, ShieldCheck, Lock } from "lucide-react";
+import {
+  Trash2,
+  ShoppingBag,
+  ArrowRight,
+  ShieldCheck,
+  Lock,
+  AlertTriangle,
+} from "lucide-react";
 import { useCartStore } from "@/stores/useCartStore";
+import { useResolvedCartListings } from "@/hooks/useResolvedCartListings";
 import { formatRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 
 export default function CartPage() {
-  const { items, removeItem, getSubtotal, getTotalAmount } =
-    useCartStore();
+  const { selectedCourier, removeItem } = useCartStore();
+  const { listings, isLoading, droppedNotice } = useResolvedCartListings({
+    fallbackToFirstActive: false,
+  });
 
-  if (items.length === 0) {
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-3">
+        <div className="h-24 rounded-2xl bg-surface-subtle animate-pulse" />
+        <div className="h-24 rounded-2xl bg-surface-subtle animate-pulse" />
+      </div>
+    );
+  }
+
+  if (listings.length === 0) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center flex flex-col items-center justify-center gap-4">
+        {droppedNotice && (
+          <div
+            role="alert"
+            className="w-full p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center gap-2 text-left"
+          >
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>{droppedNotice}</span>
+          </div>
+        )}
         <div className="w-16 h-16 rounded-full bg-surface-subtle flex items-center justify-center text-text-muted">
           <ShoppingBag className="w-8 h-8" />
         </div>
-        <h2 className="font-extrabold text-xl text-on-surface">Keranjang Belanja Kosong</h2>
+        <h2 className="font-extrabold text-xl text-on-surface">
+          Keranjang Belanja Kosong
+        </h2>
         <p className="text-xs text-text-secondary max-w-sm">
-          Yuk cari gadget idamanmu dengan proteksi pembayaran rekening bersama (Escrow) platform.
+          Yuk cari gadget idamanmu dengan proteksi pembayaran rekening bersama
+          (Escrow) platform.
         </p>
         <Link href="/search">
           <Button variant="primary" size="md" className="font-bold">
@@ -30,6 +61,9 @@ export default function CartPage() {
       </div>
     );
   }
+
+  const subtotal = listings.reduce((acc, listing) => acc + listing.price, 0);
+  const totalEstimate = subtotal + selectedCourier.price;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-6">
@@ -43,11 +77,21 @@ export default function CartPage() {
         </span>
       </div>
 
+      {droppedNotice && (
+        <div
+          role="alert"
+          className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center gap-2"
+        >
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+          <span>{droppedNotice}</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Cart Item List (8 cols) */}
         <div className="lg:col-span-8 flex flex-col gap-3">
-          {items.map(({ listing, negotiatedPrice }) => {
-            const displayPrice = negotiatedPrice || listing.price;
+          {listings.map((listing) => {
+            const cover =
+              listing.images[0] || "/assets/products/ipad-mini-unboxing.png";
             return (
               <div
                 key={listing.id}
@@ -55,9 +99,10 @@ export default function CartPage() {
               >
                 <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-surface-subtle shrink-0">
                   <Image
-                    src={listing.images[0] || "/assets/products/ipad-mini-unboxing.png"}
+                    src={cover}
                     alt={listing.title}
                     fill
+                    unoptimized={cover.startsWith("/api/")}
                     sizes="80px"
                     className="object-cover"
                   />
@@ -72,13 +117,8 @@ export default function CartPage() {
                   </h3>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="font-extrabold text-base text-brand-primary tabular-nums">
-                      {formatRupiah(displayPrice)}
+                      {formatRupiah(listing.price)}
                     </span>
-                    {negotiatedPrice && (
-                      <span className="text-[10px] font-bold text-[#B26A00] bg-[#FFF4E0] px-1.5 py-0.2 rounded">
-                        Harga Nego
-                      </span>
-                    )}
                   </div>
                   <span className="text-[11px] text-text-muted block mt-0.5">
                     Penjual: {listing.seller.name} ({listing.city})
@@ -97,15 +137,17 @@ export default function CartPage() {
           })}
         </div>
 
-        {/* Order Summary (4 cols) */}
+        {/* Order Summary */}
         <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-4 sticky top-24">
-          <h3 className="font-bold text-sm text-on-surface">Ringkasan Pesanan</h3>
+          <h3 className="font-bold text-sm text-on-surface">
+            Ringkasan Pesanan
+          </h3>
 
           <div className="space-y-2 text-xs">
             <div className="flex justify-between text-text-secondary">
               <span>Subtotal Gadget</span>
               <span className="font-bold text-on-surface tabular-nums">
-                {formatRupiah(getSubtotal())}
+                {formatRupiah(subtotal)}
               </span>
             </div>
 
@@ -122,7 +164,7 @@ export default function CartPage() {
             <div className="border-t border-surface-border pt-2 flex justify-between font-extrabold text-sm sm:text-base text-on-surface">
               <span>Total Estimasi</span>
               <span className="text-brand-primary tabular-nums">
-                {formatRupiah(getTotalAmount())}
+                {formatRupiah(totalEstimate)}
               </span>
             </div>
           </div>

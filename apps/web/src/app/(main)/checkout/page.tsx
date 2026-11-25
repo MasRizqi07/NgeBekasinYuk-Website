@@ -3,16 +3,18 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import {
   MapPin,
   Truck,
   CreditCard,
   Lock,
   CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 import { useCartStore, AVAILABLE_COURIERS } from "@/stores/useCartStore";
 import { useUserStore } from "@/stores/useUserStore";
-import { useListingStore } from "@/stores/useListingStore";
+import { useResolvedCartListings } from "@/hooks/useResolvedCartListings";
 import { formatRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
@@ -22,15 +24,12 @@ export default function CheckoutPage() {
   const { showToast } = useToast();
   const { items, selectedCourier, setSelectedCourier, clearCart } = useCartStore();
   const { user } = useUserStore();
-  const { listings } = useListingStore();
+  const { listings, isLoading, droppedNotice } = useResolvedCartListings({
+    fallbackToFirstActive: true,
+  });
+
   const [clientRequestId, setClientRequestId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // If cart is empty, fallback to demo item (e.g. iPad Air 5 or first listing)
-  const activeListing =
-    items.length > 0 ? items[0].listing : listings[1] || listings[0];
-  // Server-authoritative: always use listing price until offerId is supported in Phase 5
-  const activePrice = activeListing.price;
 
   type PaymentMethod = "BCA_VA" | "MANDIRI_VA" | "BRI_VA" | "BNI_VA" | "QRIS";
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("BCA_VA");
@@ -49,10 +48,56 @@ export default function CheckoutPage() {
     sessionStorage.setItem("checkout_paymentMethod", method);
   };
 
+  const activeListing = listings[0] ?? null;
+  const activeOfferId = activeListing
+    ? items.find((i) => i.listingId === activeListing.id)?.offerId
+    : undefined;
+
   const address = user.addresses.find((a) => a.isDefault) || user.addresses[0];
   const shippingFee = selectedCourier.price;
-  const escrowFee = 0; // Promo launching
+  const escrowFee = 0;
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-4">
+        <div className="h-24 rounded-2xl bg-surface-subtle animate-pulse" />
+        <div className="h-64 rounded-2xl bg-surface-subtle animate-pulse" />
+      </div>
+    );
+  }
+
+  if (!activeListing) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center flex flex-col items-center gap-4">
+        {droppedNotice && (
+          <div
+            role="alert"
+            className="w-full p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center gap-2 text-left"
+          >
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>{droppedNotice}</span>
+          </div>
+        )}
+        <h2 className="font-extrabold text-xl text-on-surface">
+          Barang Tidak Tersedia untuk Checkout
+        </h2>
+        <p className="text-xs text-text-secondary max-w-sm">
+          Unit yang dipilih sudah terjual, sedang dipesan, atau diarsipkan oleh
+          penjual.
+        </p>
+        <Link href="/search">
+          <Button variant="primary" size="md" className="font-bold">
+            Cari Gadget Lainnya
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const activePrice = activeListing.price;
   const totalAmount = activePrice + shippingFee + escrowFee;
+  const activeCover =
+    activeListing.images[0] || "/assets/products/ipad-mini-unboxing.png";
 
   const handlePayEscrow = async () => {
     if (isSubmitting) return;
@@ -75,6 +120,7 @@ export default function CheckoutPage() {
           shippingAddress: `${address.addressLine}, ${address.city} ${address.postalCode}`,
           courier: `${selectedCourier.name} ${selectedCourier.service}`,
           paymentMethod,
+          ...(activeOfferId ? { offerId: activeOfferId } : {}),
         }),
       });
 
@@ -99,6 +145,16 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-6">
+      {droppedNotice && (
+        <div
+          role="alert"
+          className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center gap-2"
+        >
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+          <span>{droppedNotice}</span>
+        </div>
+      )}
+
       {/* Escrow Trust Micro-Banner */}
       <div className="bg-linear-to-r from-brand-secondary-light via-surface-subtle to-brand-primary-soft/30 p-4 rounded-2xl border border-brand-secondary/30 shadow-xs flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-brand-secondary text-white flex items-center justify-center shrink-0 shadow-sm">
@@ -106,27 +162,30 @@ export default function CheckoutPage() {
         </div>
         <div>
           <div className="flex items-center gap-1.5">
-            <h2 className="font-bold text-sm text-on-surface">Dana Aman Ditahan Rekber</h2>
+            <h2 className="font-bold text-sm text-on-surface">
+              Dana Aman Ditahan Rekber
+            </h2>
             <span className="bg-brand-secondary text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
               Proteksi 100%
             </span>
           </div>
           <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">
-            Dana baru dicairkan ke penjual setelah kamu menerima paket dan lulus masa inspeksi{" "}
-            <strong>2x24 jam</strong>.
+            Dana baru dicairkan ke penjual setelah kamu menerima paket dan lulus
+            masa inspeksi <strong>2x24 jam</strong>.
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column (8 cols) */}
         <div className="lg:col-span-8 flex flex-col gap-5">
           {/* 1. Alamat Pengiriman */}
           <div className="bg-white p-5 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-brand-primary" />
-                <h3 className="font-bold text-sm text-on-surface">Alamat Pengiriman</h3>
+                <h3 className="font-bold text-sm text-on-surface">
+                  Alamat Pengiriman
+                </h3>
               </div>
               <span className="text-[10px] font-bold bg-brand-primary-soft text-brand-primary px-2 py-0.5 rounded-md">
                 Utama
@@ -135,7 +194,9 @@ export default function CheckoutPage() {
 
             <div className="p-3.5 bg-surface-subtle rounded-xl flex flex-col gap-1 text-xs">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-on-surface text-sm">{address.recipientName}</span>
+                <span className="font-bold text-on-surface text-sm">
+                  {address.recipientName}
+                </span>
                 <span className="text-text-muted">• {address.phone}</span>
               </div>
               <p className="text-text-secondary leading-relaxed mt-0.5">
@@ -170,7 +231,9 @@ export default function CheckoutPage() {
                       KYC Aktif
                     </span>
                   </div>
-                  <span className="text-[11px] text-text-muted">{activeListing.seller.location}</span>
+                  <span className="text-[11px] text-text-muted">
+                    {activeListing.seller.location}
+                  </span>
                 </div>
               </div>
             </div>
@@ -178,9 +241,10 @@ export default function CheckoutPage() {
             <div className="flex items-center gap-3.5 pt-1">
               <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-surface-subtle shrink-0">
                 <Image
-                  src={activeListing.images[0] || "/assets/products/ipad-mini-unboxing.png"}
+                  src={activeCover}
                   alt={activeListing.title}
                   fill
+                  unoptimized={activeCover.startsWith("/api/")}
                   sizes="64px"
                   className="object-cover"
                 />
@@ -196,11 +260,6 @@ export default function CheckoutPage() {
                   <span className="font-extrabold text-sm sm:text-base text-brand-primary tabular-nums">
                     {formatRupiah(activePrice)}
                   </span>
-                  {activePrice < activeListing.price && (
-                    <span className="text-[10px] font-bold text-[#B26A00] bg-[#FFF4E0] px-1.5 py-0.2 rounded">
-                      Harga Nego
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
@@ -210,7 +269,9 @@ export default function CheckoutPage() {
           <div className="bg-white p-5 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <Truck className="w-4 h-4 text-brand-primary" />
-              <h3 className="font-bold text-sm text-on-surface">Pilih Layanan Kurir</h3>
+              <h3 className="font-bold text-sm text-on-surface">
+                Pilih Layanan Kurir
+              </h3>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -230,9 +291,13 @@ export default function CheckoutPage() {
                     <div>
                       <div className="flex items-center gap-1.5 font-bold text-xs text-on-surface">
                         <span>{c.name}</span>
-                        <span className="text-text-muted font-normal">• {c.service}</span>
+                        <span className="text-text-muted font-normal">
+                          • {c.service}
+                        </span>
                       </div>
-                      <p className="text-[11px] text-text-muted mt-0.5">{c.description}</p>
+                      <p className="text-[11px] text-text-muted mt-0.5">
+                        {c.description}
+                      </p>
                       <span className="text-[10px] font-bold text-brand-secondary mt-1 block">
                         Estimasi {c.etd}
                       </span>
@@ -253,7 +318,9 @@ export default function CheckoutPage() {
           <div className="bg-white p-5 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-brand-primary" />
-              <h3 className="font-bold text-sm text-on-surface">Metode Pembayaran (Escrow)</h3>
+              <h3 className="font-bold text-sm text-on-surface">
+                Metode Pembayaran (Escrow)
+              </h3>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -288,7 +355,7 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Right Column: Invoicing Summary (4 cols) */}
+        {/* Right Column: Invoicing Summary */}
         <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-4 sticky top-24">
           <h3 className="font-bold text-sm text-on-surface">Rincian Pembayaran</h3>
 
@@ -333,12 +400,14 @@ export default function CheckoutPage() {
             className="w-full font-bold gap-2 shadow-lg"
           >
             <Lock className="w-4 h-4" />
-            <span>{isSubmitting ? "Memproses Pesanan..." : "Bayar dengan Escrow 🔒"}</span>
+            <span>
+              {isSubmitting ? "Memproses Pesanan..." : "Bayar dengan Escrow 🔒"}
+            </span>
           </Button>
 
           <p className="text-[11px] text-text-muted text-center leading-relaxed">
-            Dengan menekan tombol di atas, dana kamu akan diproteksi di rekening penampung resmi
-            dan tidak akan dicairkan tanpa persetujuanmu.
+            Dengan menekan tombol di atas, dana kamu akan diproteksi di rekening
+            penampung resmi dan tidak akan dicairkan tanpa persetujuanmu.
           </p>
         </div>
       </div>

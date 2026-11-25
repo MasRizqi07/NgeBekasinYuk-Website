@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { ProductListing } from "../types";
 
 export interface CourierService {
   id: string;
@@ -46,23 +45,60 @@ export const AVAILABLE_COURIERS: CourierService[] = [
   },
 ];
 
+export interface CartItemRef {
+  listingId: string;
+  offerId?: string;
+}
+
 interface CartStore {
-  items: { listing: ProductListing; quantity: number; negotiatedPrice?: number }[];
+  items: CartItemRef[];
   selectedCourier: CourierService;
   selectedAddressId: string;
 
-  addItem: (listing: ProductListing, negotiatedPrice?: number) => void;
-  addToCart: (listing: ProductListing, negotiatedPrice?: number) => void;
+  addItem: (listingOrId: string | { id: string }, offerId?: string) => void;
+  addToCart: (listingOrId: string | { id: string }, offerId?: string) => void;
   removeItem: (listingId: string) => void;
+  removeItems: (listingIds: string[]) => void;
   clearCart: () => void;
   setSelectedCourier: (courier: CourierService) => void;
   setSelectedAddressId: (addressId: string) => void;
-
-  getSubtotal: () => number;
-  getEscrowFee: () => number;
-  getTotalAmount: () => number;
 }
 
+function sanitizePersistedItems(rawItems: unknown): CartItemRef[] {
+  if (!Array.isArray(rawItems)) return [];
+  const seen = new Set<string>();
+  const sanitized: CartItemRef[] = [];
+
+  for (const entry of rawItems) {
+    if (!entry || typeof entry !== "object") continue;
+    const rec = entry as Record<string, unknown>;
+    let listingId: string | undefined;
+
+    if (typeof rec.listingId === "string" && rec.listingId.trim()) {
+      listingId = rec.listingId.trim();
+    } else if (
+      rec.listing &&
+      typeof rec.listing === "object" &&
+      typeof (rec.listing as Record<string, unknown>).id === "string"
+    ) {
+      listingId = String((rec.listing as Record<string, unknown>).id).trim();
+    }
+
+    if (!listingId || seen.has(listingId)) continue;
+    seen.add(listingId);
+
+    sanitized.push({
+      listingId,
+      ...(typeof rec.offerId === "string" && rec.offerId.trim()
+        ? { offerId: rec.offerId.trim() }
+        : {}),
+    });
+  }
+
+  return sanitized;
+}
+
+// Persists listing IDs only — never persist prices or listing snapshots client-side.
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
@@ -70,58 +106,77 @@ export const useCartStore = create<CartStore>()(
       selectedCourier: AVAILABLE_COURIERS[0],
       selectedAddressId: "addr-1",
 
-      addItem: (listing, negotiatedPrice) => {
+      addItem: (listingOrId, offerId) => {
+        const listingId =
+          typeof listingOrId === "string" ? listingOrId : listingOrId.id;
+        if (!listingId) return;
+
         set((state) => {
-          const existing = state.items.find((i) => i.listing.id === listing.id);
+          const existing = state.items.find((i) => i.listingId === listingId);
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.listing.id === listing.id
-                  ? { ...i, negotiatedPrice: negotiatedPrice || i.negotiatedPrice }
+                i.listingId === listingId
+                  ? { ...i, ...(offerId ? { offerId } : {}) }
                   : i
               ),
             };
           }
           return {
-            items: [...state.items, { listing, quantity: 1, negotiatedPrice }],
+            items: [
+              ...state.items,
+              { listingId, ...(offerId ? { offerId } : {}) },
+            ],
           };
         });
       },
 
-      addToCart: (listing, negotiatedPrice) => {
-        get().addItem(listing, negotiatedPrice);
+      addToCart: (listingOrId, offerId) => {
+        get().addItem(listingOrId, offerId);
       },
 
       removeItem: (listingId) =>
         set((state) => ({
-          items: state.items.filter((i) => i.listing.id !== listingId),
+          items: state.items.filter((i) => i.listingId !== listingId),
         })),
+
+      removeItems: (listingIds) => {
+        const dropSet = new Set(listingIds);
+        set((state) => ({
+          items: state.items.filter((i) => !dropSet.has(i.listingId)),
+        }));
+      },
 
       clearCart: () => set({ items: [] }),
 
       setSelectedCourier: (courier) => set({ selectedCourier: courier }),
-      setSelectedAddressId: (addressId) => set({ selectedAddressId: addressId }),
-
-      getSubtotal: () => {
-        const { items } = get();
-        return items.reduce((acc, item) => {
-          const price = item.negotiatedPrice || item.listing.price;
-          return acc + price * item.quantity;
-        }, 0);
-      },
-
-      getEscrowFee: () => {
-        // Promo Launching: 0 IDR (normally 2.5%)
-        return 0;
-      },
-
-      getTotalAmount: () => {
-        const { getSubtotal, getEscrowFee, selectedCourier } = get();
-        return getSubtotal() + selectedCourier.price + getEscrowFee();
-      },
+      setSelectedAddressId: (addressId) =>
+        set({ selectedAddressId: addressId }),
     }),
     {
       name: "ngebekasinyuk-cart-storage",
+      partialize: (state) => ({
+        items: state.items.map((i) => ({
+          listingId: i.listingId,
+          ...(i.offerId ? { offerId: i.offerId } : {}),
+        })),
+        selectedCourier: state.selectedCourier,
+        selectedAddressId: state.selectedAddressId,
+      }),
+      merge: (persistedState, currentState) => {
+        const raw = (persistedState || {}) as Record<string, unknown>;
+        return {
+          ...currentState,
+          items: sanitizePersistedItems(raw.items),
+          selectedCourier:
+            (raw.selectedCourier as CourierService | undefined) ||
+            currentState.selectedCourier,
+          selectedAddressId:
+            typeof raw.selectedAddressId === "string"
+              ? raw.selectedAddressId
+              : currentState.selectedAddressId,
+        };
+      },
     }
   )
 );

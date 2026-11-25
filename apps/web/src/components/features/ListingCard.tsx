@@ -33,6 +33,7 @@ export function ListingCard({ listing, priority = false }: ListingCardProps) {
           src={listing.images[0] || "/assets/products/ipad-mini-unboxing.png"}
           alt={listing.title}
           fill
+          unoptimized={(listing.images[0] || "").startsWith("/api/")}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           priority={priority}
           className="object-cover group-hover:scale-105 transition-transform duration-300"
