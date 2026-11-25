@@ -1,0 +1,15 @@
+
+   • Packages in scope: web
+   • Running lint in 1 packages
+   • Remote caching disabled
+
+web:lint: cache bypass, force executing 24ccade7cd0ce513
+web:lint: 
+web:lint: > web@0.1.0 lint C:\Users\rrgtet47\AppData\Local\Temp\ngebekasinyuk-baseline-9-1795602590907\apps\web
+web:lint: > eslint
+web:lint: 
+
+ Tasks:    1 successful, 1 total
+Cached:    0 cached, 1 total
+  Time:    7.93s 
+

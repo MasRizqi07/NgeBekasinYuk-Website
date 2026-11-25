@@ -1,0 +1,24 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "ngebekasinyuk_baseline", schema "public" at "localhost:5433"
+
+4 migrations found in prisma/migrations
+
+Applying migration `20260912073944_init`
+Applying migration `20260912083315_pass_3_security_hardening`
+Applying migration `20260913020000_drop_plaintext_totp_secret`
+Applying migration `20261008180000_partial_unique_index_active_order`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260912073944_init/
+    └─ migration.sql
+  └─ 20260912083315_pass_3_security_hardening/
+    └─ migration.sql
+  └─ 20260913020000_drop_plaintext_totp_secret/
+    └─ migration.sql
+  └─ 20261008180000_partial_unique_index_active_order/
+    └─ migration.sql
+      
+All migrations have been successfully applied.

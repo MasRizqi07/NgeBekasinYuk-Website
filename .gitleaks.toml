@@ -1,0 +1,14 @@
+title = "NgeBekasinYuk Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Reviewed non-secret test user IDs and idempotency key literals in seeds, scripts, docs, and proof logs"
+regexTarget = "secret"
+regexes = [
+  '''^usr-legacy-test-\d+$''',
+  '''^(?:ESC-IDEMP|ESC-LEDGER-DEP|ESC-LEDGER-REL|WLE-IDEMP-REL)-[A-Z0-9-]+$''',
+  '''^(?:proof-idemp|idemp-proof)-[A-Za-z0-9-]+$''',
+  '''^f47ac10b-58cc-4372-a567-0e02b2c3d479$''',
+]

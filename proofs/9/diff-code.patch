@@ -1,0 +1,882 @@
+diff --git a/.github/PULL_REQUEST_TEMPLATE.md b/.github/PULL_REQUEST_TEMPLATE.md
+new file mode 100644
+index 0000000..fb37a3d
+--- /dev/null
++++ b/.github/PULL_REQUEST_TEMPLATE.md
+@@ -0,0 +1,22 @@
++## Summary
++
++<!-- Describe what this PR changes and which phase/task it implements. -->
++
++## Evidence Gate Checklist (§0.2)
++
++- [ ] Raw output of `pnpm --filter web run typecheck` saved to `proofs/<phase>/` and committed
++- [ ] Raw output of uncached `pnpm turbo run lint --force` (0 errors, 0 warnings) saved to `proofs/<phase>/` and committed
++- [ ] Raw output of `pnpm --filter web run test` saved to `proofs/<phase>/` and committed
++- [ ] Raw output of `pnpm --filter web exec playwright test --reporter=list` saved to `proofs/<phase>/` and committed
++- [ ] Raw runtime proof (curl transcript with status codes, DB query, or Playwright output) saved to `proofs/<phase>/` and committed
++- [ ] `git diff <base>..<head>` of touched files captured without edits
++- [ ] All proof text files captured as UTF-8 with `NO_COLOR=1`, `FORCE_COLOR=0` (no mojibake or ANSI codes)
++- [ ] Red-before-green failure output (with assertion message) saved for every new bug/race guard test (or `NOT REPRODUCED in 20 runs`)
++- [ ] `pnpm audit --prod --audit-level=high` passes with zero findings
++- [ ] CI run JSON (`ci-run.json` / `ci-jobs.json`) saved and `flaky` count checked (or marked `UNVERIFIED — owner to paste` if blocked)
++
++## Acceptance Criteria Status
++
++| AC ID | Status (`VERIFIED` / `UNVERIFIED` / `REFUTED`) | Evidence Path |
++|---|---|---|
++| | | |
+diff --git a/.github/dependabot.yml b/.github/dependabot.yml
+new file mode 100644
+index 0000000..f7d75be
+--- /dev/null
++++ b/.github/dependabot.yml
+@@ -0,0 +1,34 @@
++version: 2
++updates:
++  - package-ecosystem: "npm"
++    directory: "/"
++    schedule:
++      interval: "weekly"
++    groups:
++      npm-root:
++        patterns:
++          - "*"
++        update-types:
++          - "minor"
++          - "patch"
++
++  - package-ecosystem: "npm"
++    directory: "/apps/web"
++    schedule:
++      interval: "weekly"
++    groups:
++      npm-web:
++        patterns:
++          - "*"
++        update-types:
++          - "minor"
++          - "patch"
++
++  - package-ecosystem: "github-actions"
++    directory: "/"
++    schedule:
++      interval: "weekly"
++    groups:
++      actions:
++        patterns:
++          - "*"
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 9b8c2ec..3470410 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -7,6 +7,20 @@ on:
+     branches: [main, master]
+ 
+ jobs:
++  secret-scan:
++    name: Secret Scan (Gitleaks)
++    runs-on: ubuntu-latest
++    steps:
++      - name: Checkout Repository
++        uses: actions/checkout@v4
++        with:
++          fetch-depth: 0
++
++      - name: Run Gitleaks Secret Scan
++        uses: gitleaks/gitleaks-action@v2
++        env:
++          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
++
+   verify:
+     name: Complete Hardening Verification Gates (PostgreSQL 16)
+     runs-on: ubuntu-latest
+@@ -79,6 +93,9 @@ jobs:
+       - name: Gate 1 - Install Dependencies
+         run: pnpm install --frozen-lockfile
+ 
++      - name: Gate 1b - Production Supply Chain Audit
++        run: pnpm audit --prod --audit-level=high
++
+       - name: Gate 2 - Prisma Validate & Generate Client
+         run: |
+           pnpm --filter web exec prisma validate
+diff --git a/.gitleaks.toml b/.gitleaks.toml
+new file mode 100644
+index 0000000..e03da2d
+--- /dev/null
++++ b/.gitleaks.toml
+@@ -0,0 +1,14 @@
++title = "NgeBekasinYuk Gitleaks Configuration"
++
++[extend]
++useDefault = true
++
++[[allowlists]]
++description = "Reviewed non-secret test user IDs and idempotency key literals in seeds, scripts, docs, and proof logs"
++regexTarget = "secret"
++regexes = [
++  '''^usr-legacy-test-\d+$''',
++  '''^(?:ESC-IDEMP|ESC-LEDGER-DEP|ESC-LEDGER-REL|WLE-IDEMP-REL)-[A-Z0-9-]+$''',
++  '''^(?:proof-idemp|idemp-proof)-[A-Za-z0-9-]+$''',
++  '''^f47ac10b-58cc-4372-a567-0e02b2c3d479$''',
++]
+diff --git a/.gitleaksignore b/.gitleaksignore
+new file mode 100644
+index 0000000..80c3936
+--- /dev/null
++++ b/.gitleaksignore
+@@ -0,0 +1,10 @@
++# Reviewed historical non-secret false positives on already-pushed commits (Rule 0.3: never rewrite pushed history)
++# docs/README.md line 161 documentation wording false positive
++8f4ea4475abb520a8adf8d26b7c66f60ca62a738:docs/README.md:generic-api-key:161
++# Deleted template file placeholder in initial repository commit
++8f4ea4475abb520a8adf8d26b7c66f60ca62a738:apps/api/README.md:generic-api-key:5
++# Simulated idempotencyKey literal in historical proof commit (already scrubbed in later commits)
++efc0440b345f80122788c8fda726405db298d26d:proof.txt:generic-api-key:25
++# Prior comment line in a0d8c94 and its net diff snapshot in fc2f569
++a0d8c94ab179d376aab18b5ea7933876b61c2a41:.gitleaksignore:generic-api-key:2
++fc2f569e886430f233e24bf2ee443c36c1a08b23:proofs/9/diff-code.patch:generic-api-key:131
+diff --git a/apps/web/package.json b/apps/web/package.json
+index dbbcc46..7dbd2fc 100644
+--- a/apps/web/package.json
++++ b/apps/web/package.json
+@@ -32,12 +32,12 @@
+     "clsx": "^2.1.1",
+     "framer-motion": "^13.2.0",
+     "lucide-react": "^1.45.0",
+-    "next": "16.3.4",
++    "next": "16.4.6",
+     "next-themes": "^0.4.6",
+     "react": "19.2.8",
+     "react-dom": "19.2.8",
+     "tailwind-merge": "^3.6.0",
+-    "zod": "^4.6.2",
++    "zod": "^4.6.7",
+     "zustand": "^5.0.15"
+   },
+   "devDependencies": {
+@@ -49,13 +49,13 @@
+     "@types/react": "^19",
+     "@types/react-dom": "^19",
+     "eslint": "^9",
+-    "eslint-config-next": "16.3.4",
+-    "jsdom": "^30.0.1",
++    "eslint-config-next": "16.4.6",
++    "jsdom": "^30.1.3",
+     "prisma": "6.4.1",
+     "tailwindcss": "^4",
+     "tsx": "^4.19.3",
+     "typescript": "^5",
+-    "vitest": "^4.1.2"
++    "vitest": "^4.1.12"
+   },
+   "prisma": {
+     "seed": "tsx ./prisma/seed.ts"
+diff --git a/apps/web/prisma/migrations/20261125200500_add_login_lockout/migration.sql b/apps/web/prisma/migrations/20261125200500_add_login_lockout/migration.sql
+new file mode 100644
+index 0000000..e734ccd
+--- /dev/null
++++ b/apps/web/prisma/migrations/20261125200500_add_login_lockout/migration.sql
+@@ -0,0 +1,4 @@
++-- Expand-only migration: add persistent login brute-force attempt counter and lock window
++ALTER TABLE "User"
++ADD COLUMN "loginFailedAttempts" INTEGER NOT NULL DEFAULT 0,
++ADD COLUMN "loginLockedUntil" TIMESTAMP(3);
+diff --git a/apps/web/prisma/schema.prisma b/apps/web/prisma/schema.prisma
+index 88a0f86..ff2b264 100644
+--- a/apps/web/prisma/schema.prisma
++++ b/apps/web/prisma/schema.prisma
+@@ -26,6 +26,8 @@ model User {
+   hashedPin         String?        // Bcrypt hashed 6-digit transaction PIN
+   pinFailedAttempts Int            @default(0)
+   pinLockedUntil    DateTime?
++  loginFailedAttempts Int          @default(0)
++  loginLockedUntil  DateTime?
+   isVerified        Boolean        @default(false)
+   accountStatus     String         @default("ACTIVE") // ACTIVE, SUSPENDED, DISABLED
+   totpSecretCiphertext String?     // AES-256-GCM encrypted TOTP secret
+diff --git a/apps/web/proof-wallet-pin.txt b/apps/web/proof-wallet-pin.txt
+deleted file mode 100644
+index 88b6c40..0000000
+--- a/apps/web/proof-wallet-pin.txt
++++ /dev/null
+@@ -1,24 +0,0 @@
+-=== 1. POST /api/wallet/pin WITHOUT SESSION (EXPECT 401 UNAUTHORIZED) ===
+-{"error":"UNAUTHORIZED","message":"Silakan login terlebih dahulu."}
+-HTTP_STATUS: 401
+-
+-=== REGISTER NEW SELLER (HAS NULL PIN PER TASK 4.6) ===
+-Seller registered.
+-
+-=== 2. POST /api/wallet/pin WITH WRONG PASSWORD (EXPECT 401 INVALID_CREDENTIALS) ===
+-{"error":"INVALID_CREDENTIALS","message":"Password tidak sesuai. Sisa kesempatan: 4 kali sebelum akun terkunci."}
+-HTTP_STATUS: 401
+-
+-=== 3. POST /api/wallet/pin WITH TRIVIALLY WEAK PIN (EXPECT 422 PIN_TOO_WEAK) ===
+-{"error":"PIN_TOO_WEAK","message":"Kombinasi PIN terlalu mudah ditebak. Hindari angka berurutan atau berulang."}
+-HTTP_STATUS: 422
+-
+-=== 4. POST /api/wallet/pin SUCCESS (EXPECT 200 OK) ===
+-{"success":true,"message":"PIN transaksi berhasil diatur."}
+-HTTP_STATUS: 200
+-
+-=== 5. POST /api/wallet/pin SECOND CALL (EXPECT 409 PIN_ALREADY_SET) ===
+-{"error":"PIN_ALREADY_SET","message":"PIN transaksi sudah pernah dibuat."}
+-HTTP_STATUS: 409
+-
+-=== WALLET PIN PROOF COMPLETE ===
+diff --git a/apps/web/src/app/api/auth/login/route.ts b/apps/web/src/app/api/auth/login/route.ts
+index 92907e6..f41c0a1 100644
+--- a/apps/web/src/app/api/auth/login/route.ts
++++ b/apps/web/src/app/api/auth/login/route.ts
+@@ -2,12 +2,39 @@ import { NextResponse } from "next/server";
+ import { prisma } from "@/server/db/prisma";
+ import bcrypt from "bcryptjs";
+ import { LoginSchema } from "@/lib/validations";
+-import { setServerSessionCookie } from "@/lib/auth/session";
++import { setSessionCookieOnResponse } from "@/lib/auth/session";
+ import { AuditLogger } from "@/domain/audit/AuditLogger";
+ 
++const MAX_LOGIN_ATTEMPTS = 5;
++const LOGIN_LOCKOUT_MS = 15 * 60 * 1000;
++const INVALID_CREDENTIALS_MESSAGE = "Email atau kata sandi tidak cocok.";
++
++let cachedDummyTimingHash: string | null = null;
++function getDummyTimingHash(): string {
++  if (!cachedDummyTimingHash) {
++    cachedDummyTimingHash = bcrypt.hashSync("ngebekasinyuk-dummy-timing-guard", 10);
++  }
++  return cachedDummyTimingHash;
++}
++
++function computeRetryAfterSeconds(lockedUntil: Date, now: Date): number {
++  return Math.max(1, Math.ceil((lockedUntil.getTime() - now.getTime()) / 1000));
++}
++
++function invalidCredentialsResponse(retryAfter?: number) {
++  const payload: { error: string; message: string; retryAfter?: number } = {
++    error: "INVALID_CREDENTIALS",
++    message: INVALID_CREDENTIALS_MESSAGE,
++  };
++  if (typeof retryAfter === "number") {
++    payload.retryAfter = retryAfter;
++  }
++  return NextResponse.json(payload, { status: 401 });
++}
++
+ export async function POST(request: Request) {
+   try {
+-    const body = await request.json();
++    const body = await request.json().catch(() => ({}));
+     const validated = LoginSchema.safeParse(body);
+ 
+     if (!validated.success) {
+@@ -18,47 +45,148 @@ export async function POST(request: Request) {
+     }
+ 
+     const { email, password } = validated.data;
++    const now = new Date();
+ 
+     const user = await prisma.user.findUnique({
+       where: { email },
++      select: {
++        id: true,
++        email: true,
++        name: true,
++        role: true,
++        isVerified: true,
++        avatar: true,
++        hashedPassword: true,
++        sessionVersion: true,
++        loginFailedAttempts: true,
++        loginLockedUntil: true,
++      },
+     });
+ 
+     if (!user) {
++      await bcrypt.compare(password, getDummyTimingHash());
+       await AuditLogger.log({
+         action: "LOGIN_FAILED",
+         targetType: "User",
+         targetId: email,
+         details: { reason: "User not found" },
+       });
+-      return NextResponse.json(
+-        { error: "INVALID_CREDENTIALS", message: "Email atau kata sandi tidak cocok." },
+-        { status: 401 }
+-      );
++      return invalidCredentialsResponse();
++    }
++
++    if (user.loginLockedUntil && user.loginLockedUntil > now) {
++      await bcrypt.compare(password, getDummyTimingHash());
++      const retryAfter = computeRetryAfterSeconds(user.loginLockedUntil, now);
++      await AuditLogger.log({
++        userId: user.id,
++        action: "LOGIN_FAILED",
++        targetType: "User",
++        targetId: user.id,
++        details: { reason: "Account locked", retryAfter },
++      });
++      return invalidCredentialsResponse(retryAfter);
+     }
+ 
+     const isMatch = await bcrypt.compare(password, user.hashedPassword);
+     if (!isMatch) {
++      const nowUtcIso = now.toISOString();
++      const lockUntilUtcIso = new Date(now.getTime() + LOGIN_LOCKOUT_MS).toISOString();
++      const updatedRows = await prisma.$queryRaw<
++        Array<{ loginFailedAttempts: number; loginLockedUntil: Date | null }>
++      >`
++        UPDATE "User"
++        SET
++          "loginFailedAttempts" = CASE
++            WHEN "loginLockedUntil" IS NOT NULL AND "loginLockedUntil" <= (${nowUtcIso}::timestamptz AT TIME ZONE 'UTC') THEN 1
++            ELSE "loginFailedAttempts" + 1
++          END,
++          "loginLockedUntil" = CASE
++            WHEN "loginLockedUntil" IS NOT NULL AND "loginLockedUntil" > (${nowUtcIso}::timestamptz AT TIME ZONE 'UTC') THEN "loginLockedUntil"
++            WHEN (
++              CASE
++                WHEN "loginLockedUntil" IS NOT NULL AND "loginLockedUntil" <= (${nowUtcIso}::timestamptz AT TIME ZONE 'UTC') THEN 1
++                ELSE "loginFailedAttempts" + 1
++              END
++            ) >= ${MAX_LOGIN_ATTEMPTS} THEN (${lockUntilUtcIso}::timestamptz AT TIME ZONE 'UTC')
++            ELSE NULL
++          END,
++          "updatedAt" = (${nowUtcIso}::timestamptz AT TIME ZONE 'UTC')
++        WHERE "id" = ${user.id}
++        RETURNING "loginFailedAttempts", "loginLockedUntil"
++      `;
++
++      const updated = updatedRows[0];
++      const lockedUntil = updated?.loginLockedUntil ?? null;
++      const isNowLocked = Boolean(lockedUntil && lockedUntil > now);
++
+       await AuditLogger.log({
+         userId: user.id,
+         action: "LOGIN_FAILED",
+         targetType: "User",
+         targetId: user.id,
+-        details: { reason: "Incorrect password" },
++        details: {
++          reason: "Incorrect password",
++          attempts: updated?.loginFailedAttempts,
++          locked: isNowLocked,
++        },
+       });
+-      return NextResponse.json(
+-        { error: "INVALID_CREDENTIALS", message: "Email atau kata sandi tidak cocok." },
+-        { status: 401 }
+-      );
++
++      if (isNowLocked && lockedUntil) {
++        return invalidCredentialsResponse(computeRetryAfterSeconds(lockedUntil, now));
++      }
++      return invalidCredentialsResponse();
++    }
++
++    // Atomically reset failure counter only if account was not concurrently locked during bcrypt verification
++    const resetResult = await prisma.user.updateMany({
++      where: {
++        id: user.id,
++        OR: [{ loginLockedUntil: null }, { loginLockedUntil: { lte: now } }],
++      },
++      data: {
++        loginFailedAttempts: 0,
++        loginLockedUntil: null,
++      },
++    });
++
++    if (resetResult.count === 0) {
++      const latest = await prisma.user.findUnique({
++        where: { id: user.id },
++        select: { loginLockedUntil: true },
++      });
++      const retryAfter =
++        latest?.loginLockedUntil && latest.loginLockedUntil > now
++          ? computeRetryAfterSeconds(latest.loginLockedUntil, now)
++          : Math.ceil(LOGIN_LOCKOUT_MS / 1000);
++      await AuditLogger.log({
++        userId: user.id,
++        action: "LOGIN_FAILED",
++        targetType: "User",
++        targetId: user.id,
++        details: { reason: "Account locked concurrently", retryAfter },
++      });
++      return invalidCredentialsResponse(retryAfter);
+     }
+ 
+-    // Set secure server session cookie
+-    await setServerSessionCookie({
++    const response = NextResponse.json({
++      success: true,
++      user: {
++        id: user.id,
++        email: user.email,
++        name: user.name,
++        role: user.role,
++        isVerified: user.isVerified,
++      },
++    });
++
++    await setSessionCookieOnResponse(response, {
+       id: user.id,
+       email: user.email,
+       name: user.name,
+       role: user.role as "BUYER" | "SELLER" | "ADMIN",
+       isVerified: user.isVerified,
+       avatar: user.avatar,
++      sessionVersion: user.sessionVersion,
+     });
+ 
+     await AuditLogger.log({
+@@ -68,16 +196,7 @@ export async function POST(request: Request) {
+       targetId: user.id,
+     });
+ 
+-    return NextResponse.json({
+-      success: true,
+-      user: {
+-        id: user.id,
+-        email: user.email,
+-        name: user.name,
+-        role: user.role,
+-        isVerified: user.isVerified,
+-      },
+-    });
++    return response;
+   } catch (error) {
+     console.error("[Auth/Login] Error:", error);
+     return NextResponse.json(
+diff --git a/apps/web/src/app/api/health/route.ts b/apps/web/src/app/api/health/route.ts
+new file mode 100644
+index 0000000..7d77f4b
+--- /dev/null
++++ b/apps/web/src/app/api/health/route.ts
+@@ -0,0 +1,13 @@
++import { NextResponse } from "next/server";
++import { prisma } from "@/server/db/prisma";
++
++export const dynamic = "force-dynamic";
++
++export async function GET() {
++  try {
++    await prisma.$queryRaw`SELECT 1`;
++    return NextResponse.json({ status: "ok" }, { status: 200 });
++  } catch {
++    return NextResponse.json({ status: "error" }, { status: 503 });
++  }
++}
+diff --git a/apps/web/src/lib/auth/session.ts b/apps/web/src/lib/auth/session.ts
+index ba4aee5..5ac2066 100644
+--- a/apps/web/src/lib/auth/session.ts
++++ b/apps/web/src/lib/auth/session.ts
+@@ -2,6 +2,7 @@
+ // Cryptographically verified HMAC-SHA256 session cookie compatible with Edge Middleware and Node.js.
+ 
+ import { cookies } from "next/headers";
++import type { NextResponse } from "next/server";
+ import { signHmacSha256, verifyHmacSha256 } from "./crypto";
+ import { env } from "../env";
+ 
+@@ -107,6 +108,23 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
+   }
+ }
+ 
++/**
++ * Sets the httpOnly session cookie directly on a NextResponse object.
++ */
++export async function setSessionCookieOnResponse(
++  response: NextResponse,
++  user: SessionUser
++): Promise<void> {
++  const token = await signSession(user);
++  response.cookies.set(COOKIE_NAME, token, {
++    httpOnly: true,
++    secure: env.NODE_ENV === "production",
++    sameSite: "lax",
++    path: "/",
++    maxAge: SESSION_TTL_SECONDS,
++  });
++}
++
+ /**
+  * Sets the httpOnly session cookie on the current response context.
+  */
+diff --git a/apps/web/test/integration/healthRoute.test.ts b/apps/web/test/integration/healthRoute.test.ts
+new file mode 100644
+index 0000000..44277b4
+--- /dev/null
++++ b/apps/web/test/integration/healthRoute.test.ts
+@@ -0,0 +1,33 @@
++import { describe, it, expect, vi, afterEach } from "vitest";
++import { prisma } from "@/server/db/prisma";
++import { GET } from "@/app/api/health/route";
++
++describe("Health Endpoint Integration Tests (AC9.7)", () => {
++  afterEach(() => {
++    vi.restoreAllMocks();
++  });
++
++  it("AC9.7: returns 200 { status: 'ok' } when PostgreSQL SELECT 1 succeeds and exposes no versions, env, or stack", async () => {
++    const res = await GET();
++    expect(res.status).toBe(200);
++
++    const body = await res.json();
++    expect(body).toEqual({ status: "ok" });
++    expect(Object.keys(body)).toEqual(["status"]);
++  });
++
++  it("AC9.7: returns 503 without versions, env, or stack when database query fails", async () => {
++    vi.spyOn(prisma, "$queryRaw").mockRejectedValueOnce(
++      new Error("ECONNREFUSED postgresql://postgres:secret@db.internal:5432/prod at stack line 42")
++    );
++
++    const res = await GET();
++    expect(res.status).toBe(503);
++
++    const rawText = await res.text();
++    const body = JSON.parse(rawText);
++    expect(body).toEqual({ status: "error" });
++    expect(Object.keys(body)).toEqual(["status"]);
++    expect(rawText).not.toMatch(/postgres|secret|ECONNREFUSED|stack|version|env/i);
++  });
++});
+diff --git a/apps/web/test/integration/loginBruteForce.test.ts b/apps/web/test/integration/loginBruteForce.test.ts
+new file mode 100644
+index 0000000..32a3b83
+--- /dev/null
++++ b/apps/web/test/integration/loginBruteForce.test.ts
+@@ -0,0 +1,193 @@
++import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
++import bcrypt from "bcryptjs";
++import { prisma } from "@/server/db/prisma";
++
++const capturedCookieSets: Array<{ name: string; value: string }> = [];
++
++// Provide an in-memory Next.js cookies() store so handlers using next/headers cookies()
++// execute identically inside Vitest without mocking auth logic or the database.
++vi.mock("next/headers", () => ({
++  cookies: vi.fn(async () => ({
++    get: () => undefined,
++    set: (name: string, value: string) => {
++      capturedCookieSets.push({ name, value });
++    },
++    delete: () => undefined,
++  })),
++}));
++
++import { POST } from "@/app/api/auth/login/route";
++
++function buildLoginRequest(email: string, password: string): Request {
++  return new Request("http://localhost:3000/api/auth/login", {
++    method: "POST",
++    headers: { "Content-Type": "application/json" },
++    body: JSON.stringify({ email, password }),
++  });
++}
++
++function hasSessionCookie(res: Response): boolean {
++  const setCookieHeader = res.headers.get("set-cookie") || "";
++  if (setCookieHeader.includes("ngebekasinyuk_session=")) return true;
++  return capturedCookieSets.some((c) => c.name === "ngebekasinyuk_session" && c.value.length > 0);
++}
++
++describe("Login Brute-Force Protection Integration Tests (AC9.3 - AC9.5)", () => {
++  const createdUserIds: string[] = [];
++  const validPassword = "CorrectPassword123!";
++  let testEmail = "";
++  let testUserId = "";
++
++  beforeEach(async () => {
++    capturedCookieSets.length = 0;
++    const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
++    testEmail = `login-bf-${suffix}@test.id`;
++    const hashedPassword = await bcrypt.hash(validPassword, 10);
++
++    const user = await prisma.user.create({
++      data: {
++        email: testEmail,
++        name: "Login BruteForce Test User",
++        role: "BUYER",
++        hashedPassword,
++      },
++    });
++    testUserId = user.id;
++    createdUserIds.push(user.id);
++  });
++
++  afterAll(async () => {
++    if (createdUserIds.length > 0) {
++      await prisma.auditLog.deleteMany({ where: { userId: { in: createdUserIds } } });
++      await prisma.user.deleteMany({ where: { id: { in: createdUserIds } } });
++    }
++  });
++
++  it("AC9.3: locks account for 15 minutes after 5 consecutive wrong passwords and rejects 6th correct password without setting session cookie", async () => {
++    for (let i = 1; i <= 4; i++) {
++      const res = await POST(buildLoginRequest(testEmail, `WrongPassword-${i}`));
++      expect(res.status).toBe(401);
++      const body = await res.json();
++      expect(body.error).toBe("INVALID_CREDENTIALS");
++      expect(typeof body.message).toBe("string");
++      expect(body.retryAfter).toBeUndefined();
++      expect(hasSessionCookie(res)).toBe(false);
++    }
++
++    // 5th consecutive wrong password triggers lock
++    const fifthRes = await POST(buildLoginRequest(testEmail, "WrongPassword-5"));
++    expect(fifthRes.status).toBe(401);
++    const fifthBody = await fifthRes.json();
++    expect(fifthBody.error).toBe("INVALID_CREDENTIALS");
++    expect(typeof fifthBody.retryAfter).toBe("number");
++    expect(fifthBody.retryAfter).toBeGreaterThan(0);
++    expect(fifthBody.retryAfter).toBeLessThanOrEqual(15 * 60);
++    expect(hasSessionCookie(fifthRes)).toBe(false);
++
++    // 6th attempt uses the CORRECT password within 15 minutes -> rejected with lock response, no cookie
++    capturedCookieSets.length = 0;
++    const sixthRes = await POST(buildLoginRequest(testEmail, validPassword));
++    expect(sixthRes.status).toBe(401);
++    const sixthBody = await sixthRes.json();
++    expect(sixthBody.error).toBe("INVALID_CREDENTIALS");
++    expect(typeof sixthBody.message).toBe("string");
++    expect(typeof sixthBody.retryAfter).toBe("number");
++    expect(sixthBody.retryAfter).toBeGreaterThan(0);
++    expect(sixthBody.retryAfter).toBeLessThanOrEqual(15 * 60);
++    expect(hasSessionCookie(sixthRes)).toBe(false);
++  });
++
++  it("AC9.4: unknown email and known email with wrong password return identical HTTP status and JSON keys", async () => {
++    const unknownRes = await POST(
++      buildLoginRequest(`unknown-${Date.now()}-${Math.random().toString(36).slice(2)}@test.id`, "WrongPassword!")
++    );
++    const knownWrongRes = await POST(buildLoginRequest(testEmail, "WrongPassword!"));
++
++    expect(unknownRes.status).toBe(401);
++    expect(knownWrongRes.status).toBe(unknownRes.status);
++
++    const unknownBody = await unknownRes.json();
++    const knownWrongBody = await knownWrongRes.json();
++
++    expect(Object.keys(unknownBody).sort()).toEqual(Object.keys(knownWrongBody).sort());
++    expect(unknownBody).toEqual(knownWrongBody);
++    expect(hasSessionCookie(unknownRes)).toBe(false);
++    expect(hasSessionCookie(knownWrongRes)).toBe(false);
++  });
++
++  it(
++    "AC9.5: 20 concurrent wrong-password requests increment loginFailedAttempts without undercounting and lock the account",
++    async () => {
++      const requests = Array.from({ length: 20 }, (_, i) =>
++        POST(buildLoginRequest(testEmail, `ConcurrentWrong-${i}`))
++      );
++      const responses = await Promise.all(requests);
++
++      for (const res of responses) {
++        expect(res.status).toBe(401);
++        expect(hasSessionCookie(res)).toBe(false);
++      }
++
++      // Immediate attempt with correct password must be rejected by the lock
++      capturedCookieSets.length = 0;
++      const correctAfterStorm = await POST(buildLoginRequest(testEmail, validPassword));
++      expect(correctAfterStorm.status).toBe(401);
++      const lockBody = await correctAfterStorm.json();
++      expect(lockBody.error).toBe("INVALID_CREDENTIALS");
++      expect(typeof lockBody.retryAfter).toBe("number");
++      expect(lockBody.retryAfter).toBeGreaterThan(0);
++      expect(hasSessionCookie(correctAfterStorm)).toBe(false);
++
++      const rows = await prisma.$queryRaw<
++        Array<{ loginFailedAttempts: number; loginLockedUntil: Date | null }>
++      >`SELECT "loginFailedAttempts", "loginLockedUntil" FROM "User" WHERE id = ${testUserId}`;
++
++      expect(rows).toHaveLength(1);
++      expect(Number(rows[0].loginFailedAttempts)).toBe(20);
++      expect(rows[0].loginLockedUntil).not.toBeNull();
++      expect(new Date(rows[0].loginLockedUntil!).getTime()).toBeGreaterThan(Date.now());
++    },
++    20_000
++  );
++
++  it("resets loginFailedAttempts on successful login and clears expired lock on subsequent attempts", async () => {
++    // 4 wrong attempts
++    for (let i = 1; i <= 4; i++) {
++      const res = await POST(buildLoginRequest(testEmail, `Wrong-${i}`));
++      expect(res.status).toBe(401);
++    }
++
++    // Successful login resets counter
++    const okRes = await POST(buildLoginRequest(testEmail, validPassword));
++    expect(okRes.status).toBe(200);
++    expect(hasSessionCookie(okRes)).toBe(true);
++
++    const afterSuccess = await prisma.$queryRaw<
++      Array<{ loginFailedAttempts: number; loginLockedUntil: Date | null }>
++    >`SELECT "loginFailedAttempts", "loginLockedUntil" FROM "User" WHERE id = ${testUserId}`;
++    expect(Number(afterSuccess[0].loginFailedAttempts)).toBe(0);
++    expect(afterSuccess[0].loginLockedUntil).toBeNull();
++
++    // Simulate an expired lock (lockedUntil in the past with 5 failed attempts)
++    const pastDate = new Date(Date.now() - 10_000);
++    await prisma.user.update({
++      where: { id: testUserId },
++      data: {
++        loginFailedAttempts: 5,
++        loginLockedUntil: pastDate,
++      },
++    });
++
++    // One wrong password after lock expiry starts fresh at 1 (does not immediately re-lock)
++    const afterExpiryWrong = await POST(buildLoginRequest(testEmail, "WrongAgain!"));
++    expect(afterExpiryWrong.status).toBe(401);
++    const bodyAfterExpiry = await afterExpiryWrong.json();
++    expect(bodyAfterExpiry.retryAfter).toBeUndefined();
++
++    const afterExpiryRows = await prisma.$queryRaw<
++      Array<{ loginFailedAttempts: number; loginLockedUntil: Date | null }>
++    >`SELECT "loginFailedAttempts", "loginLockedUntil" FROM "User" WHERE id = ${testUserId}`;
++    expect(Number(afterExpiryRows[0].loginFailedAttempts)).toBe(1);
++    expect(afterExpiryRows[0].loginLockedUntil).toBeNull();
++  });
++});
+diff --git a/apps/web/test/unit/loginDummyHash.test.ts b/apps/web/test/unit/loginDummyHash.test.ts
+new file mode 100644
+index 0000000..66a298c
+--- /dev/null
++++ b/apps/web/test/unit/loginDummyHash.test.ts
+@@ -0,0 +1,31 @@
++import { describe, it, expect, vi, afterEach } from "vitest";
++import bcrypt from "bcryptjs";
++import { POST } from "@/app/api/auth/login/route";
++
++describe("Login Dummy-Hash Timing Guard Unit Test (AC9.4)", () => {
++  afterEach(() => {
++    vi.restoreAllMocks();
++  });
++
++  it("runs bcrypt.compare against a valid bcrypt dummy hash when the email does not exist", async () => {
++    const compareSpy = vi.spyOn(bcrypt, "compare");
++
++    const unknownEmail = `nonexistent-${Date.now()}-${Math.random().toString(36).slice(2)}@ngebekasinyuk.id`;
++    const req = new Request("http://localhost:3000/api/auth/login", {
++      method: "POST",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ email: unknownEmail, password: "AttemptPassword123!" }),
++    });
++
++    const res = await POST(req);
++    expect(res.status).toBe(401);
++
++    const body = await res.json();
++    expect(Object.keys(body).sort()).toEqual(["error", "message"]);
++    expect(body.error).toBe("INVALID_CREDENTIALS");
++
++    expect(compareSpy).toHaveBeenCalledTimes(1);
++    expect(compareSpy.mock.calls[0][0]).toBe("AttemptPassword123!");
++    expect(String(compareSpy.mock.calls[0][1])).toMatch(/^\$2[aby]\$10\$/);
++  });
++});
+diff --git a/docs/engineering/EVIDENCE.md b/docs/engineering/EVIDENCE.md
+new file mode 100644
+index 0000000..08ec0e4
+--- /dev/null
++++ b/docs/engineering/EVIDENCE.md
+@@ -0,0 +1,37 @@
++# Engineering Evidence & Verification Standards
++
++Every phase and pull request in NgeBekasinYuk is accepted only on raw, reproducible tool output committed under `proofs/<phase>/` or cited directly by committed `file:line`.
++
++## 1. Required Phase Artifacts
++
++Each phase commit sequence must include raw outputs captured on the **final code commit** (before the final proof commit, or alongside it without code edits afterwards):
++
++1. `pnpm --filter web run typecheck`
++2. Uncached lint: `pnpm turbo run lint --force` (0 errors, 0 warnings)
++3. Unit, integration, and concurrency suite: `pnpm --filter web run test`
++4. Browser E2E suite: `pnpm --filter web exec playwright test --reporter=list`
++5. Supply-chain audit: `pnpm audit --prod --audit-level high`
++6. Runtime proof for changed endpoints/flows (raw `curl` transcript with HTTP status codes, PostgreSQL query output, or Playwright run output)
++7. Unedited `git diff <base>..<head>` of touched source files
++
++## 2. Capturing Clean Output (Windows & POSIX)
++
++- Always capture raw command stdout/stderr directly (`| tee proofs/<phase>/<name>.txt`), never reconstructed or hand-edited.
++- On Windows PowerShell, prevent UTF-16LE encoding, mojibake, and ANSI escape codes before capturing:
++  ```powershell
++  chcp 65001
++  $OutputEncoding = [Text.Encoding]::UTF8
++  $env:NO_COLOR = "1"
++  $env:FORCE_COLOR = "0"
++  ```
++- Verify captured `.txt` files are valid UTF-8 and contain zero ANSI CSI sequences (`\x1b[`). Re-capture if corrupted.
++
++## 3. Red-Before-Green Requirement
++
++Every new test guarding a bug, security flaw, or concurrency race must be executed **before** applying the fix in a temporary git worktree (at the base commit with dependencies installed), saving the failing output including the exact assertion failure message (`proofs/<phase>/<topic>-red.txt`). If a race does not reproduce across 20 runs, record `NOT REPRODUCED in 20 runs`.
++
++## 4. CI Verification & Status Vocabulary
++
++- Save GitHub Actions run and job JSON to `proofs/<phase>/ci-run.json` and `proofs/<phase>/ci-jobs.json` after the run finishes. If GitHub API access is blocked or rate-limited, mark `UNVERIFIED — owner to paste` and specify the required summary lines (`Test Files`, `Tests`, Playwright `N passed`, and `flaky` count).
++- Acceptance criteria in reports use only `VERIFIED`, `UNVERIFIED`, or `REFUTED`.
++- Legacy pre-phase proofs live under `proofs/legacy/` (`proofs/legacy/order-creation-curl.txt`, `proofs/legacy/wallet-pin-curl.txt`), and verification helper scripts live under `scripts/`.
+diff --git a/package.json b/package.json
+index 519cd04..b81c51a 100644
+--- a/package.json
++++ b/package.json
+@@ -15,5 +15,12 @@
+     "turbo": "^2.0.4",
+     "typescript": "^5.4.5"
+   },
++  "pnpm": {
++    "overrides": {
++      "source-map-js": ">=1.2.4",
++      "brace-expansion@^1.1.7": ">=1.1.21 <2.0.0",
++      "brace-expansion@^5.0.0": ">=5.0.12"
++    }
++  },
+   "packageManager": "pnpm@9.0.0"
+ }
+diff --git a/proof.txt b/proof.txt
+deleted file mode 100644
+index d130841..0000000
+--- a/proof.txt
++++ /dev/null
+@@ -1,34 +0,0 @@
+-==================================================
+-Proof: Server-Authoritative Order Creation via curl
+-==================================================
+-
+---- Step 0: Authoritative Session Login as Buyer ---
+-Login HTTP Status: 200
+-
+---- Step 1: Tampered itemPrice in Request Body ---
+-{"error":"VALIDATION_ERROR","message":"Data pesanan tidak valid atau terdapat atribut terlarang.","details":{"formErrors":["Unrecognized key: \"itemPrice\""],"fieldErrors":{}}}
+-HTTP_STATUS:400
+-
+---- Step 2: Injected buyerId in Request Body ---
+-{"error":"VALIDATION_ERROR","message":"Data pesanan tidak valid atau terdapat atribut terlarang.","details":{"formErrors":["Unrecognized key: \"buyerId\""],"fieldErrors":{}}}
+-HTTP_STATUS:400
+-
+---- Step 3: Inactive Listing Purchase Attempt (list-sony-wh1000xm4 is SOLD in seed) ---
+-{"error":"LISTING_NOT_ACTIVE","message":"Barang sudah tidak aktif atau sedang dalam transaksi lain."}
+-HTTP_STATUS:422
+-
+---- Step 4: Valid Authoritative Order Creation (prod-sony-a7iii) ---
+-{"id":"ord-933dc9f6-40fb-4b19-92dd-410e0c94d282","orderNumber":"ORD-2026-BA3391","buyerId":"usr-buyer-budi","sellerId":"usr-seller-dimas","listingId":"prod-sony-a7iii","itemPrice":12800000,"shippingFee":18000,"escrowFee":0,"totalAmount":12818000,"status":"PENDING_PAYMENT","shippingCourier":"J&T Express","shippingService":null,"shippingAirwayBill":null,"shippingAddress":"Jl. Merdeka No. 10, Jakarta Pusat","paidAt":null,"shippedAt":null,"deliveredAt":null,"inspectionStartedAt":null,"inspectionExpiresAt":null,"completedAt":null,"cancelledAt":null,"createdAt":"2026-10-04T13:33:32.436Z","updatedAt":"2026-10-04T13:33:32.436Z","buyerName":"Budi Pratama","buyerPhone":"+6281234567890","courier":"J&T Express","trackingNumber":"","paymentMethod":"BCA_VA","vaNumber":"8801255658113","paymentAttemptId":"cmutv33x4000pgubcwzngb0cu","reviewGiven":false,"buyer":{"id":"usr-buyer-budi","name":"Budi Pratama","avatar":"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80","isVerified":true,"phone":"+6281234567890"},"seller":{"id":"usr-seller-dimas","name":"Dimas Aditya","avatar":"https://lh3.googleusercontent.com/aida-public/AB6AXuARVSFYfBWVyVsZWQluSJcL8sMPOSmnE8mGkR5BrhkwbubbuXak0j5WwkwOo1JjgKnpaf1S7WJRcRm1ZicytLS3wpBG9CPYS6LiOOXaybKow8Ho4_EogUn5YXqk4IUoQo8UdYN600NliLjnIDlOjB89sEfXd_98btgCRMHw7HE1wvgfQtQkXwX7m6c2tCpX9IqBNbnhP4Nb57GCNuHtQ2ESg9gUjeUIvzWs7RV27u5YUKcspnWFxF1e","isVerified":true},"listing":{"id":"prod-sony-a7iii","slug":"sony-a7-iii-body-only-sc-4xxx","title":"Sony A7 III Body Only - SC 4xxx Mulus Dus Lengkap","description":"Dijual kamera Sony A7 III kesayangan pemakaian hobi pribadi. Shutter Count baru 4.120 jepretan.","price":12800000,"originalPrice":13500000,"category":"camera","categoryLabel":"Kamera","brand":"Sony","model":"ILCE-7M3","condition":"LIKE_NEW","canNego":true,"minNegoPrice":12000000,"status":"RESERVED","sellerId":"usr-seller-dimas","viewsCount":0,"favoritesCount":0,"seller":{"id":"usr-seller-dimas","name":"Dimas Aditya","avatar":"https://lh3.googleusercontent.com/aida-public/AB6AXuARVSFYfBWVyVsZWQluSJcL8sMPOSmnE8mGkR5BrhkwbubbuXak0j5WwkwOo1JjgKnpaf1S7WJRcRm1ZicytLS3wpBG9CPYS6LiOOXaybKow8Ho4_EogUn5YXqk4IUoQo8UdYN600NliLjnIDlOjB89sEfXd_98btgCRMHw7HE1wvgfQtQkXwX7m6c2tCpX9IqBNbnhP4Nb57GCNuHtQ2ESg9gUjeUIvzWs7RV27u5YUKcspnWFxF1e","isVerified":true},"images":["https://lh3.googleusercontent.com/aida-public/AB6AXuBA9eU2ewnWRCf9Qto6GOxaOS5X8o-02N4RqCpowftk7HpYZ_uYsPQNcN97v4sr4MJfr95_S4fVUvl9q-rBghLePBKSczep7xPDx_JKdKpoeM7Lyf0yAn7Iooah63Jn2if8IUDjfHczoXbNpUY3h9xrpGA-i0uqFo6J4t0cqGiWZD3PIqT1xQNYNOh0rH_DgLS1dZ-x-VFnpFMUNWV9yKfNyLePCfnQZXHna6dkqEWvPuzEw_ah9Vgr"]},"paymentAttempts":[{"id":"cmutv33x4000pgubcwzngb0cu","orderId":"ord-933dc9f6-40fb-4b19-92dd-410e0c94d282","paymentMethod":"BCA_VA","amount":12818000,"status":"PENDING","vaNumber":"8801255658113","qrString":null,"expiresAt":"2026-10-04T15:33:32.439Z","settledAt":null,"providerName":"DemoPaymentProvider","isSimulation":true,"createdAt":"2026-10-04T13:33:32.441Z","updatedAt":"2026-10-04T13:33:32.441Z"}]}
+-HTTP_STATUS:201
+-
+---- Step 5: Second Order on Same Listing Without DB Reset ---
+-{"error":"LISTING_NOT_ACTIVE","message":"Barang sudah tidak aktif atau sedang dalam transaksi lain."}
+-HTTP_STATUS:422
+-
+---- Step 6: Idempotent Replay with Same Key (proof-idemp-valid-004) ---
+-{"id":"ord-933dc9f6-40fb-4b19-92dd-410e0c94d282","orderNumber":"ORD-2026-BA3391","buyerId":"usr-buyer-budi","sellerId":"usr-seller-dimas","listingId":"prod-sony-a7iii","itemPrice":12800000,"shippingFee":18000,"escrowFee":0,"totalAmount":12818000,"status":"PENDING_PAYMENT","shippingCourier":"J&T Express","shippingService":null,"shippingAirwayBill":null,"shippingAddress":"Jl. Merdeka No. 10, Jakarta Pusat","paidAt":null,"shippedAt":null,"deliveredAt":null,"inspectionStartedAt":null,"inspectionExpiresAt":null,"completedAt":null,"cancelledAt":null,"createdAt":"2026-10-04T13:33:32.436Z","updatedAt":"2026-10-04T13:33:32.436Z","buyerName":"Budi Pratama","buyerPhone":"+6281234567890","courier":"J&T Express","trackingNumber":"","paymentMethod":"BCA_VA","vaNumber":"8801255658113","paymentAttemptId":"cmutv33x4000pgubcwzngb0cu","reviewGiven":false,"buyer":{"id":"usr-buyer-budi","name":"Budi Pratama","avatar":"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80","isVerified":true,"phone":"+6281234567890"},"seller":{"id":"usr-seller-dimas","name":"Dimas Aditya","avatar":"https://lh3.googleusercontent.com/aida-public/AB6AXuARVSFYfBWVyVsZWQluSJcL8sMPOSmnE8mGkR5BrhkwbubbuXak0j5WwkwOo1JjgKnpaf1S7WJRcRm1ZicytLS3wpBG9CPYS6LiOOXaybKow8Ho4_EogUn5YXqk4IUoQo8UdYN600NliLjnIDlOjB89sEfXd_98btgCRMHw7HE1wvgfQtQkXwX7m6c2tCpX9IqBNbnhP4Nb57GCNuHtQ2ESg9gUjeUIvzWs7RV27u5YUKcspnWFxF1e","isVerified":true},"listing":{"id":"prod-sony-a7iii","slug":"sony-a7-iii-body-only-sc-4xxx","title":"Sony A7 III Body Only - SC 4xxx Mulus Dus Lengkap","description":"Dijual kamera Sony A7 III kesayangan pemakaian hobi pribadi. Shutter Count baru 4.120 jepretan.","price":12800000,"originalPrice":13500000,"category":"camera","categoryLabel":"Kamera","brand":"Sony","model":"ILCE-7M3","condition":"LIKE_NEW","canNego":true,"minNegoPrice":12000000,"status":"RESERVED","sellerId":"usr-seller-dimas","viewsCount":0,"favoritesCount":0,"seller":{"id":"usr-seller-dimas","name":"Dimas Aditya","avatar":"https://lh3.googleusercontent.com/aida-public/AB6AXuARVSFYfBWVyVsZWQluSJcL8sMPOSmnE8mGkR5BrhkwbubbuXak0j5WwkwOo1JjgKnpaf1S7WJRcRm1ZicytLS3wpBG9CPYS6LiOOXaybKow8Ho4_EogUn5YXqk4IUoQo8UdYN600NliLjnIDlOjB89sEfXd_98btgCRMHw7HE1wvgfQtQkXwX7m6c2tCpX9IqBNbnhP4Nb57GCNuHtQ2ESg9gUjeUIvzWs7RV27u5YUKcspnWFxF1e","isVerified":true},"images":["https://lh3.googleusercontent.com/aida-public/AB6AXuBA9eU2ewnWRCf9Qto6GOxaOS5X8o-02N4RqCpowftk7HpYZ_uYsPQNcN97v4sr4MJfr95_S4fVUvl9q-rBghLePBKSczep7xPDx_JKdKpoeM7Lyf0yAn7Iooah63Jn2if8IUDjfHczoXbNpUY3h9xrpGA-i0uqFo6J4t0cqGiWZD3PIqT1xQNYNOh0rH_DgLS1dZ-x-VFnpFMUNWV9yKfNyLePCfnQZXHna6dkqEWvPuzEw_ah9Vgr"]},"paymentAttempts":[{"id":"cmutv33x4000pgubcwzngb0cu","orderId":"ord-933dc9f6-40fb-4b19-92dd-410e0c94d282","paymentMethod":"BCA_VA","amount":12818000,"status":"PENDING","vaNumber":"8801255658113","qrString":null,"expiresAt":"2026-10-04T15:33:32.439Z","settledAt":null,"providerName":"DemoPaymentProvider","isSimulation":true,"createdAt":"2026-10-04T13:33:32.441Z","updatedAt":"2026-10-04T13:33:32.441Z"}]}
+-HTTP_STATUS:201
+-
+-==================================================
+-Proof Execution Complete
+-==================================================

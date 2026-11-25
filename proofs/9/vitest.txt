@@ -1,0 +1,186 @@
+
+> web@0.1.0 test d:\MY CODE\NgeBekasinYuk-Web\apps\web
+> vitest run
+
+
+ RUN  v4.1.12 D:/MY CODE/NgeBekasinYuk-Web/apps/web
+
+stdout | test/integration/orderPartialUniqueIndex.test.ts > D8 Partial Unique Index Guarantee on Order(listingId) (PostgreSQL) > 2. Raw second active order for the same listing fails with unique violation (P2002 / 23505)
+prisma:error 
+Invalid `prisma.order.create()` invocation in
+D:/MY CODE/NgeBekasinYuk-Web/apps/web/test/integration/orderPartialUniqueIndex.test.ts:122:26
+
+  119 // Attempt raw second active order on same listing
+  120 let caughtError: { code?: string } | null = null;
+  121 try {
+→ 122   await prisma.order.create(
+Unique constraint failed on the fields: (`listingId`)
+
+ ✓ test/integration/orderPartialUniqueIndex.test.ts (3 tests) 4223ms
+     ✓ 1. pg_indexes contains order_single_active_listing_idx with exact terminal statuses matching code constant  1630ms
+     ✓ 2. Raw second active order for the same listing fails with unique violation (P2002 / 23505)  1225ms
+     ✓ 3. Multiple terminal orders for the same listing do NOT violate the index  1358ms
+ ✓ test/unit/escrowLedger.test.ts (6 tests) 5095ms
+     ✓ releases escrow funds to seller wallet and records immutable ledger  1410ms
+     ✓ P0-03 IDEMPOTENCY: calling release multiple times executes financial payout exactly once  836ms
+     ✓ MUTUAL EXCLUSION: cannot release escrow if already refunded  825ms
+     ✓ MUTUAL EXCLUSION: cannot refund escrow if already released  855ms
+     ✓ DISPUTE FREEZE: cannot release funds while in FROZEN_DISPUTE status without override  624ms
+     ✓ FORBIDDEN: seller cannot release their own escrow  538ms
+ ✓ test/integration/concurrency.test.ts (4 tests) 6637ms
+     ✓ PARALLEL ESCROW RELEASE: Two simultaneous releases credit the seller wallet exactly once  1959ms
+     ✓ RELEASE VS REFUND RACE: Mutual exclusion guaranteed when release and refund collide  1319ms
+     ✓ PARALLEL WITHDRAWALS: Two simultaneous 800k withdrawals on a 1M balance only allow one deduction  2057ms
+     ✓ CONFLICTING DISPUTE VERDICTS: Only one admin verdict can commit  1273ms
+ ✓ test/integration/disputeResolution.test.ts (3 tests) 2804ms
+     ✓ buyer opens dispute -> freezes escrow account and transitions order to DISPUTED  1108ms
+     ✓ admin resolves dispute with REFUND_BUYER verdict -> executes refund and marks dispute RESOLVED_BUYER  849ms
+     ✓ admin resolves dispute with RELEASE_SELLER verdict -> unfreezes and releases funds to seller wallet  836ms
+ ✓ test/integration/withdrawalIdempotency.test.ts (4 tests) 8898ms
+     ✓ 1. Two withdrawal requests with the SAME clientRequestId -> wallet debited exactly once, second response has isDuplicate: true  3177ms
+     ✓ 2. Two withdrawal requests with DIFFERENT clientRequestId (same user, same amount) -> both succeed, wallet debited twice  2274ms
+     ✓ 3. Missing bankAccountId in request body -> 400 VALIDATION_ERROR (schema requires it)  1092ms
+     ✓ 4. Two withdrawal requests with the SAME Idempotency-Key HTTP HEADER -> wallet debited exactly once, second response has isDuplicate: true  2343ms
+ ✓ test/integration/orderCreation.test.ts (8 tests) 10361ms
+     ✓ 1. Tampered itemPrice / totalAmount in body -> 400, no order row created  1764ms
+     ✓ 2. Own listing purchase attempt -> 403, no order row created  1356ms
+     ✓ 3. Same Idempotency-Key twice -> exactly one order row created, identical response  1274ms
+     ✓ 4. Inactive or unknown listing -> 404/422, no order row created  1109ms
+     ✓ 5. Unauthenticated request -> 401, no order row created  1112ms
+     ✓ 6. Missing Idempotency-Key header -> 400 IDEMPOTENCY_KEY_REQUIRED  1118ms
+     ✓ 7. Written order has buyerId === session.id, status === PENDING_PAYMENT, and correct server breakdown  1293ms
+     ✓ 8. I1 Defense (Decision D5): Second order on already RESERVED listing is rejected with 422  1328ms
+ ✓ test/integration/orderFullJourney.test.ts (1 test) 2732ms
+     ✓ completes full end-to-end server journey: createOrder -> getOrders -> webhookFund -> ship -> deliver -> inspect -> release  2699ms
+ ✓ test/unit/stepUpGrant.test.ts (9 tests) 1404ms
+     ✓ successfully consumes a valid single-use step-up grant on first use  614ms
+ ✓ test/integration/orderSimulationD4.test.ts (7 tests) 1195ms
+     ✓ 1. Reject with 404 when demo flag is disabled  427ms
+ ✓ test/integration/orderEscrowLifecycle.test.ts (1 test) 1689ms
+     ✓ executes full lifecycle: payment -> shipment -> inspection -> receipt confirmation -> escrow release  1674ms
+ ✓ test/integration/orderReservationConcurrency.test.ts (6 tests) 13593ms
+     ✓ 1. 5 distinct buyers racing for the same listing (20 loop iterations)  6906ms
+     ✓ 2. 2 buyers racing for a listing whose blocking order is expired  1356ms
+     ✓ 3. Late POST /api/payment/simulate-webhook for an order cancelled by lazy expiry is rejected  1349ms
+     ✓ 4. Same buyer, different Idempotency-Key, same listing: second order rejected with 422  1319ms
+     ✓ 5. Replay of same Idempotency-Key returns same order with single DB row  1316ms
+     ✓ 6. Decision D7: POST /api/orders on an ARCHIVED listing is rejected with 422 LISTING_NOT_ACTIVE  1326ms
+ ✓ test/integration/walletPin.test.ts (6 tests) 14272ms
+     ✓ 1. Rejects request without session with 401  1070ms
+     ✓ 2. Rejects wrong password with 401 and increments failed attempts (Task 4.2 brake)  1385ms
+     ✓ 3. Locks account after 5 failed password attempts  3242ms
+     ✓ 4. Rejects trivially weak PINs with 422 PIN_TOO_WEAK  3209ms
+     ✓ 5. Successfully sets PIN, stores hash, writes AuditLog, and passes assertNoSecrets  4093ms
+     ✓ 6. GET /api/wallet/pin returns hasPin accurately and passes assertNoSecrets  1242ms
+ ✓ test/unit/totpDistributedReplay.test.ts (6 tests) 1141ms
+     ✓ accepts a valid TOTP code on first submission and records lastTotpStep in PostgreSQL  718ms
+ ✓ test/integration/orderSecretLeak.test.ts (1 test) 1399ms
+     ✓ POST /api/orders, replay, GET /api/orders/[id], and GET /api/orders never leak secrets or sentinels to buyer, seller, or admin  1377ms
+stdout | test/integration/migrationUpgradeSafety.test.ts > Operational Migration Upgrade Safety (FINAL-OPS-01) > verifies clean preflight state on modern schema with dropped plaintext column
+[Preflight Safety Check] SUCCESS: Column 'totpSecret' does not exist or has already been dropped.
+
+stdout | test/integration/migrationUpgradeSafety.test.ts > Operational Migration Upgrade Safety (FINAL-OPS-01) > safely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[Migration] Starting legacy TOTP encryption check...
+
+stdout | test/integration/migrationUpgradeSafety.test.ts > Operational Migration Upgrade Safety (FINAL-OPS-01) > safely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[Migration] Encrypted TOTP secret for user: usr-legacy-test-1795612297327
+[Migration] Completed: 1 migrated, 0 errors.
+
+stdout | test/integration/migrationUpgradeSafety.test.ts > Operational Migration Upgrade Safety (FINAL-OPS-01) > safely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[Preflight Safety Check] SUCCESS: 0 unmigrated plaintext TOTP records found.
+
+stdout | test/integration/migrationUpgradeSafety.test.ts > Operational Migration Upgrade Safety (FINAL-OPS-01) > safely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[Preflight Safety Check] SUCCESS: Column 'totpSecret' does not exist or has already been dropped.
+
+ ✓ test/integration/migrationUpgradeSafety.test.ts (2 tests) 982ms
+     ✓ verifies clean preflight state on modern schema with dropped plaintext column  633ms
+ ✓ test/integration/walletAuthority.test.ts (11 tests) 17264ms
+       ✓ 1. Returns 401 UNAUTHORIZED when no session exists  1520ms
+       ✓ 2. Returns canonical wallet state, hasPin=true, masked bank accounts, and scoped ledger  1363ms
+       ✓ 3. Correctly reflects hasPin=false when user has no transaction PIN configured  1643ms
+       ✓ 1. Allows withdrawal to User A's own registered bankAccountId and snapshots canonical details  1773ms
+       ✓ 2. IDOR REJECTION: User A submitting User B's bankAccountId is rejected with generic error and ZERO DB mutations  1195ms
+       ✓ 3. Rejects nonexistent bankAccountId with generic error and zero mutations  1178ms
+       ✓ 4. Rejects request without session with 401 UNAUTHORIZED  1196ms
+       ✓ 5. Rejects withdrawal with insufficient active balance and mutates nothing  1842ms
+       ✓ 6. Rejects withdrawal when user has not configured PIN (PIN_NOT_SET -> 409)  1755ms
+       ✓ 7. Rejects malformed bankAccountId (empty string) with 400 VALIDATION_ERROR  1252ms
+       ✓ 1. Replaying exact same Idempotency-Key returns canonical response and debits active balance exactly once  2505ms
+ ✓ test/integration/orderTransitionConcurrency.test.ts (1 test) 1612ms
+     ✓ fires two concurrent SHIPPED transitions from same seller: exactly one 200, one 409, and exactly one OrderStatusHistory row  1593ms
+ ✓ test/unit/totp.test.ts (9 tests) 958ms
+ ✓ test/unit/sessionRevocation.test.ts (5 tests) 1234ms
+     ✓ authoritatively validates an active session when sessionVersion matches  879ms
+ ✓ test/unit/walletLedger.test.ts (10 tests) 21450ms
+       ✓ accepts the correct 6-digit PIN  2234ms
+       ✓ rejects an incorrect 6-digit PIN (fixes the original P0-04 bug)  1738ms
+       ✓ rejects non-6-digit PIN format  1043ms
+       ✓ locks user PIN after 5 consecutive failed attempts  3801ms
+       ✓ successfully creates withdrawal and deducts active balance with valid PIN  1751ms
+       ✓ rejects withdrawal with insufficient active balance  1646ms
+       ✓ rejects withdrawal with invalid PIN  1537ms
+       ✓ IDEMPOTENCY: duplicate withdrawal request does not double-debit active balance  2451ms
+       ✓ returns PIN_NOT_SET without consuming failed attempts when hashedPin is null  1772ms
+       ✓ throws INVALID_PIN and increments counter when PIN is wrong  3402ms
+ ✓ test/unit/loginDummyHash.test.ts (1 test) 2494ms
+     ✓ runs bcrypt.compare against a valid bcrypt dummy hash when the email does not exist  2476ms
+ ✓ test/unit/walletFakeSuccess.test.ts (8 tests) 443ms
+ ✓ test/integration/healthRoute.test.ts (2 tests) 491ms
+     ✓ AC9.7: returns 200 { status: 'ok' } when PostgreSQL SELECT 1 succeeds and exposes no versions, env, or stack  446ms
+ ✓ test/unit/money.test.ts (11 tests) 300ms
+ ✓ test/unit/sessionTampering.test.ts (8 tests) 208ms
+ ✓ test/unit/orderStateMachine.test.ts (15 tests) 75ms
+ ✓ test/unit/environmentMatrix.test.ts (9 tests) 87ms
+ ✓ test/unit/totpEncryption.test.ts (7 tests) 80ms
+ ✓ test/unit/authorization.test.ts (3 tests) 56ms
+ ✓ test/unit/envValidation.test.ts (7 tests) 41ms
+ ✓ test/integration/loginBruteForce.test.ts (4 tests) 23409ms
+     ✓ AC9.3: locks account for 15 minutes after 5 consecutive wrong passwords and rejects 6th correct password without setting session cookie  4983ms
+     ✓ AC9.4: unknown email and known email with wrong password return identical HTTP status and JSON keys  1551ms
+     ✓ AC9.5: 20 concurrent wrong-password requests increment loginFailedAttempts without undercounting and lock the account  13378ms
+     ✓ resets loginFailedAttempts on successful login and clears expired lock on subsequent attempts  3465ms
+ ✓ test/unit/seedSafety.test.ts (6 tests) 27444ms
+       ✓ hard refuses to execute seed when APP_ENV=production  11705ms
+       ✓ hard refuses to execute seed when NODE_ENV=production  10906ms
+       ✓ refuses execution even with CI parent environment pollution (ALLOW_DEMO_IN_PRODUCTION=true)  4814ms
+
+ Test Files  32 passed (32)
+      Tests  184 passed (184)
+   Start at  20:11:16
+   Duration  30.09s (transform 10.82s, setup 0ms, import 57.60s, tests 174.07s, environment 47ms)
+
+stderr | test/integration/migrationUpgradeSafety.test.ts > Operational Migration Upgrade Safety (FINAL-OPS-01) > safely backfills legacy Pass #2 plaintext TOTP seeds to AES-256-GCM before drop column
+[Preflight Safety Check] FAILED: Found 1 user(s) with plaintext TOTP seeds but no ciphertext! Do NOT apply drop-column migration.
+
+stderr | test/unit/walletFakeSuccess.test.ts > Phase 1.1 — Financial Fake-Success & Ambiguous State Hardening > Item A — Zustand Store: useWalletStore.withdrawFunds > returns status UNKNOWN on simulated network timeout/failure and preserves balance
+[useWalletStore] withdrawFunds request failed: TypeError: Failed to fetch
+    at D:/MY CODE/NgeBekasinYuk-Web/apps/web/test/unit/walletFakeSuccess.test.ts:24:48
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+stderr | test/unit/walletFakeSuccess.test.ts > Phase 1.1 — Financial Fake-Success & Ambiguous State Hardening > Item A — Zustand Store: useWalletStore.withdrawFunds > UI Contract: preserves clientRequestId and triggers warning toast when status is UNKNOWN
+[useWalletStore] withdrawFunds request failed: Error: Network timeout after 10000ms
+    at D:/MY CODE/NgeBekasinYuk-Web/apps/web/test/unit/walletFakeSuccess.test.ts:98:48
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///D:/MY%20CODE/NgeBekasinYuk-Web/node_modules/.pnpm/@vitest+runner@4.1.12/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+stderr | test/unit/seedSafety.test.ts > Database Seed Production Refusal Safety Test (Task 4.7) > assertSeedEnvironmentIsSafe synchronous assertion > throws immediately if APP_ENV=production
+CRITICAL ERROR: Cannot run deterministic seed in production environment!
+
+stderr | test/unit/seedSafety.test.ts > Database Seed Production Refusal Safety Test (Task 4.7) > assertSeedEnvironmentIsSafe synchronous assertion > throws immediately if NODE_ENV=production
+CRITICAL ERROR: Cannot run deterministic seed in production environment!
+

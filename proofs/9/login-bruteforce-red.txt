@@ -1,0 +1,96 @@
+
+ RUN  v4.1.11 C:/Users/rrgtet47/AppData/Local/Temp/ngebekasinyuk-red-phase9-1795611785258/apps/web
+
+ ❯ test/unit/loginDummyHash.test.ts (1 test | 1 failed) 319ms
+     × runs bcrypt.compare against a valid bcrypt dummy hash when the email does not exist 317ms
+stdout | test/integration/loginBruteForce.test.ts > Login Brute-Force Protection Integration Tests (AC9.3 - AC9.5) > resets loginFailedAttempts on successful login and clears expired lock on subsequent attempts
+prisma:error 
+Invalid `prisma.$queryRaw()` invocation:
+
+
+Raw query failed. Code: `42703`. Message: `column "loginFailedAttempts" does not exist`
+
+ ❯ test/integration/loginBruteForce.test.ts (4 tests | 3 failed) 4004ms
+     × AC9.3: locks account for 15 minutes after 5 consecutive wrong passwords and rejects 6th correct password without setting session cookie 815ms
+     ✓ AC9.4: unknown email and known email with wrong password return identical HTTP status and JSON keys 200ms
+     × AC9.5: 20 concurrent wrong-password requests increment loginFailedAttempts without undercounting and lock the account 2448ms
+     × resets loginFailedAttempts on successful login and clears expired lock on subsequent attempts 472ms
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 1 passed (5)
+   Start at  20:03:29
+   Duration  5.72s (transform 272ms, setup 0ms, import 1.33s, tests 4.32s, environment 0ms)
+
+undefined
+C:\Users\rrgtet47\AppData\Local\Temp\ngebekasinyuk-red-phase9-1795611785258\apps\web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command "vitest" not found
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/unit/loginDummyHash.test.ts > Login Dummy-Hash Timing Guard Unit Test (AC9.4) > runs bcrypt.compare against a valid bcrypt dummy hash when the email does not exist
+AssertionError: expected "compare" to be called 1 times, but got 0 times
+ ❯ test/unit/loginDummyHash.test.ts:27:24
+     25|     expect(body.error).toBe("INVALID_CREDENTIALS");
+     26|
+     27|     expect(compareSpy).toHaveBeenCalledTimes(1);
+       |                        ^
+     28|     expect(compareSpy.mock.calls[0][0]).toBe("AttemptPassword123!");
+     29|     expect(String(compareSpy.mock.calls[0][1])).toMatch(/^\$2[aby]\$10…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/integration/loginBruteForce.test.ts > Login Brute-Force Protection Integration Tests (AC9.3 - AC9.5) > AC9.3: locks account for 15 minutes after 5 consecutive wrong passwords and rejects 6th correct password without setting session cookie
+AssertionError: expected 'undefined' to be 'number' // Object.is equality
+
+Expected: "number"
+Received: "undefined"
+
+ ❯ test/integration/loginBruteForce.test.ts:82:41
+     80|     const fifthBody = await fifthRes.json();
+     81|     expect(fifthBody.error).toBe("INVALID_CREDENTIALS");
+     82|     expect(typeof fifthBody.retryAfter).toBe("number");
+       |                                         ^
+     83|     expect(fifthBody.retryAfter).toBeGreaterThan(0);
+     84|     expect(fifthBody.retryAfter).toBeLessThanOrEqual(15 * 60);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/integration/loginBruteForce.test.ts > Login Brute-Force Protection Integration Tests (AC9.3 - AC9.5) > AC9.5: 20 concurrent wrong-password requests increment loginFailedAttempts without undercounting and lock the account
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ test/integration/loginBruteForce.test.ts:132:38
+    130|     capturedCookieSets.length = 0;
+    131|     const correctAfterStorm = await POST(buildLoginRequest(testEmail, …
+    132|     expect(correctAfterStorm.status).toBe(401);
+       |                                      ^
+    133|     const lockBody = await correctAfterStorm.json();
+    134|     expect(lockBody.error).toBe("INVALID_CREDENTIALS");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/integration/loginBruteForce.test.ts > Login Brute-Force Protection Integration Tests (AC9.3 - AC9.5) > resets loginFailedAttempts on successful login and clears expired lock on subsequent attempts
+PrismaClientKnownRequestError: 
+Invalid `prisma.$queryRaw()` invocation:
+
+
+Raw query failed. Code: `42703`. Message: `column "loginFailedAttempts" does not exist`
+ ❯ Un.handleRequestError ../../node_modules/.pnpm/@prisma+client@6.4.1_prisma@6.4.1_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client/runtime/library.js:121:7447
+ ❯ Un.handleAndLogRequestError ../../node_modules/.pnpm/@prisma+client@6.4.1_prisma@6.4.1_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client/runtime/library.js:121:6771
+ ❯ Un.request ../../node_modules/.pnpm/@prisma+client@6.4.1_prisma@6.4.1_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client/runtime/library.js:121:6478
+ ❯ l ../../node_modules/.pnpm/@prisma+client@6.4.1_prisma@6.4.1_typescript@5.9.3__typescript@5.9.3/node_modules/@prisma/client/runtime/library.js:130:9644
+ ❯ test/integration/loginBruteForce.test.ts:161:26
+    159|     expect(hasSessionCookie(okRes)).toBe(true);
+    160|
+    161|     const afterSuccess = await prisma.$queryRaw<
+       |                          ^
+    162|       Array<{ loginFailedAttempts: number; loginLockedUntil: Date | nu…
+    163|     >`SELECT "loginFailedAttempts", "loginLockedUntil" FROM "User" WHE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+

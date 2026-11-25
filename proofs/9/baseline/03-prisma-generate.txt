@@ -1,0 +1,23 @@
+
+> web@0.1.0 prisma:generate C:\Users\rrgtet47\AppData\Local\Temp\ngebekasinyuk-baseline-9-1795602590907\apps\web
+> prisma generate
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+✔ Generated Prisma Client (v6.4.1) to .\..\..\node_modules\.pnpm\@prisma+client@6.4.1_prisma@6.4.1_typescript@5.9.3__typescript@5.9.3\node_modules\@prisma\client in 120ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Help us improve the Prisma ORM for everyone. Share your feedback in a short 2-min survey: https://pris.ly/orm/survey/release-5-22
+
+┌─────────────────────────────────────────────────────────┐
+│  Update available 6.4.1 -> 8.0.0-rc.35                  │
+│                                                         │
+│  This is a major update - please follow the guide at    │
+│  https://pris.ly/d/major-version-upgrade                │
+│                                                         │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘

@@ -1,0 +1,4 @@
+
+> web@0.1.0 typecheck C:\Users\rrgtet47\AppData\Local\Temp\ngebekasinyuk-baseline-9-1795602590907\apps\web
+> tsc --noEmit
+
