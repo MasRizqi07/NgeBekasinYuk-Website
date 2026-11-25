@@ -101,6 +101,40 @@ index 9b8c2ec..3470410 100644
        - name: Gate 2 - Prisma Validate & Generate Client
          run: |
            pnpm --filter web exec prisma validate
+diff --git a/.gitleaks.toml b/.gitleaks.toml
+new file mode 100644
+index 0000000..e03da2d
+--- /dev/null
++++ b/.gitleaks.toml
+@@ -0,0 +1,14 @@
++title = "NgeBekasinYuk Gitleaks Configuration"
++
++[extend]
++useDefault = true
++
++[[allowlists]]
++description = "Reviewed non-secret test user IDs and idempotency key literals in seeds, scripts, docs, and proof logs"
++regexTarget = "secret"
++regexes = [
++  '''^usr-legacy-test-\d+$''',
++  '''^(?:ESC-IDEMP|ESC-LEDGER-DEP|ESC-LEDGER-REL|WLE-IDEMP-REL)-[A-Z0-9-]+$''',
++  '''^(?:proof-idemp|idemp-proof)-[A-Za-z0-9-]+$''',
++  '''^f47ac10b-58cc-4372-a567-0e02b2c3d479$''',
++]
+diff --git a/.gitleaksignore b/.gitleaksignore
+new file mode 100644
+index 0000000..9f718c4
+--- /dev/null
++++ b/.gitleaksignore
+@@ -0,0 +1,8 @@
++# Reviewed historical non-secret false positives on already-pushed commits (Rule 0.3: never rewrite pushed history)
++# docs/README.md:161 matched "Password: bcrypt/argon2" (documentation text)
++8f4ea4475abb520a8adf8d26b7c66f60ca62a738:docs/README.md:generic-api-key:161
++# Deleted template file placeholder ("token=") in initial repository commit
++8f4ea4475abb520a8adf8d26b7c66f60ca62a738:apps/api/README.md:generic-api-key:5
++# Simulated idempotencyKey literal in historical proof commit (already scrubbed in later commits)
++efc0440b345f80122788c8fda726405db298d26d:proof.txt:generic-api-key:25
++
 diff --git a/apps/web/package.json b/apps/web/package.json
 index dbbcc46..7dbd2fc 100644
 --- a/apps/web/package.json

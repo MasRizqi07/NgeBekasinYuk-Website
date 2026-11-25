@@ -1,6 +1,8 @@
  .github/PULL_REQUEST_TEMPLATE.md                   |   22 +
  .github/dependabot.yml                             |   34 +
  .github/workflows/ci.yml                           |   17 +
+ .gitleaks.toml                                     |   14 +
+ .gitleaksignore                                    |    8 +
  apps/web/package.json                              |   10 +-
  .../20261125200500_add_login_lockout/migration.sql |    4 +
  apps/web/prisma/schema.prisma                      |    2 +
@@ -31,8 +33,17 @@
  proofs/9/baseline/09-vitest.txt                    |  164 ++
  proofs/9/baseline/10-build.txt                     |   66 +
  proofs/9/baseline/11-playwright-list.txt           |   27 +
+ proofs/9/build.txt                                 |   66 +
+ proofs/9/diff-code.patch                           |  846 +++++++
+ proofs/9/diff-stat.txt                             |   38 +
+ proofs/9/gitleaks.txt                              |    3 +
+ proofs/9/lint.txt                                  |   15 +
  proofs/9/login-bruteforce-green.txt                |   16 +
  proofs/9/login-bruteforce-red.txt                  |   96 +
+ proofs/9/playwright.txt                            |   37 +
+ proofs/9/runtime-curl.txt                          |  145 ++
+ proofs/9/typecheck.txt                             |    4 +
+ proofs/9/vitest.txt                                |  186 ++
  proof.txt => proofs/legacy/order-creation-curl.txt |    0
  .../legacy/wallet-pin-curl.txt                     |    0
- 37 files changed, 4659 insertions(+), 776 deletions(-)
+ 48 files changed, 6021 insertions(+), 776 deletions(-)
