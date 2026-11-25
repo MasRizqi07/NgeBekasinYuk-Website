@@ -56,6 +56,9 @@ export interface ListListingsInput {
   sellerId?: string;
   status?: ListingStatus;
   mine?: boolean;
+  canNego?: boolean;
+  verifiedOnly?: boolean;
+  city?: string;
   ids?: string[];
   sort?: "newest" | "price_asc" | "price_desc" | "popular";
   limit?: number;
@@ -251,6 +254,15 @@ export function parseListListingsQuery(
     sellerId: data.sellerId,
     status: data.status as ListingStatus | undefined,
     mine: data.mine === "true" || data.mine === "1",
+    canNego:
+      data.canNego === undefined
+        ? undefined
+        : data.canNego === "true" || data.canNego === "1",
+    verifiedOnly:
+      data.verifiedOnly === undefined
+        ? undefined
+        : data.verifiedOnly === "true" || data.verifiedOnly === "1",
+    city: data.city && data.city !== "Semua Kota" ? data.city : undefined,
     ids,
     sort: data.sort,
     limit: data.limit,
@@ -342,6 +354,21 @@ export async function listListings(
     conditions.push(Prisma.sql`l."price" <= ${params.maxPrice}`);
   }
 
+  if (params.canNego !== undefined) {
+    conditions.push(Prisma.sql`l."canNego" = ${params.canNego}`);
+  }
+
+  if (params.verifiedOnly) {
+    conditions.push(Prisma.sql`u."isVerified" = true`);
+  }
+
+  if (params.city) {
+    const escapedCity = escapeLikePattern(params.city.trim());
+    conditions.push(
+      Prisma.sql`sp."city" ILIKE ${`%${escapedCity}%`} ESCAPE '\\'`
+    );
+  }
+
   if (params.q && params.q.trim().length > 0) {
     const escapedQ = escapeLikePattern(params.q.trim());
     const pattern = `%${escapedQ}%`;
@@ -352,12 +379,13 @@ export async function listListings(
 
   if (params.cursor) {
     const c = decodeCursor(params.cursor, sort);
-    const cursorDate = new Date(c.createdAt);
+    // Normalize ISO instant to UTC timestamp without timezone to match Prisma's TIMESTAMP(3) column regardless of PG TimeZone.
+    const cursorTs = Prisma.sql`(${c.createdAt}::timestamptz AT TIME ZONE 'UTC')`;
 
     if (sort === "newest") {
       // Bound upper timestamp first so PostgreSQL leverages ProductListing_status_createdAt_id_idx.
       conditions.push(
-        Prisma.sql`l."createdAt" <= ${cursorDate} AND (l."createdAt" < ${cursorDate} OR l."id" > ${c.id})`
+        Prisma.sql`l."createdAt" <= ${cursorTs} AND (l."createdAt" < ${cursorTs} OR l."id" > ${c.id})`
       );
     } else if (sort === "price_asc") {
       if (c.price === undefined) {
@@ -369,7 +397,7 @@ export async function listListings(
         );
       }
       conditions.push(
-        Prisma.sql`(l."price" > ${c.price} OR (l."price" = ${c.price} AND (l."createdAt" < ${cursorDate} OR (l."createdAt" = ${cursorDate} AND l."id" > ${c.id}))))`
+        Prisma.sql`(l."price" > ${c.price} OR (l."price" = ${c.price} AND (l."createdAt" < ${cursorTs} OR (l."createdAt" = ${cursorTs} AND l."id" > ${c.id}))))`
       );
     } else if (sort === "price_desc") {
       if (c.price === undefined) {
@@ -381,7 +409,7 @@ export async function listListings(
         );
       }
       conditions.push(
-        Prisma.sql`(l."price" < ${c.price} OR (l."price" = ${c.price} AND (l."createdAt" < ${cursorDate} OR (l."createdAt" = ${cursorDate} AND l."id" > ${c.id}))))`
+        Prisma.sql`(l."price" < ${c.price} OR (l."price" = ${c.price} AND (l."createdAt" < ${cursorTs} OR (l."createdAt" = ${cursorTs} AND l."id" > ${c.id}))))`
       );
     } else {
       if (c.viewsCount === undefined) {
@@ -393,7 +421,7 @@ export async function listListings(
         );
       }
       conditions.push(
-        Prisma.sql`(l."viewsCount" < ${c.viewsCount} OR (l."viewsCount" = ${c.viewsCount} AND (l."createdAt" < ${cursorDate} OR (l."createdAt" = ${cursorDate} AND l."id" > ${c.id}))))`
+        Prisma.sql`(l."viewsCount" < ${c.viewsCount} OR (l."viewsCount" = ${c.viewsCount} AND (l."createdAt" < ${cursorTs} OR (l."createdAt" = ${cursorTs} AND l."id" > ${c.id}))))`
       );
     }
   }
