@@ -1,0 +1,301 @@
+{
+  "total_count": 2,
+  "jobs": [
+    {
+      "id": 139237539645,
+      "run_id": 45623506426,
+      "workflow_name": "NgeBekasinYuk Production Verification CI",
+      "head_branch": "feat/phase-9-baseline-security",
+      "run_url": "https://api.github.com/repos/MasRizqi07/NgeBekasinYuk-Website/actions/runs/45623506426",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUUAiS88AAAAgazQ_PQ",
+      "head_sha": "0d2d0d626e8b851188a6e36b2628cb9828840b1a",
+      "url": "https://api.github.com/repos/MasRizqi07/NgeBekasinYuk-Website/actions/jobs/139237539645",
+      "html_url": "https://github.com/MasRizqi07/NgeBekasinYuk-Website/actions/runs/45623506426/job/139237539645",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-25T13:25:55Z",
+      "started_at": "2026-11-25T13:25:57Z",
+      "completed_at": "2026-11-25T13:26:04Z",
+      "name": "Secret Scan (Gitleaks)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-25T13:25:58Z",
+          "completed_at": "2026-11-25T13:25:58Z"
+        },
+        {
+          "name": "Checkout Repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-25T13:25:58Z",
+          "completed_at": "2026-11-25T13:26:00Z"
+        },
+        {
+          "name": "Run Gitleaks Secret Scan",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-25T13:26:00Z",
+          "completed_at": "2026-11-25T13:26:02Z"
+        },
+        {
+          "name": "Post Checkout Repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-25T13:26:02Z",
+          "completed_at": "2026-11-25T13:26:02Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-25T13:26:02Z",
+          "completed_at": "2026-11-25T13:26:02Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/MasRizqi07/NgeBekasinYuk-Website/check-runs/139237539645",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000875,
+      "runner_name": "GitHub Actions 1000000875",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 139237539910,
+      "run_id": 45623506426,
+      "workflow_name": "NgeBekasinYuk Production Verification CI",
+      "head_branch": "feat/phase-9-baseline-security",
+      "run_url": "https://api.github.com/repos/MasRizqi07/NgeBekasinYuk-Website/actions/runs/45623506426",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUUAiS88AAAAgazRARg",
+      "head_sha": "0d2d0d626e8b851188a6e36b2628cb9828840b1a",
+      "url": "https://api.github.com/repos/MasRizqi07/NgeBekasinYuk-Website/actions/jobs/139237539910",
+      "html_url": "https://github.com/MasRizqi07/NgeBekasinYuk-Website/actions/runs/45623506426/job/139237539910",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-25T13:25:55Z",
+      "started_at": "2026-11-25T13:25:58Z",
+      "completed_at": "2026-11-25T13:28:28Z",
+      "name": "Complete Hardening Verification Gates (PostgreSQL 16)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-25T13:25:59Z",
+          "completed_at": "2026-11-25T13:26:02Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-25T13:26:02Z",
+          "completed_at": "2026-11-25T13:26:20Z"
+        },
+        {
+          "name": "Checkout Repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-25T13:26:20Z",
+          "completed_at": "2026-11-25T13:26:25Z"
+        },
+        {
+          "name": "Verify Exact Git HEAD SHA",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-25T13:26:25Z",
+          "completed_at": "2026-11-25T13:26:25Z"
+        },
+        {
+          "name": "Setup Node.js 20.x",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-25T13:26:25Z",
+          "completed_at": "2026-11-25T13:26:28Z"
+        },
+        {
+          "name": "Install pnpm",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-25T13:26:28Z",
+          "completed_at": "2026-11-25T13:26:29Z"
+        },
+        {
+          "name": "Get pnpm store directory",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-25T13:26:29Z",
+          "completed_at": "2026-11-25T13:26:30Z"
+        },
+        {
+          "name": "Setup pnpm cache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-25T13:26:30Z",
+          "completed_at": "2026-11-25T13:26:36Z"
+        },
+        {
+          "name": "Gate 1 - Install Dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-25T13:26:36Z",
+          "completed_at": "2026-11-25T13:26:38Z"
+        },
+        {
+          "name": "Gate 1b - Production Supply Chain Audit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-11-25T13:26:38Z",
+          "completed_at": "2026-11-25T13:26:38Z"
+        },
+        {
+          "name": "Gate 2 - Prisma Validate & Generate Client",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-11-25T13:26:38Z",
+          "completed_at": "2026-11-25T13:26:40Z"
+        },
+        {
+          "name": "Gate 3 - Deploy Fresh PostgreSQL Migrations",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-11-25T13:26:40Z",
+          "completed_at": "2026-11-25T13:26:42Z"
+        },
+        {
+          "name": "Gate 4 - Seed Test Database Fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-11-25T13:26:42Z",
+          "completed_at": "2026-11-25T13:26:43Z"
+        },
+        {
+          "name": "Gate 5 - Code Quality & Strict Linting (0 Warnings)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-11-25T13:26:43Z",
+          "completed_at": "2026-11-25T13:26:49Z"
+        },
+        {
+          "name": "Gate 6 - Strict TypeScript Typecheck",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-11-25T13:26:49Z",
+          "completed_at": "2026-11-25T13:26:56Z"
+        },
+        {
+          "name": "Gate 7 - Unit, Integration & Concurrency Test Suite",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-11-25T13:26:56Z",
+          "completed_at": "2026-11-25T13:27:06Z"
+        },
+        {
+          "name": "Gate 8 - Production App Router Bundle Build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-25T13:27:06Z",
+          "completed_at": "2026-11-25T13:27:20Z"
+        },
+        {
+          "name": "Install Playwright Chromium with OS Dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-11-25T13:27:20Z",
+          "completed_at": "2026-11-25T13:27:49Z"
+        },
+        {
+          "name": "Gate 9 - Playwright Browser E2E Test Suite",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-11-25T13:27:49Z",
+          "completed_at": "2026-11-25T13:28:23Z"
+        },
+        {
+          "name": "Post Setup pnpm cache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 34,
+          "started_at": "2026-11-25T13:28:23Z",
+          "completed_at": "2026-11-25T13:28:24Z"
+        },
+        {
+          "name": "Post Install pnpm",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 35,
+          "started_at": "2026-11-25T13:28:24Z",
+          "completed_at": "2026-11-25T13:28:24Z"
+        },
+        {
+          "name": "Post Setup Node.js 20.x",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 36,
+          "started_at": "2026-11-25T13:28:24Z",
+          "completed_at": "2026-11-25T13:28:24Z"
+        },
+        {
+          "name": "Post Checkout Repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 37,
+          "started_at": "2026-11-25T13:28:24Z",
+          "completed_at": "2026-11-25T13:28:25Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 38,
+          "started_at": "2026-11-25T13:28:25Z",
+          "completed_at": "2026-11-25T13:28:25Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 39,
+          "started_at": "2026-11-25T13:28:25Z",
+          "completed_at": "2026-11-25T13:28:25Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/MasRizqi07/NgeBekasinYuk-Website/check-runs/139237539910",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000874,
+      "runner_name": "GitHub Actions 1000000874",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}
