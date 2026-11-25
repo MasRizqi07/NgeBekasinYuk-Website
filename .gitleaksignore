@@ -1,0 +1,8 @@
+# Reviewed historical non-secret false positives on already-pushed commits (Rule 0.3: never rewrite pushed history)
+# docs/README.md:161 matched "Password: bcrypt/argon2" (documentation text)
+8f4ea4475abb520a8adf8d26b7c66f60ca62a738:docs/README.md:generic-api-key:161
+# Deleted template file placeholder ("token=") in initial repository commit
+8f4ea4475abb520a8adf8d26b7c66f60ca62a738:apps/api/README.md:generic-api-key:5
+# Simulated idempotencyKey literal in historical proof commit (already scrubbed in later commits)
+efc0440b345f80122788c8fda726405db298d26d:proof.txt:generic-api-key:25
+
