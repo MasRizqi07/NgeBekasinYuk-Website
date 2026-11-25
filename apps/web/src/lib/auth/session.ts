@@ -2,6 +2,7 @@
 // Cryptographically verified HMAC-SHA256 session cookie compatible with Edge Middleware and Node.js.
 
 import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 import { signHmacSha256, verifyHmacSha256 } from "./crypto";
 import { env } from "../env";
 
@@ -105,6 +106,23 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
   } catch {
     return null;
   }
+}
+
+/**
+ * Sets the httpOnly session cookie directly on a NextResponse object.
+ */
+export async function setSessionCookieOnResponse(
+  response: NextResponse,
+  user: SessionUser
+): Promise<void> {
+  const token = await signSession(user);
+  response.cookies.set(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: SESSION_TTL_SECONDS,
+  });
 }
 
 /**

@@ -26,6 +26,8 @@ model User {
   hashedPin         String?        // Bcrypt hashed 6-digit transaction PIN
   pinFailedAttempts Int            @default(0)
   pinLockedUntil    DateTime?
+  loginFailedAttempts Int          @default(0)
+  loginLockedUntil  DateTime?
   isVerified        Boolean        @default(false)
   accountStatus     String         @default("ACTIVE") // ACTIVE, SUSPENDED, DISABLED
   totpSecretCiphertext String?     // AES-256-GCM encrypted TOTP secret

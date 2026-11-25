@@ -1,0 +1,16 @@
+
+ RUN  v4.1.12 D:/MY CODE/NgeBekasinYuk-Web/apps/web
+
+ ✓ test/unit/loginDummyHash.test.ts (1 test) 485ms
+     ✓ runs bcrypt.compare against a valid bcrypt dummy hash when the email does not exist  480ms
+ ✓ test/integration/loginBruteForce.test.ts (4 tests) 5929ms
+     ✓ AC9.3: locks account for 15 minutes after 5 consecutive wrong passwords and rejects 6th correct password without setting session cookie  1374ms
+     ✓ AC9.4: unknown email and known email with wrong password return identical HTTP status and JSON keys  357ms
+     ✓ AC9.5: 20 concurrent wrong-password requests increment loginFailedAttempts without undercounting and lock the account  3078ms
+     ✓ resets loginFailedAttempts on successful login and clears expired lock on subsequent attempts  1074ms
+
+ Test Files  2 passed (2)
+      Tests  5 passed (5)
+   Start at  20:07:58
+   Duration  7.33s (transform 433ms, setup 0ms, import 1.60s, tests 6.41s, environment 1ms)
+
