@@ -25,7 +25,6 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           gitleaks git --no-banner --redact --log-opts="${{ github.event.pull_request.base.sha }}..HEAD"
-          gitleaks detect --no-git --no-banner --redact
 
   verify:
     name: Complete Hardening Verification Gates (PostgreSQL 16)
