@@ -1,7 +1,10 @@
 export type TechCondition =
   | 'BRAND_NEW_SEALED'// Segel Baru (100%)
+  | 'BRAND_NEW'       // Segel Baru (100%)
   | 'LIKE_NEW'        // Seperti Baru (99%)
+  | 'VERY_GOOD'       // Sangat Mulus (96%)
   | 'NORMAL_USE'      // Pemakaian Wajar (95%)
+  | 'FAIR'            // Kondisi Layak (90%)
   | 'MINOR_SCRATCHES' // Lecet Pemakaian (90%)
   | 'MINOR_DEFECT';   // Minus / Rusak Ringan
 
@@ -36,6 +39,9 @@ export interface ProductListing {
   conditionLabel: string;
   conditionScore: number; // e.g. 98
   canNego: boolean;
+  minNegoPrice?: number;
+  status?: 'ACTIVE' | 'RESERVED' | 'SOLD' | 'ARCHIVED';
+  sellerId?: string;
   images: string[];
   location: string;
   city: string;
