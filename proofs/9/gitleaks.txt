@@ -1,16 +1,3 @@
-Finding:     Password: REDACTED"
-Secret:      REDACTED
-RuleID:      generic-api-key
-Entropy:     3.546594
-File:        .gitleaksignore
-Line:        2
-Commit:      a0d8c94ab179d376aab18b5ea7933876b61c2a41
-Author:      MasRizqi07
-Email:       sembarangananak@gmail.com
-Date:        2026-11-25T13:23:44Z
-Fingerprint: a0d8c94ab179d376aab18b5ea7933876b61c2a41:.gitleaksignore:generic-api-key:2
-Link:        https://github.com/MasRizqi07/NgeBekasinYuk-Website/blob/a0d8c94ab179d376aab18b5ea7933876b61c2a41/.gitleaksignore#L2
-
-8:24PM INF 62 commits scanned.
-8:24PM INF scanned ~3560531 bytes (3.56 MB) in 1.42s
-8:24PM WRN leaks found: 1
+8:25PM INF 64 commits scanned.
+8:25PM INF scanned ~3563610 bytes (3.56 MB) in 2.16s
+8:25PM INF no leaks found

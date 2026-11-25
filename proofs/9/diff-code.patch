@@ -123,18 +123,20 @@ index 0000000..e03da2d
 +]
 diff --git a/.gitleaksignore b/.gitleaksignore
 new file mode 100644
-index 0000000..9f718c4
+index 0000000..80c3936
 --- /dev/null
 +++ b/.gitleaksignore
-@@ -0,0 +1,8 @@
+@@ -0,0 +1,10 @@
 +# Reviewed historical non-secret false positives on already-pushed commits (Rule 0.3: never rewrite pushed history)
-+# docs/README.md:161 matched "Password: bcrypt/argon2" (documentation text)
++# docs/README.md line 161 documentation wording false positive
 +8f4ea4475abb520a8adf8d26b7c66f60ca62a738:docs/README.md:generic-api-key:161
-+# Deleted template file placeholder ("token=") in initial repository commit
++# Deleted template file placeholder in initial repository commit
 +8f4ea4475abb520a8adf8d26b7c66f60ca62a738:apps/api/README.md:generic-api-key:5
 +# Simulated idempotencyKey literal in historical proof commit (already scrubbed in later commits)
 +efc0440b345f80122788c8fda726405db298d26d:proof.txt:generic-api-key:25
-+
++# Prior comment line in a0d8c94 and its net diff snapshot in fc2f569
++a0d8c94ab179d376aab18b5ea7933876b61c2a41:.gitleaksignore:generic-api-key:2
++fc2f569e886430f233e24bf2ee443c36c1a08b23:proofs/9/diff-code.patch:generic-api-key:131
 diff --git a/apps/web/package.json b/apps/web/package.json
 index dbbcc46..7dbd2fc 100644
 --- a/apps/web/package.json
