@@ -21,6 +21,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Scan Full PR Commit Range & Merge Diff
+        if: github.event_name == 'pull_request'
+        run: |
+          gitleaks git --no-banner --redact --log-opts="${{ github.event.pull_request.base.sha }}..HEAD"
+          gitleaks detect --no-git --no-banner --redact
+
   verify:
     name: Complete Hardening Verification Gates (PostgreSQL 16)
     runs-on: ubuntu-latest
