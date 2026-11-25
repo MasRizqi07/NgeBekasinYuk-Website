@@ -1,0 +1,66 @@
+
+> web@0.1.0 build C:\Users\rrgtet47\AppData\Local\Temp\ngebekasinyuk-baseline-9-1795602590907\apps\web
+> next build
+
+▲ Next.js 16.3.4 (Turbopack)
+- Environments: .env
+✓ Running next.config.ts took 35ms
+⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 6.4s
+  Running TypeScript ...
+  Finished TypeScript in 5.6s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/30) ...
+  Generating static pages using 11 workers (7/30) 
+  Generating static pages using 11 workers (14/30) 
+  Generating static pages using 11 workers (22/30) 
+✓ Generating static pages using 11 workers (30/30) in 425ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin/dashboard
+├ ○ /admin/disputes
+├ ƒ /api/admin/step-up
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/register
+├ ƒ /api/auth/session
+├ ƒ /api/disputes/[id]/verdict
+├ ƒ /api/orders
+├ ƒ /api/orders/[id]
+├ ƒ /api/orders/[id]/simulate
+├ ƒ /api/orders/[id]/transition
+├ ƒ /api/payment/simulate-webhook
+├ ƒ /api/wallet
+├ ƒ /api/wallet/pin
+├ ƒ /api/wallet/withdraw
+├ ○ /cart
+├ ○ /chat
+├ ƒ /chat/[id]
+├ ○ /checkout
+├ ƒ /disputes/[id]
+├ ○ /help/escrow
+├ ○ /login
+├ ○ /my-listings
+├ ○ /notifications
+├ ○ /orders
+├ ƒ /orders/[id]
+├ ƒ /payment/[orderId]/pending
+├ ƒ /product/[slug]
+├ ○ /profile
+├ ○ /profile/verification
+├ ○ /register
+├ ○ /search
+├ ○ /sell
+└ ○ /wallet
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
