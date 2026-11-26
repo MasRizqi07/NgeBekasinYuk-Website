@@ -4,6 +4,7 @@ import { validateAuthoritativeSession } from "@/lib/auth/authoritativeSession";
 import { OrderTransitionSchema } from "@/lib/validations";
 import {
   assertTransition,
+  type ActorRole,
   OrderStatus,
   OrderStateTransitionError,
 } from "@/domain/order/OrderStateMachine";
@@ -43,11 +44,22 @@ export async function POST(
       return NextResponse.json({ error: "ORDER_NOT_FOUND", message: "Pesanan tidak ditemukan." }, { status: 404 });
     }
 
+    // Derive per-order capability for C2C users so BUYER accounts who publish listings
+    // can fulfill/ship sales without leaving their buyer capabilities or mutating OrderStateMachine.
+    const effectiveActorRole: ActorRole =
+      session.role === "ADMIN"
+        ? "ADMIN"
+        : session.id === order.buyerId
+        ? "BUYER"
+        : session.id === order.sellerId
+        ? "SELLER"
+        : (session.role as ActorRole);
+
     // Enforce state machine rules
     try {
       assertTransition(order.status as OrderStatus, toStatus as OrderStatus, {
         actorId: session.id,
-        actorRole: session.role,
+        actorRole: effectiveActorRole,
         order: {
           id: order.id,
           buyerId: order.buyerId,
@@ -69,7 +81,7 @@ export async function POST(
 
     // If transitioning to COMPLETED, execute authoritative escrow release!
     if (toStatus === "COMPLETED") {
-      if (session.role !== "BUYER" && session.role !== "ADMIN") {
+      if (effectiveActorRole !== "BUYER" && effectiveActorRole !== "ADMIN") {
         return NextResponse.json(
           { error: "FORBIDDEN", message: "Penjual tidak diizinkan melepaskan dana escrow sendiri." },
           { status: 403 }
@@ -79,7 +91,7 @@ export async function POST(
       const releaseResult = await EscrowLedgerService.releaseEscrow({
         orderId: order.id,
         actorId: session.id,
-        actorRole: session.role,
+        actorRole: effectiveActorRole,
       });
 
       return NextResponse.json({
@@ -98,7 +110,7 @@ export async function POST(
       toStatus: toStatus as OrderStatus,
       actor: {
         id: session.id,
-        role: session.role,
+        role: effectiveActorRole,
         name: session.name,
       },
       shippingCourier,

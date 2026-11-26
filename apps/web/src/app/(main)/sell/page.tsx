@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -19,6 +19,8 @@ import { useToast } from "@/components/ui/Toast";
 interface PendingImageFile {
   file: File;
   previewUrl: string;
+  uploadKey: string;
+  uploaded: boolean;
 }
 
 export default function SellPage() {
@@ -27,6 +29,7 @@ export default function SellPage() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [pendingImages, setPendingImages] = useState<PendingImageFile[]>([]);
+  const livePreviewUrlsRef = useRef<Set<string>>(new Set());
   const [title, setTitle] = useState("");
   const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
@@ -44,32 +47,56 @@ export default function SellPage() {
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
+  const [draftListing, setDraftListing] = useState<{ id: string; slug: string } | null>(null);
 
   useEffect(() => {
+    const urls = livePreviewUrlsRef.current;
     return () => {
-      for (const img of pendingImages) {
-        URL.revokeObjectURL(img.previewUrl);
+      for (const url of urls) {
+        URL.revokeObjectURL(url);
       }
+      urls.clear();
     };
-  }, [pendingImages]);
+  }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const remainingSlots = Math.max(0, 8 - pendingImages.length);
+    if (remainingSlots === 0) {
+      showToast("Maksimal 8 foto per iklan.", "error");
+      e.target.value = "";
+      return;
+    }
+
     const accepted: PendingImageFile[] = [];
     for (const file of Array.from(files)) {
+      if (accepted.length >= remainingSlots) {
+        showToast("Sebagian foto dilewati karena batas maksimal 8 foto.", "info");
+        break;
+      }
+      if (file.size === 0) {
+        showToast(`"${file.name}" kosong (0 byte).`, "error");
+        continue;
+      }
       if (file.size > 5 * 1024 * 1024) {
         showToast(`"${file.name}" melebihi batas 5 MB.`, "error");
         continue;
       }
+      const previewUrl = URL.createObjectURL(file);
+      livePreviewUrlsRef.current.add(previewUrl);
       accepted.push({
         file,
-        previewUrl: URL.createObjectURL(file),
+        previewUrl,
+        uploadKey: crypto.randomUUID(),
+        uploaded: false,
       });
     }
 
-    setPendingImages((prev) => [...prev, ...accepted].slice(0, 8));
+    if (accepted.length > 0) {
+      setPendingImages((prev) => [...prev, ...accepted]);
+    }
     e.target.value = "";
   };
 
@@ -78,6 +105,7 @@ export default function SellPage() {
       const target = prev[index];
       if (target) {
         URL.revokeObjectURL(target.previewUrl);
+        livePreviewUrlsRef.current.delete(target.previewUrl);
       }
       return prev.filter((_, i) => i !== index);
     });
@@ -116,52 +144,70 @@ export default function SellPage() {
 
     const derivedBrand = brand.trim() || title.trim().split(/\s+/)[0] || "Gadget";
     const derivedModel = model.trim() || title.trim().slice(0, 80);
+    const hasPendingImages = pendingImages.length > 0;
 
     try {
-      const createRes = await fetch("/api/listings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Idempotency-Key": activeKey,
-        },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: finalDescription,
-          price: Number(price),
-          category,
-          brand: derivedBrand,
-          model: derivedModel,
-          condition,
-          canNego,
-        }),
-      });
+      let targetListing = draftListing;
 
-      const createdJson = await createRes.json().catch(() => ({}));
-      if (createRes.status === 401) {
-        showToast("Silakan login terlebih dahulu untuk memasang iklan.", "error");
-        setIsSubmitting(false);
-        router.push("/login");
-        return;
+      if (!targetListing) {
+        const createRes = await fetch("/api/listings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": activeKey,
+          },
+          body: JSON.stringify({
+            title: title.trim(),
+            description: finalDescription,
+            price: Number(price),
+            category,
+            brand: derivedBrand,
+            model: derivedModel,
+            condition,
+            canNego,
+            deferPublish: hasPendingImages,
+          }),
+        });
+
+        const createdJson = await createRes.json().catch(() => ({}));
+        if (createRes.status === 401) {
+          showToast("Silakan login terlebih dahulu untuk memasang iklan.", "error");
+          setIsSubmitting(false);
+          router.push("/login");
+          return;
+        }
+
+        if (!createRes.ok) {
+          showToast(
+            createdJson?.detail ||
+              createdJson?.message ||
+              "Gagal membuat iklan gadget.",
+            "error"
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        targetListing = { id: createdJson.id, slug: createdJson.slug };
+        setDraftListing(targetListing);
       }
 
-      if (!createRes.ok) {
-        showToast(
-          createdJson?.detail ||
-            createdJson?.message ||
-            "Gagal membuat iklan gadget.",
-          "error"
-        );
-        setIsSubmitting(false);
-        return;
-      }
+      for (let i = 0; i < pendingImages.length; i++) {
+        const item = pendingImages[i];
+        if (item.uploaded) continue;
 
-      for (const item of pendingImages) {
         const formData = new FormData();
         formData.append("file", item.file);
-        const uploadRes = await fetch(`/api/listings/${createdJson.id}/images`, {
-          method: "POST",
-          body: formData,
-        });
+        const uploadRes = await fetch(
+          `/api/listings/${targetListing.id}/images`,
+          {
+            method: "POST",
+            headers: {
+              "Idempotency-Key": item.uploadKey,
+            },
+            body: formData,
+          }
+        );
 
         if (!uploadRes.ok) {
           const uploadErr = await uploadRes.json().catch(() => ({}));
@@ -174,11 +220,34 @@ export default function SellPage() {
           setIsSubmitting(false);
           return;
         }
+
+        setPendingImages((prev) =>
+          prev.map((img, idx) => (idx === i ? { ...img, uploaded: true } : img))
+        );
+      }
+
+      if (hasPendingImages) {
+        const publishRes = await fetch(
+          `/api/listings/${targetListing.id}/relist`,
+          { method: "POST" }
+        );
+        if (!publishRes.ok) {
+          const pubErr = await publishRes.json().catch(() => ({}));
+          showToast(
+            pubErr?.detail ||
+              pubErr?.message ||
+              "Foto tersimpan namun gagal menayangkan iklan.",
+            "error"
+          );
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       setIdempotencyKey(null);
+      setDraftListing(null);
       showToast("Iklan gadget berhasil ditayangkan! 🎉", "success");
-      router.push(`/product/${createdJson.slug}`);
+      router.push(`/product/${targetListing.slug}`);
     } catch {
       showToast("Terjadi kesalahan jaringan saat menayangkan iklan.", "error");
       setIsSubmitting(false);

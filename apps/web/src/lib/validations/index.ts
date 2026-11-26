@@ -186,6 +186,7 @@ export const CreateListingSchema = z
       .max(500000000)
       .nullable()
       .optional(),
+    deferPublish: z.boolean().optional().default(false),
     images: z
       .array(
         z

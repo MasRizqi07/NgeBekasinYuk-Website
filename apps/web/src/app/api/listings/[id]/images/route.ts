@@ -1,11 +1,61 @@
 import { NextResponse } from "next/server";
 import { validateAuthoritativeSession } from "@/lib/auth/authoritativeSession";
-import { attachListingImage } from "@/domain/listing/listingService";
+import {
+  attachListingImage,
+  authorizeListingImageUpload,
+  ListingServiceError,
+} from "@/domain/listing/listingService";
 import {
   handleRouteError,
   problemResponse,
   requestPathname,
 } from "@/lib/http/problemDetails";
+
+// Allow 6 MB raw multipart envelope overhead around the strict 5 MB file cap.
+const MAX_MULTIPART_BODY_BYTES = 6 * 1024 * 1024;
+
+async function readBoundedRequestBody(request: Request): Promise<Buffer> {
+  const contentLengthHeader = request.headers.get("content-length");
+  if (contentLengthHeader) {
+    const declaredLength = Number(contentLengthHeader);
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_MULTIPART_BODY_BYTES) {
+      throw new ListingServiceError(
+        "PAYLOAD_TOO_LARGE",
+        "Ukuran Permintaan Terlalu Besar",
+        "Ukuran unggahan maksimal 5 MB per foto.",
+        413
+      );
+    }
+  }
+
+  if (!request.body) {
+    return Buffer.alloc(0);
+  }
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) {
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_MULTIPART_BODY_BYTES) {
+        await reader.cancel().catch(() => {});
+        throw new ListingServiceError(
+          "PAYLOAD_TOO_LARGE",
+          "Ukuran Permintaan Terlalu Besar",
+          "Ukuran unggahan maksimal 5 MB per foto.",
+          413
+        );
+      }
+      chunks.push(value);
+    }
+  }
+
+  return Buffer.concat(chunks.map((c) => Buffer.from(c)));
+}
 
 export async function POST(
   request: Request,
@@ -23,9 +73,22 @@ export async function POST(
       });
     }
 
+    const { id } = await context.params;
+    const actor = { id: session.id, role: session.role };
+
+    // Authorize listing existence, ownership, and photo count limit before reading body.
+    await authorizeListingImageUpload({ listingId: id, actor });
+
+    const boundedBuffer = await readBoundedRequestBody(request);
     let formData: FormData;
     try {
-      formData = await request.formData();
+      const contentType = request.headers.get("content-type") || "";
+      const boundedReq = new Request(request.url, {
+        method: "POST",
+        headers: { "content-type": contentType },
+        body: new Uint8Array(boundedBuffer),
+      });
+      formData = await boundedReq.formData();
     } catch {
       return problemResponse({
         error: "INVALID_MULTIPART",
@@ -47,15 +110,17 @@ export async function POST(
       });
     }
 
-    const arrayBuffer = await fileEntry.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const buffer = Buffer.from(await fileEntry.arrayBuffer());
+    const idempotencyKey =
+      request.headers.get("Idempotency-Key") ||
+      request.headers.get("idempotency-key");
 
-    const { id } = await context.params;
     const createdImage = await attachListingImage({
       listingId: id,
-      actor: { id: session.id, role: session.role },
+      actor,
       buffer,
       claimedMimeType: fileEntry.type,
+      idempotencyKey,
     });
 
     return NextResponse.json(createdImage, { status: 201 });

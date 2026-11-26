@@ -227,9 +227,15 @@ export default function CheckoutPage() {
                     <span className="font-bold text-xs text-on-surface">
                       {activeListing.seller.name}
                     </span>
-                    <span className="text-[10px] font-bold bg-brand-secondary-light text-brand-secondary px-1.5 py-0.2 rounded">
-                      KYC Aktif
-                    </span>
+                    {activeListing.seller.verifiedKYC ? (
+                      <span className="text-[10px] font-bold bg-brand-secondary-light text-brand-secondary px-1.5 py-0.2 rounded">
+                        KYC Aktif
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold bg-surface-subtle text-text-muted px-1.5 py-0.2 rounded">
+                        Penjual Terdaftar
+                      </span>
+                    )}
                   </div>
                   <span className="text-[11px] text-text-muted">
                     {activeListing.seller.location}

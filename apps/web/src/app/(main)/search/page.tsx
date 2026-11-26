@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   SlidersHorizontal,
   ArrowUpDown,
@@ -65,12 +65,30 @@ function SearchContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Sync URL params to filter store on URL change
+  const router = useRouter();
+  const lastSyncedSearchRef = useRef<string | null>(null);
+  const currentQueryString = searchParams.toString();
+
+  // Sync URL params to filter store only when the URL itself changes.
   useEffect(() => {
+    if (lastSyncedSearchRef.current === currentQueryString) return;
+    lastSyncedSearchRef.current = currentQueryString;
+
     if (queryParam) setSearchQuery(queryParam);
     if (categoryParam) setSelectedCategory(categoryParam);
-    if (canNegoParam === "true" && !canNegoOnly) toggleCanNegoOnly();
-  }, [queryParam, categoryParam, canNegoParam, canNegoOnly, setSearchQuery, setSelectedCategory, toggleCanNegoOnly]);
+    if (canNegoParam === "true" && !canNegoOnly) {
+      toggleCanNegoOnly();
+    }
+  }, [
+    currentQueryString,
+    queryParam,
+    categoryParam,
+    canNegoParam,
+    canNegoOnly,
+    setSearchQuery,
+    setSelectedCategory,
+    toggleCanNegoOnly,
+  ]);
 
   const buildQueryString = useCallback(
     (cursor?: string | null) => {
@@ -164,6 +182,12 @@ function SearchContent() {
     }
   };
 
+  const handleResetFilters = useCallback(() => {
+    resetFilters();
+    lastSyncedSearchRef.current = "";
+    router.replace("/search", { scroll: false });
+  }, [resetFilters, router]);
+
   let activeFilterCount = 0;
   if (selectedCategory && selectedCategory !== "all") activeFilterCount++;
   activeFilterCount += selectedConditions.length;
@@ -235,7 +259,7 @@ function SearchContent() {
               </span>
             )}
             <button
-              onClick={resetFilters}
+              onClick={handleResetFilters}
               className="text-xs font-bold text-brand-danger hover:underline ml-1"
             >
               Reset Semua
@@ -352,7 +376,7 @@ function SearchContent() {
           <p className="text-xs text-text-secondary max-w-sm">
             Coba ubah kata kunci pencarian atau reset filter kondisi dan rentang harga.
           </p>
-          <Button variant="primary" size="sm" onClick={resetFilters} className="mt-2">
+          <Button variant="primary" size="sm" onClick={handleResetFilters} className="mt-2">
             Reset Semua Filter
           </Button>
         </div>

@@ -5,6 +5,7 @@ import os from "os";
 import path from "path";
 import { prisma } from "@/server/db/prisma";
 import { signSession } from "@/lib/auth/session";
+import { updateListing } from "@/domain/listing/listingService";
 import { GET as listListingsRoute, POST as createListingRoute } from "@/app/api/listings/route";
 import {
   GET as getListingRoute,
@@ -15,6 +16,7 @@ import { POST as relistListingRoute } from "@/app/api/listings/[id]/relist/route
 import { POST as uploadImageRoute } from "@/app/api/listings/[id]/images/route";
 import { GET as serveImageRoute } from "@/app/api/listings/images/[filename]/route";
 import { GET as listOrdersRoute, POST as createOrderRoute } from "@/app/api/orders/route";
+import { POST as transitionOrderRoute } from "@/app/api/orders/[id]/transition/route";
 
 let currentSessionCookie: string | undefined;
 
@@ -65,6 +67,7 @@ describe("Phase 10 Listings API Integration (Real PostgreSQL)", () => {
   const createdUserIds: string[] = [];
   const createdListingIds: string[] = [];
   const createdOrderIds: string[] = [];
+  const createdIdempotencyKeys: string[] = [];
   let tempUploadDir: string;
 
   let ownerA: { id: string; email: string; name: string; role: "SELLER"; isVerified: boolean };
@@ -134,43 +137,58 @@ describe("Phase 10 Listings API Integration (Real PostgreSQL)", () => {
     delete process.env.LISTING_UPLOAD_DIR;
     rmSync(tempUploadDir, { recursive: true, force: true });
 
-    if (createdOrderIds.length > 0) {
+    if (createdIdempotencyKeys.length > 0) {
+      await prisma.idempotencyKey.deleteMany({
+        where: {
+          OR: [
+            { key: { in: createdIdempotencyKeys.filter(Boolean) } },
+            { key: { startsWith: "proof-idemp-" } },
+          ],
+        },
+      });
+      createdIdempotencyKeys.length = 0;
+    }
+
+    const orderIds = createdOrderIds.filter(Boolean);
+    createdOrderIds.length = 0;
+    if (orderIds.length > 0) {
       await prisma.escrowAccount.deleteMany({
-        where: { orderId: { in: createdOrderIds } },
+        where: { orderId: { in: orderIds } },
       });
       await prisma.paymentAttempt.deleteMany({
-        where: { orderId: { in: createdOrderIds } },
+        where: { orderId: { in: orderIds } },
       });
       await prisma.orderStatusHistory.deleteMany({
-        where: { orderId: { in: createdOrderIds } },
+        where: { orderId: { in: orderIds } },
       });
       await prisma.order.deleteMany({
-        where: { id: { in: createdOrderIds } },
+        where: { id: { in: orderIds } },
       });
-      createdOrderIds.length = 0;
     }
 
-    if (createdListingIds.length > 0) {
+    const listingIds = createdListingIds.filter(Boolean);
+    createdListingIds.length = 0;
+    if (listingIds.length > 0) {
       await prisma.listingImage.deleteMany({
-        where: { listingId: { in: createdListingIds } },
+        where: { listingId: { in: listingIds } },
       });
       await prisma.productListing.deleteMany({
-        where: { id: { in: createdListingIds } },
+        where: { id: { in: listingIds } },
       });
-      createdListingIds.length = 0;
     }
 
-    if (createdUserIds.length > 0) {
+    const userIds = createdUserIds.filter(Boolean);
+    createdUserIds.length = 0;
+    if (userIds.length > 0) {
       await prisma.auditLog.deleteMany({
-        where: { userId: { in: createdUserIds } },
+        where: { userId: { in: userIds } },
       });
       await prisma.sellerProfile.deleteMany({
-        where: { userId: { in: createdUserIds } },
+        where: { userId: { in: userIds } },
       });
       await prisma.user.deleteMany({
-        where: { id: { in: createdUserIds } },
+        where: { id: { in: userIds } },
       });
-      createdUserIds.length = 0;
     }
   });
 
@@ -719,5 +737,424 @@ describe("Phase 10 Listings API Integration (Real PostgreSQL)", () => {
       queryRawSpy.mock.calls.length + findManySpy.mock.calls.length;
     expect(totalQueries).toBeGreaterThanOrEqual(1);
     expect(totalQueries).toBeLessThanOrEqual(3);
+  });
+
+  it("PR24-1: BUYER-role seller can process & ship own sale via effectiveActorRole, but cannot self-complete", async () => {
+    // userB (role: BUYER) creates listing
+    currentSessionCookie = buyerCookieB;
+    const createRes = await createListingRoute(
+      new Request("http://localhost:3000/api/listings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": `proof-idemp-buyer-sell-${crypto.randomBytes(4).toString("hex")}`,
+        },
+        body: JSON.stringify({
+          title: "Buyer-Owned Console",
+          description: "Dijual oleh akun pembeli terdaftar.",
+          price: 3500000,
+          category: "console",
+          brand: "Nintendo",
+          model: "Switch OLED",
+          condition: "LIKE_NEW",
+        }),
+      })
+    );
+    expect(createRes.status).toBe(201);
+    const listing = await createRes.json();
+    createdListingIds.push(listing.id);
+
+    // ownerA buys userB's listing
+    currentSessionCookie = sellerCookieA;
+    const orderKey = `proof-idemp-ord-${crypto.randomBytes(4).toString("hex")}`;
+    createdIdempotencyKeys.push(orderKey);
+    const orderRes = await createOrderRoute(
+      new Request("http://localhost:3000/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": orderKey,
+        },
+        body: JSON.stringify({
+          listingId: listing.id,
+          shippingAddress: "Jl. Kemang No. 10, Jakarta Selatan",
+          courier: "J&T Express",
+          paymentMethod: "BCA_VA",
+        }),
+      })
+    );
+    expect(orderRes.status).toBe(201);
+    const order = await orderRes.json();
+    createdOrderIds.push(order.id);
+
+    // Advance order to FUNDED so seller fulfillment steps apply
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { status: "FUNDED" },
+    });
+
+    // userB (account role BUYER, order role SELLER) ships item
+    currentSessionCookie = buyerCookieB;
+    const processRes = await transitionOrderRoute(
+      new Request(`http://localhost:3000/api/orders/${order.id}/transition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toStatus: "PROCESSING" }),
+      }),
+      { params: Promise.resolve({ id: order.id }) }
+    );
+    expect(processRes.status).toBe(200);
+
+    const shipRes = await transitionOrderRoute(
+      new Request(`http://localhost:3000/api/orders/${order.id}/transition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toStatus: "SHIPPED",
+          shippingCourier: "JNE YES",
+          shippingAirwayBill: "JNE987654321",
+        }),
+      }),
+      { params: Promise.resolve({ id: order.id }) }
+    );
+    expect(shipRes.status).toBe(200);
+    const shippedJson = await shipRes.json();
+    expect(shippedJson.order.status).toBe("SHIPPED");
+
+    // Seller BUYER account still cannot transition own sale to COMPLETED (422)
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { status: "DELIVERED", deliveredAt: new Date() },
+    });
+    const completeAttemptRes = await transitionOrderRoute(
+      new Request(`http://localhost:3000/api/orders/${order.id}/transition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toStatus: "COMPLETED" }),
+      }),
+      { params: Promise.resolve({ id: order.id }) }
+    );
+    expect(completeAttemptRes.status).toBe(422);
+  });
+
+  it("PR24-2: Expired PENDING_PAYMENT reservations recover to ACTIVE on read while FUNDED stays RESERVED", async () => {
+    currentSessionCookie = sellerCookieA;
+    const expiredListingRes = await createListingRoute(
+      new Request("http://localhost:3000/api/listings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": `proof-idemp-exp-1-${crypto.randomBytes(4).toString("hex")}`,
+        },
+        body: JSON.stringify({
+          title: "Expired Order Recovery Tablet",
+          description: "Testing lazy reservation expiry recovery on GET listings.",
+          price: 4100000,
+          category: "accessories",
+          brand: "Samsung",
+          model: "Tab S8",
+          condition: "VERY_GOOD",
+        }),
+      })
+    );
+    expect(expiredListingRes.status).toBe(201);
+    const expiredListing = await expiredListingRes.json();
+    createdListingIds.push(expiredListing.id);
+
+    const fundedListingRes = await createListingRoute(
+      new Request("http://localhost:3000/api/listings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": `proof-idemp-exp-2-${crypto.randomBytes(4).toString("hex")}`,
+        },
+        body: JSON.stringify({
+          title: "Funded Active Reservation Tablet",
+          description: "Testing funded reservation remains protected.",
+          price: 4500000,
+          category: "accessories",
+          brand: "Apple",
+          model: "iPad Air",
+          condition: "LIKE_NEW",
+        }),
+      })
+    );
+    expect(fundedListingRes.status).toBe(201);
+    const fundedListing = await fundedListingRes.json();
+    createdListingIds.push(fundedListing.id);
+
+    currentSessionCookie = buyerCookieB;
+    const key1 = `proof-idemp-ord-exp-${crypto.randomBytes(4).toString("hex")}`;
+    const key2 = `proof-idemp-ord-fund-${crypto.randomBytes(4).toString("hex")}`;
+    createdIdempotencyKeys.push(key1, key2);
+
+    const expOrderRes = await createOrderRoute(
+      new Request("http://localhost:3000/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": key1 },
+        body: JSON.stringify({
+          listingId: expiredListing.id,
+          shippingAddress: "Jl. Melawai No. 20, Jakarta",
+          courier: "J&T Express",
+          paymentMethod: "QRIS",
+        }),
+      })
+    );
+    expect(expOrderRes.status).toBe(201);
+    const expOrder = await expOrderRes.json();
+    createdOrderIds.push(expOrder.id);
+
+    const fundOrderRes = await createOrderRoute(
+      new Request("http://localhost:3000/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": key2 },
+        body: JSON.stringify({
+          listingId: fundedListing.id,
+          shippingAddress: "Jl. Melawai No. 21, Jakarta",
+          courier: "J&T Express",
+          paymentMethod: "QRIS",
+        }),
+      })
+    );
+    expect(fundOrderRes.status).toBe(201);
+    const fundOrder = await fundOrderRes.json();
+    createdOrderIds.push(fundOrder.id);
+
+    // Expire first order (backdate createdAt & paymentAttempt.expiresAt by 3 hours)
+    const past = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    await prisma.order.update({
+      where: { id: expOrder.id },
+      data: { createdAt: past },
+    });
+    await prisma.paymentAttempt.updateMany({
+      where: { orderId: expOrder.id },
+      data: { expiresAt: past },
+    });
+
+    // Fund second order (backdated createdAt must NOT trigger expiry because status is FUNDED)
+    await prisma.order.update({
+      where: { id: fundOrder.id },
+      data: { status: "FUNDED", createdAt: past },
+    });
+
+    const getRes = await listListingsRoute(
+      new Request(
+        `http://localhost:3000/api/listings?ids=${encodeURIComponent(
+          `${expiredListing.id},${fundedListing.id}`
+        )}`
+      )
+    );
+    expect(getRes.status).toBe(200);
+    const getJson = await getRes.json();
+    const returnedIds = (getJson.data as Array<{ id: string }>).map((d) => d.id);
+    expect(returnedIds).toContain(expiredListing.id);
+    expect(returnedIds).not.toContain(fundedListing.id);
+
+    const refreshedExpiredOrder = await prisma.order.findUniqueOrThrow({
+      where: { id: expOrder.id },
+    });
+    expect(refreshedExpiredOrder.status).toBe("CANCELLED");
+
+    const refreshedFundedListing = await prisma.productListing.findUniqueOrThrow({
+      where: { id: fundedListing.id },
+    });
+    expect(refreshedFundedListing.status).toBe("RESERVED");
+  });
+
+  it("PR24-3: Concurrent POST /api/orders and PATCH price update never bill superseded price", async () => {
+    currentSessionCookie = sellerCookieA;
+    const createRes = await createListingRoute(
+      new Request("http://localhost:3000/api/listings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": `proof-idemp-price-race-${crypto.randomBytes(4).toString("hex")}`,
+        },
+        body: JSON.stringify({
+          title: "Price Lock Concurrency Camera",
+          description: "Testing FOR UPDATE lock between order create and price patch.",
+          price: 5000000,
+          category: "camera",
+          brand: "Sony",
+          model: "A6400",
+          condition: "LIKE_NEW",
+        }),
+      })
+    );
+    const listing = await createRes.json();
+    createdListingIds.push(listing.id);
+
+    const orderKey = `proof-idemp-ord-race-${crypto.randomBytes(4).toString("hex")}`;
+    createdIdempotencyKeys.push(orderKey);
+
+    // Run price update (5jt -> 8.5jt) in parallel with order checkout (avoid shared session cookie mutation)
+    currentSessionCookie = buyerCookieB;
+    const [patchOutcome, orderRes] = await Promise.all([
+      updateListing({
+        id: listing.id,
+        actor: { id: ownerA.id, role: ownerA.role },
+        rawBody: { price: 8500000 },
+      }).then(
+        () => ({ ok: true as const }),
+        () => ({ ok: false as const })
+      ),
+      createOrderRoute(
+        new Request("http://localhost:3000/api/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": orderKey,
+          },
+          body: JSON.stringify({
+            listingId: listing.id,
+            shippingAddress: "Jl. Senopati No. 5, Jakarta",
+            courier: "J&T Express",
+            paymentMethod: "BCA_VA",
+          }),
+        })
+      ),
+    ]);
+
+    expect(orderRes.status).toBe(201);
+    const createdOrder = await orderRes.json();
+    createdOrderIds.push(createdOrder.id);
+
+    // Authoritative invariant: order itemPrice ALWAYS equals persisted listing price at lock commit time
+    const latestListing = await prisma.productListing.findUniqueOrThrow({
+      where: { id: listing.id },
+    });
+    expect([5000000, 8500000]).toContain(createdOrder.itemPrice);
+    if (patchOutcome.ok) {
+      expect(createdOrder.itemPrice).toBe(latestListing.price);
+    } else {
+      expect(createdOrder.itemPrice).toBe(5000000);
+      expect(latestListing.price).toBe(5000000);
+    }
+  });
+
+  it("PR24-4 & PR24-5: Archived images are hidden (404) from non-owners, upload enforces auth/idempotency, and deferPublish delays ACTIVE", async () => {
+    currentSessionCookie = sellerCookieA;
+    const createRes = await createListingRoute(
+      new Request("http://localhost:3000/api/listings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": `proof-idemp-defer-${crypto.randomBytes(4).toString("hex")}`,
+        },
+        body: JSON.stringify({
+          title: "Deferred Draft Laptop",
+          description: "Testing deferred publishing while uploading listing images.",
+          price: 12000000,
+          category: "laptop",
+          brand: "Lenovo",
+          model: "ThinkPad X1",
+          condition: "LIKE_NEW",
+          deferPublish: true,
+        }),
+      })
+    );
+    expect(createRes.status).toBe(201);
+    const draft = await createRes.json();
+    createdListingIds.push(draft.id);
+    expect(draft.status).toBe("ARCHIVED");
+
+    // Unauthenticated & non-owner upload attempts rejected BEFORE image creation
+    currentSessionCookie = undefined;
+    const anonForm = new FormData();
+    anonForm.append("file", new File([VALID_PNG_BYTES], "test.png", { type: "image/png" }));
+    const anonUpload = await uploadImageRoute(
+      new Request(`http://localhost:3000/api/listings/${draft.id}/images`, {
+        method: "POST",
+        body: anonForm,
+      }),
+      { params: Promise.resolve({ id: draft.id }) }
+    );
+    expect(anonUpload.status).toBe(401);
+
+    currentSessionCookie = buyerCookieB;
+    const otherForm = new FormData();
+    otherForm.append("file", new File([VALID_PNG_BYTES], "test.png", { type: "image/png" }));
+    const otherUpload = await uploadImageRoute(
+      new Request(`http://localhost:3000/api/listings/${draft.id}/images`, {
+        method: "POST",
+        body: otherForm,
+      }),
+      { params: Promise.resolve({ id: draft.id }) }
+    );
+    expect(otherUpload.status).toBe(403);
+
+    // Owner uploads twice with same Idempotency-Key -> replays single DB image row
+    currentSessionCookie = sellerCookieA;
+    const uploadKey = `proof-idemp-img-up-${crypto.randomBytes(4).toString("hex")}`;
+    createdIdempotencyKeys.push(uploadKey);
+
+    const form1 = new FormData();
+    form1.append("file", new File([VALID_PNG_BYTES], "draft.png", { type: "image/png" }));
+    const up1 = await uploadImageRoute(
+      new Request(`http://localhost:3000/api/listings/${draft.id}/images`, {
+        method: "POST",
+        headers: { "Idempotency-Key": uploadKey },
+        body: form1,
+      }),
+      { params: Promise.resolve({ id: draft.id }) }
+    );
+    expect(up1.status).toBe(201);
+    const img1 = await up1.json();
+
+    const form2 = new FormData();
+    form2.append("file", new File([VALID_PNG_BYTES], "draft.png", { type: "image/png" }));
+    const up2 = await uploadImageRoute(
+      new Request(`http://localhost:3000/api/listings/${draft.id}/images`, {
+        method: "POST",
+        headers: { "Idempotency-Key": uploadKey },
+        body: form2,
+      }),
+      { params: Promise.resolve({ id: draft.id }) }
+    );
+    expect(up2.status).toBe(201);
+    const img2 = await up2.json();
+    expect(img2.id).toBe(img1.id);
+    expect(
+      await prisma.listingImage.count({ where: { listingId: draft.id } })
+    ).toBe(1);
+
+    // Archived listing image hidden (404) from anonymous & userB, visible (200 private, no-store) to ownerA
+    const filename = (img1.url as string).split("/").pop()!;
+    currentSessionCookie = undefined;
+    const serveAnon = await serveImageRoute(
+      new Request(`http://localhost:3000${img1.url}`),
+      { params: Promise.resolve({ filename }) }
+    );
+    expect(serveAnon.status).toBe(404);
+
+    currentSessionCookie = buyerCookieB;
+    const serveOther = await serveImageRoute(
+      new Request(`http://localhost:3000${img1.url}`),
+      { params: Promise.resolve({ filename }) }
+    );
+    expect(serveOther.status).toBe(404);
+
+    currentSessionCookie = sellerCookieA;
+    const serveOwner = await serveImageRoute(
+      new Request(`http://localhost:3000${img1.url}`),
+      { params: Promise.resolve({ filename }) }
+    );
+    expect(serveOwner.status).toBe(200);
+    expect(serveOwner.headers.get("Cache-Control")).toBe("private, no-store");
+
+    // Publish via relist -> becomes ACTIVE and image becomes public
+    const publishRes = await relistListingRoute(
+      new Request(`http://localhost:3000/api/listings/${draft.id}/relist`, {
+        method: "POST",
+      }),
+      { params: Promise.resolve({ id: draft.id }) }
+    );
+    expect(publishRes.status).toBe(200);
+    currentSessionCookie = undefined;
+    const servePublic = await serveImageRoute(
+      new Request(`http://localhost:3000${img1.url}`),
+      { params: Promise.resolve({ filename }) }
+    );
+    expect(servePublic.status).toBe(200);
   });
 });
