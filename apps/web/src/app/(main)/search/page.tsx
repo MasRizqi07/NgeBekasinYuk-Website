@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   SlidersHorizontal,
@@ -11,10 +11,25 @@ import {
   ChevronDown,
   Sparkles,
 } from "lucide-react";
+import type { ProductListing } from "@/types";
 import { useListingStore } from "@/stores/useListingStore";
 import { ListingCard } from "@/components/features/ListingCard";
 import { FilterSheet } from "@/components/features/FilterSheet";
 import { Button } from "@/components/ui/Button";
+
+function mapSortToApi(sortBy: string): "newest" | "price_asc" | "price_desc" | "popular" {
+  switch (sortBy) {
+    case "price_low":
+      return "price_asc";
+    case "price_high":
+      return "price_desc";
+    case "newest":
+      return "newest";
+    case "relevant":
+    default:
+      return "popular";
+  }
+}
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -40,22 +55,115 @@ function SearchContent() {
     sortBy,
     setSortBy,
     resetFilters,
-    getFilteredListings,
   } = useListingStore();
 
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const [listings, setListings] = useState<ProductListing[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Sync URL params to store on load
+  // Sync URL params to filter store on URL change
   useEffect(() => {
     if (queryParam) setSearchQuery(queryParam);
     if (categoryParam) setSelectedCategory(categoryParam);
-    if (canNegoParam === "true") toggleCanNegoOnly();
-  }, [queryParam, categoryParam, canNegoParam, setSearchQuery, setSelectedCategory, toggleCanNegoOnly]);
+    if (canNegoParam === "true" && !canNegoOnly) toggleCanNegoOnly();
+  }, [queryParam, categoryParam, canNegoParam, canNegoOnly, setSearchQuery, setSelectedCategory, toggleCanNegoOnly]);
 
-  const listings = getFilteredListings();
+  const buildQueryString = useCallback(
+    (cursor?: string | null) => {
+      const qs = new URLSearchParams();
+      if (searchQuery.trim()) qs.set("q", searchQuery.trim());
+      if (selectedCategory && selectedCategory !== "all") {
+        qs.set("category", selectedCategory);
+      }
+      if (selectedConditions.length > 0) {
+        qs.set("condition", selectedConditions.join(","));
+      }
+      if (minPrice !== null) qs.set("minPrice", String(minPrice));
+      if (maxPrice !== null) qs.set("maxPrice", String(maxPrice));
+      if (selectedCity && selectedCity !== "Semua Kota") {
+        qs.set("city", selectedCity);
+      }
+      if (canNegoOnly) qs.set("canNego", "true");
+      if (verifiedSellerOnly) qs.set("verifiedOnly", "true");
+      qs.set("sort", mapSortToApi(sortBy));
+      qs.set("limit", "12");
+      if (cursor) qs.set("cursor", cursor);
+      return qs.toString();
+    },
+    [
+      searchQuery,
+      selectedCategory,
+      selectedConditions,
+      minPrice,
+      maxPrice,
+      selectedCity,
+      canNegoOnly,
+      verifiedSellerOnly,
+      sortBy,
+    ]
+  );
 
-  // Count active filters
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchCatalog() {
+      try {
+        const res = await fetch(`/api/listings?${buildQueryString()}`, {
+          cache: "no-store",
+        });
+        const json = await res.json();
+        if (!cancelled) {
+          setListings(Array.isArray(json?.data) ? json.data : []);
+          setNextCursor(json?.pagination?.nextCursor ?? null);
+          setHasMore(Boolean(json?.pagination?.hasMore));
+          setIsLoading(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setListings([]);
+          setNextCursor(null);
+          setHasMore(false);
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void fetchCatalog();
+    return () => {
+      cancelled = true;
+    };
+  }, [buildQueryString]);
+
+  const handleLoadMore = async () => {
+    if (!nextCursor || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const res = await fetch(`/api/listings?${buildQueryString(nextCursor)}`, {
+        cache: "no-store",
+      });
+      const json = await res.json();
+      const incoming: ProductListing[] = Array.isArray(json?.data) ? json.data : [];
+      setListings((prev) => {
+        const seen = new Set(prev.map((item) => item.id));
+        const merged = [...prev];
+        for (const item of incoming) {
+          if (!seen.has(item.id)) {
+            seen.add(item.id);
+            merged.push(item);
+          }
+        }
+        return merged;
+      });
+      setNextCursor(json?.pagination?.nextCursor ?? null);
+      setHasMore(Boolean(json?.pagination?.hasMore));
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
   let activeFilterCount = 0;
   if (selectedCategory && selectedCategory !== "all") activeFilterCount++;
   activeFilterCount += selectedConditions.length;
@@ -89,64 +197,46 @@ function SearchContent() {
 
         {/* 2. Active Dismissible Filter Pills */}
         {activeFilterCount > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1 border-t border-surface-border">
-            {selectedCategory && selectedCategory !== "all" && (
-              <span className="inline-flex items-center gap-1 bg-surface-subtle text-text-secondary px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
+          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-surface-border">
+            {selectedCategory !== "all" && (
+              <span className="inline-flex items-center gap-1 bg-brand-primary-soft text-brand-primary text-xs font-semibold px-2.5 py-1 rounded-full">
                 <span>Kategori: {selectedCategory}</span>
                 <button
                   onClick={() => setSelectedCategory("all")}
-                  className="hover:text-on-surface"
+                  className="hover:text-brand-danger"
                 >
                   <X className="w-3 h-3" />
                 </button>
               </span>
             )}
-
             {selectedConditions.map((cond) => (
               <span
                 key={cond}
-                className="inline-flex items-center gap-1 bg-brand-primary-soft text-brand-primary px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+                className="inline-flex items-center gap-1 bg-brand-primary-soft text-brand-primary text-xs font-semibold px-2.5 py-1 rounded-full"
               >
-                <span>{cond === "LIKE_NEW" ? "Seperti Baru 99%" : cond}</span>
+                <span>{cond}</span>
                 <button
                   onClick={() => toggleCondition(cond)}
-                  className="hover:text-brand-primary-hover"
+                  className="hover:text-brand-danger"
                 >
                   <X className="w-3 h-3" />
                 </button>
               </span>
             ))}
-
-            {canNegoOnly && (
-              <span className="inline-flex items-center gap-1 bg-[#FFF4E0] text-[#B26A00] px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
-                <span>Bisa Nego</span>
-                <button onClick={toggleCanNegoOnly}>
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-
-            {verifiedSellerOnly && (
-              <span className="inline-flex items-center gap-1 bg-brand-secondary-light text-brand-secondary px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
-                <span>KYC Terverifikasi</span>
-                <button onClick={toggleVerifiedSellerOnly}>
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-
             {selectedCity && (
-              <span className="inline-flex items-center gap-1 bg-surface-subtle text-text-secondary px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
-                <span>{selectedCity}</span>
-                <button onClick={() => setSelectedCity(null)}>
+              <span className="inline-flex items-center gap-1 bg-brand-primary-soft text-brand-primary text-xs font-semibold px-2.5 py-1 rounded-full">
+                <span>Kota: {selectedCity}</span>
+                <button
+                  onClick={() => setSelectedCity(null)}
+                  className="hover:text-brand-danger"
+                >
                   <X className="w-3 h-3" />
                 </button>
               </span>
             )}
-
             <button
               onClick={resetFilters}
-              className="text-xs font-bold text-brand-accent hover:underline px-2 whitespace-nowrap"
+              className="text-xs font-bold text-brand-danger hover:underline ml-1"
             >
               Reset Semua
             </button>
@@ -154,10 +244,9 @@ function SearchContent() {
         )}
       </div>
 
-      {/* 3. Sticky Quick Actions (Filter Modal Trigger + Sort + Quick Chips) */}
+      {/* 3. Sticky Quick Actions */}
       <div className="bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-surface-border shadow-xs flex items-center justify-between gap-3 overflow-x-auto no-scrollbar sticky top-16 sm:top-20 z-30">
         <div className="flex items-center gap-2">
-          {/* Filter Drawer Trigger */}
           <Button
             variant="primary"
             size="sm"
@@ -173,7 +262,6 @@ function SearchContent() {
             )}
           </Button>
 
-          {/* Sort Dropdown */}
           <div className="relative shrink-0">
             <button
               onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
@@ -216,7 +304,6 @@ function SearchContent() {
           </div>
         </div>
 
-        {/* Quick Toggles */}
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={toggleCanNegoOnly}
@@ -245,7 +332,16 @@ function SearchContent() {
       </div>
 
       {/* 4. Results Grid */}
-      {listings.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="h-72 rounded-2xl bg-surface-subtle animate-pulse border border-surface-border"
+            />
+          ))}
+        </div>
+      ) : listings.length === 0 ? (
         <div className="py-16 bg-white rounded-2xl border border-surface-border text-center flex flex-col items-center justify-center p-6 gap-3">
           <div className="w-16 h-16 rounded-full bg-surface-subtle flex items-center justify-center text-text-muted">
             <SlidersHorizontal className="w-8 h-8" />
@@ -261,14 +357,29 @@ function SearchContent() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
-          {listings.map((item) => (
-            <ListingCard key={item.id} listing={item} />
-          ))}
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+            {listings.map((item) => (
+              <ListingCard key={item.id} listing={item} />
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={handleLoadMore}
+                disabled={isLoadingMore}
+                className="font-bold"
+              >
+                {isLoadingMore ? "Memuat..." : "Muat Lebih Banyak"}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Filter Bottom Sheet Modal */}
       <FilterSheet
         isOpen={filterSheetOpen}
         onClose={() => setFilterSheetOpen(false)}
@@ -291,4 +402,3 @@ export default function SearchPage() {
     </Suspense>
   );
 }
-

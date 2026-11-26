@@ -8,3 +8,5 @@ efc0440b345f80122788c8fda726405db298d26d:proof.txt:generic-api-key:25
 # Prior comment line in a0d8c94 and its net diff snapshot in fc2f569
 a0d8c94ab179d376aab18b5ea7933876b61c2a41:.gitleaksignore:generic-api-key:2
 fc2f569e886430f233e24bf2ee443c36c1a08b23:proofs/9/diff-code.patch:generic-api-key:131
+# Phase 10 vitest proof line echoing synthetic usr-legacy-test-<ts> ID (non-secret test fixture)
+496aac3fd76d90338ca72b56af7f6a90b9d2658d:proofs/10/vitest.txt:generic-api-key:89

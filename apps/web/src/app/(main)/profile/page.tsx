@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -16,18 +16,37 @@ import {
   Clock,
 } from "lucide-react";
 import { useUserStore } from "@/stores/useUserStore";
-import { useListingStore } from "@/stores/useListingStore";
 import ListingCard from "@/components/features/ListingCard";
+import type { ProductListing } from "@/types";
 
 type ProfileTab = "LISTINGS" | "REVIEWS" | "ABOUT";
 
 export default function ProfilePage() {
   const { user } = useUserStore();
-  const { listings } = useListingStore();
+  const [myListings, setMyListings] = useState<ProductListing[]>([]);
   const [activeTab, setActiveTab] = useState<ProfileTab>("LISTINGS");
 
-  // User's own listings
-  const myListings = listings.slice(0, 4);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await fetch("/api/listings?mine=true&limit=6", {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled && Array.isArray(json?.data)) {
+          setMyListings(json.data);
+        }
+      } catch {
+        // Unauthenticated visitors see empty seller inventory.
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-surface pb-32 pt-4">

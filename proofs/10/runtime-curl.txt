@@ -1,0 +1,24 @@
+=== Phase 10 Runtime HTTP Proof (next start on 127.0.0.1:3110) ===
+
+[1] GET /api/listings?limit=2 -> HTTP 200
+{"object":"list","count":2,"pagination":{"limit":2,"nextCursor":"eyJzb3J0IjoibmV3ZXN0IiwiY3JlYXRlZEF0IjoiMjAyNi0xMS0yNVQxMDo1MTo0MS4wNDFaIiwiaWQiOiJwcm9kLWlwYWQtYWlyNSJ9","hasMore":true}}
+
+[2] POST /api/listings (unauthenticated) -> HTTP 401
+{"type":"https://ngebekasinyuk.id/errors/unauthorized","title":"Autentikasi Diperlukan","status":401,"detail":"Silakan login terlebih dahulu untuk membuat iklan.","error":"UNAUTHORIZED","message":"Silakan login terlebih dahulu untuk membuat iklan.","instance":"/api/listings"}
+
+[3] POST /api/auth/login (seller@ngebekasinyuk.id) -> HTTP 200 (cookie issued: true)
+
+[4] POST /api/listings (forged sellerId) -> HTTP 400
+{"type":"https://ngebekasinyuk.id/errors/validation-error","title":"Data Iklan Tidak Valid","status":400,"detail":"Unrecognized key: \"sellerId\"","error":"VALIDATION_ERROR","message":"Unrecognized key: \"sellerId\"","instance":"/api/listings"}
+
+[5] POST /api/listings (valid) -> HTTP 201, id=list-46456d31-147e-4e5e-9817-5a772fc33a71, slug=runtime-proof-keychron-v1-max-eec45b, sellerId=usr-seller-dimas, status=ACTIVE
+[5b] Replay same Idempotency-Key -> HTTP 201, id=list-46456d31-147e-4e5e-9817-5a772fc33a71, replayedHeader=true
+
+[6] POST /api/listings/list-46456d31-147e-4e5e-9817-5a772fc33a71/images (spoofed PNG) -> HTTP 400
+{"type":"https://ngebekasinyuk.id/errors/unsupported-media-type","title":"Gambar Tidak Valid","status":400,"detail":"Format gambar tidak valid. Hanya JPEG, PNG, dan WebP yang diizinkan.","error":"UNSUPPORTED_MEDIA_TYPE","message":"Format gambar tidak valid. Hanya JPEG, PNG, dan WebP yang diizinkan.","instance":"/api/listings/list-46456d31-147e-4e5e-9817-5a772fc33a71/images"}
+[6b] POST /api/listings/list-46456d31-147e-4e5e-9817-5a772fc33a71/images (real PNG) -> HTTP 201, url=/api/listings/images/57e21658-3eca-47bf-9a47-b9c8d23759e7.png
+[6c] GET /api/listings/images/57e21658-3eca-47bf-9a47-b9c8d23759e7.png -> HTTP 200, Content-Type=image/png, X-Content-Type-Options=nosniff
+
+[7] POST /api/listings/list-46456d31-147e-4e5e-9817-5a772fc33a71/archive -> HTTP 200, status=ARCHIVED
+[7b] GET /api/listings/list-46456d31-147e-4e5e-9817-5a772fc33a71 (anonymous after archive) -> HTTP 404
+[7c] POST /api/listings/list-46456d31-147e-4e5e-9817-5a772fc33a71/relist -> HTTP 200, status=ACTIVE

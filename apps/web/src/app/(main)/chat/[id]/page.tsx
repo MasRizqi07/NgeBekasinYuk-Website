@@ -20,7 +20,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useChatStore } from "@/stores/useChatStore";
-import { SEED_LISTINGS } from "@/lib/seedData";
 import { formatRupiah } from "@/lib/utils";
 import { useToast } from "@/components/ui/Toast";
 import Modal from "@/components/ui/Modal";
@@ -31,6 +30,7 @@ export default function ChatDetailPage() {
   const router = useRouter();
   const convoId = params.id as string;
   const {
+    conversations,
     getConversationById,
     sendMessage,
     sendOffer,
@@ -46,24 +46,68 @@ export default function ChatDetailPage() {
   const [customOfferPrice, setCustomOfferPrice] = useState<number>(6900000);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const conversation = getConversationById(convoId) || {
-    id: convoId,
-    listingId: (SEED_LISTINGS[1] || SEED_LISTINGS[0]).id,
-    counterpart: {
-      id: "usr-dimas",
-      name: "Dimas Aditya",
-      avatar:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuARVSFYfBWVyVsZWQluSJcL8sMPOSmnE8mGkR5BrhkwbubbuXak0j5WwkwOo1JjgKnpaf1S7WJRcRm1ZicytLS3wpBG9CPYS6LiOOXaybKow8Ho4_EogUn5YXqk4IUoQo8UdYN600NliLjnIDlOjB89sEfXd_98btgCRMHw7HE1wvgfQtQkXwX7m6c2tCpX9IqBNbnhP4Nb57GCNuHtQ2ESg9gUjeUIvzWs7RV27u5YUKcspnWFxF1e",
-      isOnline: true,
-      isVerified: true,
-      city: "Jakarta Barat",
-    },
-    listing: SEED_LISTINGS[1] || SEED_LISTINGS[0],
-    lastMessage: "Harga penawarannya sudah saya acc ya kak!",
-    lastTimestamp: new Date().toISOString(),
-    unreadCount: 0,
-    messages: [],
-  };
+  const conversation =
+    getConversationById(convoId) ||
+    conversations[0] || {
+      id: convoId,
+      listingId: "prod-ipad-air5",
+      counterpart: {
+        id: "usr-seller-dimas",
+        name: "Dimas Aditya",
+        avatar: "/assets/products/ipad-mini-unboxing.png",
+        verifiedKYC: true,
+        trustScore: 98,
+        rating: 4.9,
+        reviewCount: 52,
+        location: "Jakarta Barat",
+        city: "Jakarta Barat",
+        joinedDate: "Maret 2023",
+        responseTime: "< 5 menit",
+        successTransactions: 48,
+      },
+      listing: {
+        id: "prod-ipad-air5",
+        slug: "ipad-air-5-64gb-wifi-starlight",
+        title: "iPad Air 5 M1 64GB WiFi Only Starlight",
+        price: 7500000,
+        category: "smartphone" as const,
+        categoryLabel: "Smartphone & Tablet",
+        brand: "Apple",
+        model: "iPad Air 5",
+        condition: "LIKE_NEW" as const,
+        conditionLabel: "Seperti Baru (99%)",
+        conditionScore: 99,
+        canNego: true,
+        images: ["/assets/products/ipad-mini-unboxing.png"],
+        location: "Jakarta Selatan",
+        city: "Jakarta Selatan",
+        description: "Unit siap transaksi via Escrow.",
+        specifications: { Merek: "Apple" },
+        completeness: ["Unit Utama"],
+        diagnosticPassed: true,
+        seller: {
+          id: "usr-seller-dimas",
+          name: "Dimas Aditya",
+          avatar: "/assets/products/ipad-mini-unboxing.png",
+          verifiedKYC: true,
+          trustScore: 98,
+          rating: 4.9,
+          reviewCount: 52,
+          location: "Jakarta Barat",
+          city: "Jakarta Barat",
+          joinedDate: "Maret 2023",
+          responseTime: "< 5 menit",
+          successTransactions: 48,
+        },
+        createdAt: "2026-09-10T09:00:00.000Z",
+        viewsCount: 0,
+        favoritesCount: 0,
+      },
+      lastMessage: "Harga penawarannya sudah saya acc ya kak!",
+      lastTimestamp: new Date().toISOString(),
+      unreadCount: 0,
+      messages: [],
+    };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

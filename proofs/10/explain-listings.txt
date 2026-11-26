@@ -1,0 +1,50 @@
+Seeding 1200 temporary listings for EXPLAIN ANALYZE benchmark...
+Total ProductListing rows in DB during EXPLAIN: 1211
+
+=== EXPLAIN (Page 1: status='ACTIVE' ORDER BY createdAt DESC, id ASC LIMIT 21) ===
+Limit  (cost=0.42..5.79 rows=21 width=110) (actual time=0.046..0.068 rows=21.00 loops=1)
+  Buffers: shared hit=16
+  ->  Nested Loop Left Join  (cost=0.42..278.39 rows=1088 width=110) (actual time=0.046..0.066 rows=21.00 loops=1)
+        Join Filter: (sp."userId" = u.id)
+        Rows Removed by Join Filter: 21
+        Buffers: shared hit=16
+        ->  Nested Loop  (cost=0.42..226.88 rows=1088 width=116) (actual time=0.024..0.039 rows=21.00 loops=1)
+              Buffers: shared hit=11
+              ->  Index Scan using "ProductListing_status_createdAt_id_idx" on "ProductListing" l  (cost=0.28..200.53 rows=1088 width=98) (actual time=0.010..0.014 rows=21.00 loops=1)
+                    Index Cond: (status = 'ACTIVE'::text)
+                    Index Searches: 1
+                    Buffers: shared hit=5
+              ->  Memoize  (cost=0.14..0.24 rows=1 width=36) (actual time=0.001..0.001 rows=1.00 loops=21)
+                    Cache Key: l."sellerId"
+                    Cache Mode: logical
+                    Hits: 18  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=6
+                    ->  Index Scan using "User_pkey" on "User" u  (cost=0.13..0.23 rows=1 width=36) (actual time=0.002..0.002 rows=1.00 loops=3)
+                          Index Cond: (id = l."sellerId")
+                          Index Searches: 3
+                          Buffers: shared hit=6
+        ->  Materialize  (cost=0.00..6.04 rows=3 width=31) (actual time=0.001..0.001 rows=2.00 loops=21)
+              Storage: Memory  Maximum Storage: 17kB
+              Buffers: shared hit=5
+              ->  Seq Scan on "SellerProfile" sp  (cost=0.00..6.03 rows=3 width=31) (actual time=0.018..0.018 rows=3.00 loops=1)
+                    Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=119
+Planning Time: 2.704 ms
+Execution Time: 0.101 ms
+
+listListings page 1 count: 20 hasMore: true
+
+=== EXPLAIN (Filtered: status='ACTIVE' AND category='smartphone' LIMIT 21) ===
+Limit  (cost=0.28..27.60 rows=21 width=57) (actual time=0.020..0.039 rows=21.00 loops=1)
+  Buffers: shared hit=10
+  ->  Index Scan using "ProductListing_status_createdAt_id_idx" on "ProductListing" l  (cost=0.28..203.25 rows=156 width=57) (actual time=0.019..0.037 rows=21.00 loops=1)
+        Index Cond: (status = 'ACTIVE'::text)
+        Filter: (category = 'smartphone'::text)
+        Rows Removed by Filter: 125
+        Index Searches: 1
+        Buffers: shared hit=10
+Planning Time: 0.103 ms
+Execution Time: 0.051 ms
+
+Cleaned up temporary benchmark rows: 1200

@@ -34,7 +34,7 @@ export function OfferCard({ offer, listing, convoId }: OfferCardProps) {
   );
 
   const handleCheckoutClick = () => {
-    addItem(listing, offer.offerPrice);
+    addItem(listing.id, offer.id);
   };
 
   const isAccepted = offer.status === "ACCEPTED";

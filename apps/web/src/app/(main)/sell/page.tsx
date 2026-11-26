@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -12,25 +12,24 @@ import {
   Sparkles,
   Lightbulb,
 } from "lucide-react";
-import { useListingStore } from "@/stores/useListingStore";
-import { useUserStore } from "@/stores/useUserStore";
-import { TechCondition } from "@/types";
+import type { TechCondition } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 
+interface PendingImageFile {
+  file: File;
+  previewUrl: string;
+}
+
 export default function SellPage() {
   const router = useRouter();
-  const { addListing } = useListingStore();
-  const { user } = useUserStore();
   const { showToast } = useToast();
 
   const [currentStep, setCurrentStep] = useState(1);
-
-  // Form states
-  const [images, setImages] = useState<string[]>([
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuB5AGlNW65v3aI0R4CrWZx64XEhcC9SCu6VYiQ7tk34hxG3vTLqNi6esOWfrCtIVWrFBhKvjo-mUPlTy1ytbnrP5B4jx3SfpmVpA0b9YJOUjDo-m92ptsOn4f-Q0fAOgkw4AwSG3hayF3hpXcawQOC9S59fm-bHYie6x-K3ctgzgNWMlrtH3ZDPWp8AZJCFCtnFMVcuXIRIVCAdyd6L0q40Lork3L5D_wKDNemifKRwMTJia9bCOGK6",
-  ]);
+  const [pendingImages, setPendingImages] = useState<PendingImageFile[]>([]);
   const [title, setTitle] = useState("");
+  const [brand, setBrand] = useState("");
+  const [model, setModel] = useState("");
   const [category, setCategory] = useState<
     "smartphone" | "laptop" | "audio" | "pc-gaming" | "console" | "camera" | "accessories"
   >("smartphone");
@@ -43,18 +42,45 @@ export default function SellPage() {
     "Dus / Box Asli",
     "Charger Original",
   ]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      for (const img of pendingImages) {
+        URL.revokeObjectURL(img.previewUrl);
+      }
+    };
+  }, [pendingImages]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Use URL.createObjectURL for client-side preview
-    const newUrls = Array.from(files).map((f) => URL.createObjectURL(f));
-    setImages((prev) => [...prev, ...newUrls].slice(0, 8));
+    const accepted: PendingImageFile[] = [];
+    for (const file of Array.from(files)) {
+      if (file.size > 5 * 1024 * 1024) {
+        showToast(`"${file.name}" melebihi batas 5 MB.`, "error");
+        continue;
+      }
+      accepted.push({
+        file,
+        previewUrl: URL.createObjectURL(file),
+      });
+    }
+
+    setPendingImages((prev) => [...prev, ...accepted].slice(0, 8));
+    e.target.value = "";
   };
 
   const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPendingImages((prev) => {
+      const target = prev[index];
+      if (target) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const toggleCompleteness = (item: string) => {
@@ -65,75 +91,98 @@ export default function SellPage() {
     }
   };
 
-  const handleSubmitListing = () => {
-    if (!title.trim() || !price) {
-      showToast("Judul dan harga wajib diisi!", "error");
+  const handleSubmitListing = async () => {
+    if (isSubmitting) return;
+    if (!title.trim() || !price || Number(price) < 10000) {
+      showToast("Judul dan harga (min Rp 10.000) wajib diisi!", "error");
       return;
     }
 
-    const conditionLabels: Record<TechCondition, string> = {
-      BRAND_NEW_SEALED: "Segel Baru 100%",
-      LIKE_NEW: "Seperti Baru 99%",
-      NORMAL_USE: "Pemakaian Wajar 95%",
-      MINOR_SCRATCHES: "Lecet Pemakaian 90%",
-      MINOR_DEFECT: "Minus Ringan",
-    };
+    setIsSubmitting(true);
+    const activeKey = idempotencyKey || crypto.randomUUID();
+    if (!idempotencyKey) {
+      setIdempotencyKey(activeKey);
+    }
 
-    const newListing = addListing({
-      title: title.trim(),
-      price: Number(price),
-      category,
-      categoryLabel: category.toUpperCase(),
-      brand: "Gadget",
-      model: title.trim(),
-      condition,
-      conditionLabel: conditionLabels[condition],
-      conditionScore:
-        condition === "BRAND_NEW_SEALED"
-          ? 100
-          : condition === "LIKE_NEW"
-          ? 99
-          : condition === "NORMAL_USE"
-          ? 95
-          : 90,
-      canNego,
-      images:
-        images.length > 0
-          ? images
-          : [
-              "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80",
-            ],
-      location: city,
-      city,
-      description:
-        description.trim() ||
+    const finalDescription = [
+      description.trim() ||
         "Unit terawat mulus, fungsi 100% normal tanpa kendala. Siap dikirim dan diuji via Escrow NgeBekasinYuk.",
-      specifications: {
-        Kategori: category,
-        Kondisi: conditionLabels[condition],
-        Garansi: "Escrow 2x24 Jam",
-      },
-      completeness,
-      diagnosticPassed: true,
-      diagnosticTool: "QC Mandiri Passed",
-      seller: {
-        id: user.id,
-        name: user.name,
-        avatar: user.avatar,
-        verifiedKYC: user.isKYCVerified,
-        trustScore: user.trustScore,
-        rating: 5.0,
-        reviewCount: 1,
-        location: city,
-        city,
-        joinedDate: user.joinedDate,
-        responseTime: "< 5 menit",
-        successTransactions: 1,
-      },
-    });
+      completeness.length > 0
+        ? `\nKelengkapan: ${completeness.join(", ")}`
+        : "",
+    ]
+      .join("")
+      .trim();
 
-    showToast("Iklan gadget berhasil ditayangkan! 🎉", "success");
-    router.push(`/product/${newListing.slug}`);
+    const derivedBrand = brand.trim() || title.trim().split(/\s+/)[0] || "Gadget";
+    const derivedModel = model.trim() || title.trim().slice(0, 80);
+
+    try {
+      const createRes = await fetch("/api/listings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": activeKey,
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: finalDescription,
+          price: Number(price),
+          category,
+          brand: derivedBrand,
+          model: derivedModel,
+          condition,
+          canNego,
+        }),
+      });
+
+      const createdJson = await createRes.json().catch(() => ({}));
+      if (createRes.status === 401) {
+        showToast("Silakan login terlebih dahulu untuk memasang iklan.", "error");
+        setIsSubmitting(false);
+        router.push("/login");
+        return;
+      }
+
+      if (!createRes.ok) {
+        showToast(
+          createdJson?.detail ||
+            createdJson?.message ||
+            "Gagal membuat iklan gadget.",
+          "error"
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      for (const item of pendingImages) {
+        const formData = new FormData();
+        formData.append("file", item.file);
+        const uploadRes = await fetch(`/api/listings/${createdJson.id}/images`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          const uploadErr = await uploadRes.json().catch(() => ({}));
+          showToast(
+            uploadErr?.detail ||
+              uploadErr?.message ||
+              `Foto "${item.file.name}" ditolak server.`,
+            "error"
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      setIdempotencyKey(null);
+      showToast("Iklan gadget berhasil ditayangkan! 🎉", "success");
+      router.push(`/product/${createdJson.slug}`);
+    } catch {
+      showToast("Terjadi kesalahan jaringan saat menayangkan iklan.", "error");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -155,7 +204,6 @@ export default function SellPage() {
           </span>
         </div>
 
-        {/* Stepper Dots */}
         <div className="grid grid-cols-4 gap-2 pt-1">
           {[
             { num: 1, label: "Foto Unit" },
@@ -183,42 +231,43 @@ export default function SellPage() {
 
       {/* STEP 1: FOTO PRODUK */}
       {currentStep === 1 && (
-        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-5 animate-in fade-in duration-200">
+        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-5">
           <div>
             <h2 className="font-bold text-base text-on-surface">
               Langkah 1: Unggah Foto Gadget
             </h2>
             <p className="text-xs text-text-secondary mt-0.5">
-              Semakin lengkap sudut foto (layar menyala, port, nomor seri), gadget lebih cepat dilirik.
+              Format JPG, PNG, atau WebP (maks. 5 MB per foto). Foto disimpan
+              langsung ke server saat iklan ditayangkan.
             </p>
           </div>
 
-          {/* Tips Card */}
           <div className="bg-brand-secondary-light p-3.5 rounded-xl border border-brand-secondary/30 flex items-start gap-2.5 text-xs text-on-secondary-container">
             <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-brand-secondary" />
             <p className="leading-relaxed">
-              <strong>Tips Kurasi:</strong> Pastikan foto jelas di ruangan terang. Wajib sertakan foto layar
-              saat menyala dan fisik sudut bodi tanpa filter.
+              <strong>Tips Kurasi:</strong> Pastikan foto jelas di ruangan terang.
+              Wajib sertakan foto layar saat menyala dan fisik sudut bodi tanpa filter.
             </p>
           </div>
 
-          {/* Photo Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {images.map((img, idx) => (
+            {pendingImages.map((img, idx) => (
               <div
-                key={idx}
+                key={img.previewUrl}
                 className="relative aspect-square rounded-xl overflow-hidden bg-surface-subtle border border-surface-border shadow-xs group"
               >
                 <Image
-                  src={img}
+                  src={img.previewUrl}
                   alt={`Upload ${idx + 1}`}
                   fill
+                  unoptimized
                   sizes="(max-width: 640px) 50vw, 25vw"
                   className="object-cover"
                 />
                 <button
                   type="button"
                   onClick={() => removeImage(idx)}
+                  aria-label="Hapus foto"
                   className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-brand-danger transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -231,14 +280,18 @@ export default function SellPage() {
               </div>
             ))}
 
-            {images.length < 8 && (
+            {pendingImages.length < 8 && (
               <label className="relative aspect-square rounded-xl border-2 border-dashed border-surface-border hover:border-brand-primary bg-surface-subtle hover:bg-brand-primary-soft/30 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all">
                 <Camera className="w-6 h-6 text-text-muted" />
-                <span className="text-[11px] font-bold text-text-secondary">+ Tambah Foto</span>
-                <span className="text-[9px] text-text-muted">Maks. 8 Foto</span>
+                <span className="text-[11px] font-bold text-text-secondary">
+                  + Tambah Foto
+                </span>
+                <span className="text-[9px] text-text-muted">
+                  JPG/PNG/WebP (Maks 8)
+                </span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   multiple
                   onChange={handleFileUpload}
                   className="hidden"
@@ -252,7 +305,6 @@ export default function SellPage() {
               variant="primary"
               size="md"
               onClick={() => setCurrentStep(2)}
-              disabled={images.length === 0}
               className="gap-2 font-bold"
             >
               <span>Lanjut ke Spesifikasi</span>
@@ -264,22 +316,26 @@ export default function SellPage() {
 
       {/* STEP 2: SPESIFIKASI & KONDISI */}
       {currentStep === 2 && (
-        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-5 animate-in fade-in duration-200">
+        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-5">
           <div>
             <h2 className="font-bold text-base text-on-surface">
               Langkah 2: Detail & Kondisi Gadget
             </h2>
             <p className="text-xs text-text-secondary mt-0.5">
-              Jujur dalam menyatakan kondisi untuk menghindari risiko dispute saat masa inspeksi 48 jam.
+              Jujur dalam menyatakan kondisi untuk menghindari risiko dispute saat
+              masa inspeksi 48 jam.
             </p>
           </div>
 
-          {/* Judul Produk */}
           <div>
-            <label className="text-xs font-bold text-on-surface block mb-1">
+            <label
+              htmlFor="sell-title"
+              className="text-xs font-bold text-on-surface block mb-1"
+            >
               Judul Iklan Gadget:
             </label>
             <input
+              id="sell-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -289,7 +345,41 @@ export default function SellPage() {
             />
           </div>
 
-          {/* Kategori */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label
+                htmlFor="sell-brand"
+                className="text-xs font-bold text-on-surface block mb-1"
+              >
+                Merek (Brand):
+              </label>
+              <input
+                id="sell-brand"
+                type="text"
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                placeholder="Contoh: Apple, Sony, Lenovo"
+                className="w-full h-11 px-3.5 bg-surface-subtle rounded-xl text-xs sm:text-sm text-on-surface border border-transparent focus:border-brand-primary focus:bg-white outline-none"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="sell-model"
+                className="text-xs font-bold text-on-surface block mb-1"
+              >
+                Seri / Model:
+              </label>
+              <input
+                id="sell-model"
+                type="text"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                placeholder="Contoh: MacBook Pro 14 M2"
+                className="w-full h-11 px-3.5 bg-surface-subtle rounded-xl text-xs sm:text-sm text-on-surface border border-transparent focus:border-brand-primary focus:bg-white outline-none"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="text-xs font-bold text-on-surface block mb-1.5">
               Kategori:
@@ -303,6 +393,7 @@ export default function SellPage() {
                   { id: "audio", label: "Audio / TWS" },
                   { id: "console", label: "Konsol Gaming" },
                   { id: "pc-gaming", label: "PC Gaming / GPU" },
+                  { id: "accessories", label: "Aksesoris" },
                 ] as const
               ).map((c) => (
                 <button
@@ -321,7 +412,6 @@ export default function SellPage() {
             </div>
           </div>
 
-          {/* Kondisi Fisik */}
           <div>
             <label className="text-xs font-bold text-on-surface block mb-1.5">
               Pilihan Kondisi Unit:
@@ -368,13 +458,14 @@ export default function SellPage() {
                     <div className="font-bold text-xs">{c.label}</div>
                     <div className="text-[10px] text-text-muted mt-0.5">{c.desc}</div>
                   </div>
-                  {condition === c.id && <CheckCircle2 className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" />}
+                  {condition === c.id && (
+                    <CheckCircle2 className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" />
+                  )}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Kelengkapan */}
           <div>
             <label className="text-xs font-bold text-on-surface block mb-1.5">
               Kelengkapan yang Disertakan:
@@ -411,8 +502,8 @@ export default function SellPage() {
               variant="primary"
               size="md"
               onClick={() => {
-                if (!title.trim()) {
-                  showToast("Mohon masukkan judul iklan terlebih dahulu", "error");
+                if (title.trim().length < 3) {
+                  showToast("Mohon masukkan judul iklan minimal 3 karakter", "error");
                   return;
                 }
                 setCurrentStep(3);
@@ -428,7 +519,7 @@ export default function SellPage() {
 
       {/* STEP 3: HARGA & NEGO */}
       {currentStep === 3 && (
-        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-5 animate-in fade-in duration-200">
+        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-5">
           <div>
             <h2 className="font-bold text-base text-on-surface">
               Langkah 3: Harga & Pengaturan Nego
@@ -438,25 +529,30 @@ export default function SellPage() {
             </p>
           </div>
 
-          {/* Input Harga */}
           <div>
-            <label className="text-xs font-bold text-on-surface block mb-1">
+            <label
+              htmlFor="sell-price"
+              className="text-xs font-bold text-on-surface block mb-1"
+            >
               Harga Jual (Rp):
             </label>
             <input
+              id="sell-price"
               type="number"
               value={price}
               onChange={(e) => setPrice(e.target.value ? Number(e.target.value) : "")}
               placeholder="Contoh: 8500000"
+              min={10000}
               className="w-full h-12 px-3.5 bg-surface-subtle rounded-xl text-lg font-mono font-bold text-on-surface border border-transparent focus:border-brand-primary focus:bg-white outline-none"
               required
             />
           </div>
 
-          {/* Toggle Nego */}
           <div className="p-4 bg-surface-subtle rounded-xl border border-surface-border flex items-center justify-between">
             <div>
-              <h4 className="font-bold text-xs text-on-surface">Aktifkan Fitur Tawar / Nego</h4>
+              <h4 className="font-bold text-xs text-on-surface">
+                Aktifkan Fitur Tawar / Nego
+              </h4>
               <p className="text-[11px] text-text-muted mt-0.5">
                 Calon pembeli dapat mengajukan tawaran harga di ruang chat.
               </p>
@@ -469,12 +565,15 @@ export default function SellPage() {
             />
           </div>
 
-          {/* Kota Lokasi */}
           <div>
-            <label className="text-xs font-bold text-on-surface block mb-1">
+            <label
+              htmlFor="sell-city"
+              className="text-xs font-bold text-on-surface block mb-1"
+            >
               Kota Asal Pengiriman:
             </label>
             <select
+              id="sell-city"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               className="w-full h-11 px-3 bg-surface-subtle rounded-xl text-xs sm:text-sm font-semibold text-on-surface border border-transparent focus:border-brand-primary outline-none"
@@ -488,12 +587,15 @@ export default function SellPage() {
             </select>
           </div>
 
-          {/* Deskripsi */}
           <div>
-            <label className="text-xs font-bold text-on-surface block mb-1">
+            <label
+              htmlFor="sell-description"
+              className="text-xs font-bold text-on-surface block mb-1"
+            >
               Deskripsi Lengkap:
             </label>
             <textarea
+              id="sell-description"
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -510,8 +612,8 @@ export default function SellPage() {
               variant="primary"
               size="md"
               onClick={() => {
-                if (!price || Number(price) <= 0) {
-                  showToast("Mohon tentukan harga jual yang valid", "error");
+                if (!price || Number(price) < 10000) {
+                  showToast("Mohon tentukan harga jual minimal Rp 10.000", "error");
                   return;
                 }
                 setCurrentStep(4);
@@ -527,7 +629,7 @@ export default function SellPage() {
 
       {/* STEP 4: REVIEW & TAYANG */}
       {currentStep === 4 && (
-        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-5 animate-in fade-in duration-200">
+        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-surface-border shadow-xs flex flex-col gap-5">
           <div>
             <h2 className="font-bold text-base text-on-surface">
               Langkah 4: Konfirmasi & Siap Tayang
@@ -537,45 +639,66 @@ export default function SellPage() {
             </p>
           </div>
 
-          {/* Summary Preview Card */}
           <div className="p-4 bg-surface-subtle rounded-xl border border-surface-border flex gap-4">
             <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-white shrink-0 shadow-xs">
-              <Image src={images[0]} alt={title} fill sizes="80px" className="object-cover" />
+              <Image
+                src={
+                  pendingImages[0]?.previewUrl ||
+                  "/assets/products/ipad-mini-unboxing.png"
+                }
+                alt={title}
+                fill
+                unoptimized
+                sizes="80px"
+                className="object-cover"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <span className="text-[10px] font-bold bg-brand-primary-soft text-brand-primary px-2 py-0.5 rounded-full uppercase">
                 {category}
               </span>
-              <h3 className="font-bold text-sm text-on-surface mt-1 truncate">{title}</h3>
+              <h3 className="font-bold text-sm text-on-surface mt-1 truncate">
+                {title}
+              </h3>
               <div className="font-extrabold text-base text-brand-primary mt-0.5 tabular-nums">
                 Rp {Number(price).toLocaleString("id-ID")}
               </div>
-              <span className="text-xs text-text-muted">{city} • {canNego ? "Bisa Nego" : "Harga Pas"}</span>
+              <span className="text-xs text-text-muted">
+                {city} • {canNego ? "Bisa Nego" : "Harga Pas"} •{" "}
+                {pendingImages.length} Foto
+              </span>
             </div>
           </div>
 
-          {/* Escrow Seller Protection Notice */}
           <div className="bg-brand-secondary-light p-4 rounded-xl border border-brand-secondary/30 flex items-start gap-3 text-xs text-on-secondary-container">
             <ShieldCheck className="w-5 h-5 text-brand-secondary shrink-0 mt-0.5" />
             <div className="leading-relaxed">
-              <strong>Jaminan Keamanan Penjual:</strong> Pembeli wajib mentransfer dana ke rekening
-              escrow sebelum kamu diminta mengirim barang. Dana dijamin cair setelah barang tiba dan masa
-              uji 2x24 jam usai.
+              <strong>Jaminan Keamanan Penjual:</strong> Pembeli wajib mentransfer
+              dana ke rekening escrow sebelum kamu diminta mengirim barang. Dana
+              dijamin cair setelah barang tiba dan masa uji 2x24 jam usai.
             </div>
           </div>
 
           <div className="flex items-center justify-between pt-2">
-            <Button variant="outline" size="md" onClick={() => setCurrentStep(3)}>
+            <Button
+              variant="outline"
+              size="md"
+              onClick={() => setCurrentStep(3)}
+              disabled={isSubmitting}
+            >
               Ubah Data
             </Button>
             <Button
               variant="accent"
               size="lg"
               onClick={handleSubmitListing}
+              disabled={isSubmitting}
               className="gap-2 font-bold shadow-lg"
             >
               <Sparkles className="w-5 h-5" />
-              <span>Tayangkan Iklan Sekarang</span>
+              <span>
+                {isSubmitting ? "Menayangkan Iklan..." : "Tayangkan Iklan Sekarang"}
+              </span>
             </Button>
           </div>
         </div>

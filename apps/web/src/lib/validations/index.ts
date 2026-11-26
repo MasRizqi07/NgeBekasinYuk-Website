@@ -2,6 +2,10 @@
 // Enforces strict types, lengths, and constraints at API boundaries.
 
 import { z } from "zod";
+import {
+  LISTING_CATEGORY_SLUGS,
+  LISTING_CONDITION_VALUES,
+} from "@/domain/listing/listingMetadata";
 
 export const LoginSchema = z.object({
   email: z.string().email("Format email tidak valid").toLowerCase().trim(),
@@ -131,4 +135,146 @@ export const SetWalletPinSchema = z
     pin: z.string().regex(/^\d{6}$/, "PIN harus berupa 6 digit angka"),
   })
   .strict();
+
+export const LISTING_SORT_OPTIONS = [
+  "newest",
+  "price_asc",
+  "price_desc",
+  "popular",
+] as const;
+
+export const SAFE_LISTING_IMAGE_URL_REGEX =
+  /^(?:\/api\/listings\/images\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:jpg|png|webp)|\/assets\/products\/[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp))$/;
+
+export const CreateListingSchema = z
+  .object({
+    title: z
+      .string()
+      .trim()
+      .min(3, "Judul minimal 3 karakter")
+      .max(160, "Judul maksimal 160 karakter"),
+    description: z
+      .string()
+      .trim()
+      .min(10, "Deskripsi minimal 10 karakter")
+      .max(5000, "Deskripsi maksimal 5000 karakter"),
+    price: z
+      .number()
+      .int("Harga harus bilangan bulat Rupiah")
+      .min(10000, "Harga minimal Rp 10.000")
+      .max(500000000, "Harga maksimal Rp 500.000.000"),
+    originalPrice: z
+      .number()
+      .int("Harga coret harus bilangan bulat")
+      .min(10000)
+      .max(1000000000)
+      .nullable()
+      .optional(),
+    category: z.enum(LISTING_CATEGORY_SLUGS, {
+      message: "Kategori tidak valid",
+    }),
+    brand: z.string().trim().min(1, "Merek wajib diisi").max(80),
+    model: z.string().trim().min(1, "Model wajib diisi").max(120),
+    condition: z.enum(LISTING_CONDITION_VALUES, {
+      message: "Kondisi barang tidak valid",
+    }),
+    canNego: z.boolean().default(true),
+    minNegoPrice: z
+      .number()
+      .int("Harga minimum nego harus bilangan bulat")
+      .min(10000)
+      .max(500000000)
+      .nullable()
+      .optional(),
+    images: z
+      .array(
+        z
+          .string()
+          .regex(SAFE_LISTING_IMAGE_URL_REGEX, "URL gambar tidak diizinkan")
+      )
+      .max(8, "Maksimal 8 foto per iklan")
+      .optional(),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    if (data.originalPrice != null && data.originalPrice < data.price) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["originalPrice"],
+        message: "Harga coret harus >= harga jual.",
+      });
+    }
+    if (data.minNegoPrice != null && data.minNegoPrice > data.price) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["minNegoPrice"],
+        message: "Harga minimum nego tidak boleh melebihi harga jual.",
+      });
+    }
+  });
+
+export const UpdateListingSchema = z
+  .object({
+    title: z.string().trim().min(3).max(160).optional(),
+    description: z.string().trim().min(10).max(5000).optional(),
+    price: z.number().int().min(10000).max(500000000).optional(),
+    originalPrice: z.number().int().min(10000).max(1000000000).nullable().optional(),
+    category: z.enum(LISTING_CATEGORY_SLUGS).optional(),
+    brand: z.string().trim().min(1).max(80).optional(),
+    model: z.string().trim().min(1).max(120).optional(),
+    condition: z.enum(LISTING_CONDITION_VALUES).optional(),
+    canNego: z.boolean().optional(),
+    minNegoPrice: z.number().int().min(10000).max(500000000).nullable().optional(),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    if (Object.keys(data).length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Minimal satu atribut iklan harus diubah.",
+      });
+    }
+    if (
+      data.price !== undefined &&
+      data.originalPrice != null &&
+      data.originalPrice < data.price
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["originalPrice"],
+        message: "Harga coret harus >= harga jual.",
+      });
+    }
+    if (
+      data.price !== undefined &&
+      data.minNegoPrice != null &&
+      data.minNegoPrice > data.price
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["minNegoPrice"],
+        message: "Harga minimum nego tidak boleh melebihi harga jual.",
+      });
+    }
+  });
+
+export const ListListingsQuerySchema = z.object({
+  q: z.string().trim().max(100).optional(),
+  category: z.string().trim().max(40).optional(),
+  condition: z.string().trim().max(200).optional(),
+  brand: z.string().trim().max(80).optional(),
+  minPrice: z.coerce.number().int().min(0).max(1000000000).optional(),
+  maxPrice: z.coerce.number().int().min(0).max(1000000000).optional(),
+  sellerId: z.string().trim().max(100).optional(),
+  status: z.enum(["ACTIVE", "RESERVED", "SOLD", "ARCHIVED"]).optional(),
+  mine: z.enum(["true", "false", "1", "0"]).optional(),
+  canNego: z.enum(["true", "false", "1", "0"]).optional(),
+  verifiedOnly: z.enum(["true", "false", "1", "0"]).optional(),
+  city: z.string().trim().max(80).optional(),
+  ids: z.string().trim().max(2500).optional(),
+  sort: z.enum(LISTING_SORT_OPTIONS).default("newest"),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  cursor: z.string().trim().max(500).optional(),
+});
+
 

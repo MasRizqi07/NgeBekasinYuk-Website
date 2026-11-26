@@ -139,6 +139,8 @@ model ProductListing {
 
   @@index([sellerId])
   @@index([status])
+  @@index([status, createdAt(sort: Desc), id])
+  @@index([category])
 }
 
 model ListingImage {
