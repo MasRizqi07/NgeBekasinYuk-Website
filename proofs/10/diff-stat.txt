@@ -1,4 +1,5 @@
- .github/workflows/ci.yml                           |    6 +
+ .github/workflows/ci.yml                           |    5 +
+ .gitleaksignore                                    |    2 +
  apps/web/.gitignore                                |    3 +
  apps/web/next.config.ts                            |    8 +
  .../migration.sql                                  |    3 +
@@ -40,4 +41,4 @@
  apps/web/test/integration/listingsApi.test.ts      |  723 +++++++++++++
  apps/web/test/unit/imageStorage.test.ts            |  105 ++
  docs/engineering/STATUS.md                         |   10 +-
- 42 files changed, 5856 insertions(+), 1826 deletions(-)
+ 43 files changed, 5857 insertions(+), 1826 deletions(-)

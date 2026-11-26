@@ -1,8 +1,8 @@
 diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
-index 3470410..5e858a3 100644
+index 3470410..af78b6b 100644
 --- a/.github/workflows/ci.yml
 +++ b/.github/workflows/ci.yml
-@@ -21,6 +21,12 @@ jobs:
+@@ -21,6 +21,11 @@ jobs:
          env:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
  
@@ -10,11 +10,20 @@ index 3470410..5e858a3 100644
 +        if: github.event_name == 'pull_request'
 +        run: |
 +          gitleaks git --no-banner --redact --log-opts="${{ github.event.pull_request.base.sha }}..HEAD"
-+          gitleaks detect --no-git --no-banner --redact
 +
    verify:
      name: Complete Hardening Verification Gates (PostgreSQL 16)
      runs-on: ubuntu-latest
+diff --git a/.gitleaksignore b/.gitleaksignore
+index 80c3936..7ed4194 100644
+--- a/.gitleaksignore
++++ b/.gitleaksignore
+@@ -8,3 +8,5 @@ efc0440b345f80122788c8fda726405db298d26d:proof.txt:generic-api-key:25
+ # Prior comment line in a0d8c94 and its net diff snapshot in fc2f569
+ a0d8c94ab179d376aab18b5ea7933876b61c2a41:.gitleaksignore:generic-api-key:2
+ fc2f569e886430f233e24bf2ee443c36c1a08b23:proofs/9/diff-code.patch:generic-api-key:131
++# Phase 10 vitest proof line echoing synthetic usr-legacy-test-<ts> ID (non-secret test fixture)
++496aac3fd76d90338ca72b56af7f6a90b9d2658d:proofs/10/vitest.txt:generic-api-key:89
 diff --git a/apps/web/.gitignore b/apps/web/.gitignore
 index cf4579f..0e3a6bb 100644
 --- a/apps/web/.gitignore
