@@ -1,0 +1,37 @@
+
+> web@0.1.0 test C:\Users\rrgtet47\AppData\Local\Temp\ngebekasinyuk-red-phase11-1795700278084\apps\web
+> vitest run "test/integration/offerCheckoutConcurrency.test.ts"
+
+
+ RUN  v4.1.12 C:/Users/rrgtet47/AppData/Local/Temp/ngebekasinyuk-red-phase11-1795700278084/apps/web
+
+ ❯ test/integration/offerCheckoutConcurrency.test.ts (1 test | 1 failed) 526ms
+     × allows exactly 1 order at offered price and rejects the concurrent duplicate across 20 iterations 524ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  20:38:27
+   Duration  1.34s (transform 198ms, setup 0ms, import 487ms, tests 526ms, environment 0ms)
+
+C:\Users\rrgtet47\AppData\Local\Temp\ngebekasinyuk-red-phase11-1795700278084\apps\web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  web@0.1.0 test: `vitest run "test/integration/offerCheckoutConcurrency.test.ts"`
+Exit status 1
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/integration/offerCheckoutConcurrency.test.ts > AC11.8: Concurrent Accepted Offer Checkout Consumption (20x Promise.all) > allows exactly 1 order at offered price and rejects the concurrent duplicate across 20 iterations
+AssertionError: expected 'ACCEPTED' to be 'CONSUMED' // Object.is equality
+
+Expected: "CONSUMED"
+Received: "ACCEPTED"
+
+ ❯ test/integration/offerCheckoutConcurrency.test.ts:223:35
+    221|         where: { id: offer.id },
+    222|       });
+    223|       expect(updatedOffer.status).toBe("CONSUMED");
+       |                                   ^
+    224|
+    225|       const orderCount = await prisma.order.count({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

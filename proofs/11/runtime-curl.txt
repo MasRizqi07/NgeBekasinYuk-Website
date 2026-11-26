@@ -1,0 +1,20 @@
+=== Phase 11 Runtime HTTP Proof (next start on 127.0.0.1:3111) ===
+
+[1] GET /api/conversations (unauthenticated) -> HTTP 401
+
+[2] POST /api/conversations (seller self-chat) -> HTTP 403
+
+[3] POST /api/conversations (buyer) -> HTTP 201, id=conv-ed8ed4b1-25b3-4b30-841c-d986a1830f16
+[3b] POST /api/conversations (idempotent repeat) -> HTTP 200, sameId=true
+
+[4] GET /api/conversations/conv-ed8ed4b1-25b3-4b30-841c-d986a1830f16 (non-participant IDOR) -> HTTP 403
+
+[5a] POST .../offers (> listing price) -> HTTP 422
+[5b] POST .../offers (Rp 4.200.000) -> HTTP 201, offerId=off-356ee23a-d909-4a6b-bdd9-3872537b9cf4, status=PENDING
+[5c] POST .../offers (duplicate PENDING) -> HTTP 409
+[5d] POST .../offers/off-356ee23a-d909-4a6b-bdd9-3872537b9cf4/accept (seller) -> HTTP 200, status=ACCEPTED
+
+[6a] POST /api/orders (outsider stealing offerId) -> HTTP 422
+[6b] POST /api/orders (negotiated buyer checkout) -> HTTP 201, itemPrice=4200000, offerStatusAfter=CONSUMED
+
+[7] Rate limit trigger -> HTTP 429 reached cleanly on cumulative message #31
