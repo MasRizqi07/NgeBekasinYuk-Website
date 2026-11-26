@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -29,7 +29,29 @@ export function Navbar() {
   const { searchQuery, setSearchQuery } = useListingStore();
   const unreadNotifs = useNotificationStore((s) => s.getUnreadCount());
   const unreadChats = useChatStore((s) => s.getUnreadMessagesCount());
+  const syncInbox = useChatStore((s) => s.syncInbox);
   const { user } = useUserStore();
+
+  useEffect(() => {
+    let active = true;
+    async function loadUnreadChats() {
+      try {
+        const res = await fetch("/api/auth/session", { cache: "no-store" });
+        const json = (await res.json().catch(() => null)) as {
+          authenticated?: boolean;
+        } | null;
+        if (active && res.ok && json?.authenticated) {
+          await syncInbox();
+        }
+      } catch {
+        // Non-fatal navbar sync failure
+      }
+    }
+    void loadUnreadChats();
+    return () => {
+      active = false;
+    };
+  }, [syncInbox]);
 
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [isProfileOpen, setIsProfileOpen] = useState(false);

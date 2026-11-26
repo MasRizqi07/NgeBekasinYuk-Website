@@ -1,221 +1,323 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import {
-  Tag,
-  Clock,
-  XCircle,
+  Check,
+  X,
   ArrowRight,
-  Lock,
+  Clock,
+  Tag,
+  CheckCircle2,
   Sparkles,
-  ShoppingBag,
+  RefreshCw,
 } from "lucide-react";
-import { Offer, ProductListing } from "@/types";
+import type { Offer, ProductListing } from "@/types";
 import { formatRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
-import { useChatStore } from "@/stores/useChatStore";
-import { useCartStore } from "@/stores/useCartStore";
 
 interface OfferCardProps {
   offer: Offer;
   listing: ProductListing;
-  convoId: string;
+  viewerId: string;
+  nowMs?: number;
+  isLatestForOffer?: boolean;
+  hasActivePendingOffer?: boolean;
+  isBusy?: boolean;
+  onAccept?: (offerId: string) => Promise<void> | void;
+  onReject?: (offerId: string) => Promise<void> | void;
+  onCounter?: (offerId: string, amount: number) => Promise<void> | void;
+  onBuyNegotiated?: (offer: Offer) => void;
+  onAcceptCounterAsBuyer?: (amount: number) => Promise<void> | void;
 }
 
-export function OfferCard({ offer, listing, convoId }: OfferCardProps) {
-  const { acceptOffer, rejectOffer, counterOffer } = useChatStore();
-  const { addItem } = useCartStore();
-
+export function OfferCard({
+  offer,
+  listing,
+  viewerId,
+  nowMs = 0,
+  isLatestForOffer = true,
+  hasActivePendingOffer = false,
+  isBusy = false,
+  onAccept,
+  onReject,
+  onCounter,
+  onBuyNegotiated,
+  onAcceptCounterAsBuyer,
+}: OfferCardProps) {
   const [counterOpen, setCounterOpen] = useState(false);
-  const [counterPrice, setCounterPrice] = useState(
-    Math.round(offer.offerPrice * 1.05)
+  const [counterInput, setCounterInput] = useState(
+    String(
+      Math.max(
+        10000,
+        Math.round(((offer.offerPrice + listing.price) / 2) / 1000) * 1000
+      )
+    )
   );
+  const [counterError, setCounterError] = useState<string | null>(null);
 
-  const handleCheckoutClick = () => {
-    addItem(listing.id, offer.id);
+  const isExpiredByClock =
+    (offer.status === "PENDING" || offer.status === "ACCEPTED") &&
+    nowMs > 0 &&
+    nowMs > new Date(offer.expiresAt).getTime();
+  const displayStatus = isExpiredByClock ? "EXPIRED" : offer.status;
+
+  const isSeller = viewerId === offer.sellerId;
+  const isBuyer = viewerId === offer.buyerId;
+  const isListingActive = !listing.status || listing.status === "ACTIVE";
+
+  const statusMeta: Record<
+    Offer["status"],
+    { label: string; bg: string; text: string }
+  > = {
+    PENDING: {
+      label: "Menunggu Konfirmasi",
+      bg: "bg-[#FFF4E0]",
+      text: "text-[#B26A00]",
+    },
+    ACCEPTED: {
+      label: "Penawaran Disetujui",
+      bg: "bg-brand-secondary-light",
+      text: "text-brand-secondary",
+    },
+    REJECTED: {
+      label: "Penawaran Ditolak",
+      bg: "bg-red-50",
+      text: "text-brand-danger",
+    },
+    COUNTERED: {
+      label: "Harga Tanding Penjual",
+      bg: "bg-brand-primary-soft",
+      text: "text-brand-primary",
+    },
+    EXPIRED: {
+      label: "Penawaran Kadaluwarsa",
+      bg: "bg-surface-subtle",
+      text: "text-text-muted",
+    },
+    CONSUMED: {
+      label: "Digunakan untuk Checkout",
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+    },
   };
 
-  const isAccepted = offer.status === "ACCEPTED";
-  const isRejected = offer.status === "REJECTED";
-  const isPending = offer.status === "PENDING";
+  const badge = statusMeta[displayStatus] ?? statusMeta.EXPIRED;
+
+  const handleCounterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCounterError(null);
+    const parsed = Number.parseInt(counterInput, 10);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      setCounterError("Masukkan nominal bulat lebih dari Rp 0.");
+      return;
+    }
+    if (parsed > listing.price) {
+      setCounterError("Harga tanding tidak boleh melebihi harga iklan.");
+      return;
+    }
+    if (onCounter) {
+      await onCounter(offer.id, parsed);
+      setCounterOpen(false);
+    }
+  };
 
   return (
-    <div
-      className={`w-full max-w-md my-3 rounded-2xl p-4 shadow-md flex flex-col gap-3 relative overflow-hidden border ${
-        isAccepted
-          ? "bg-brand-secondary-light border-brand-secondary/40"
-          : isRejected
-          ? "bg-brand-danger-soft border-brand-danger/30"
-          : "bg-surface-subtle border-surface-border"
-      }`}
-    >
-      {/* Top Border Accent Line */}
-      <div
-        className={`absolute top-0 inset-x-0 h-1.5 ${
-          isAccepted
-            ? "bg-brand-secondary"
-            : isRejected
-            ? "bg-brand-danger"
-            : "bg-brand-primary"
-        }`}
-      />
-
-      {/* Header Info */}
-      <div className="flex items-center justify-between gap-2 pt-0.5">
-        <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm">
-          {isAccepted ? (
-            <div className="flex items-center gap-1 text-brand-secondary">
-              <Sparkles className="w-4 h-4" />
-              <span>Tawaran Disetujui Penjual!</span>
-            </div>
-          ) : isRejected ? (
-            <div className="flex items-center gap-1 text-brand-danger">
-              <XCircle className="w-4 h-4" />
-              <span>Tawaran Ditolak</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 text-brand-primary">
-              <Tag className="w-4 h-4" />
-              <span>Penawaran Harga Diajukan</span>
-            </div>
-          )}
+    <div className="bg-white rounded-2xl border border-surface-border shadow-sm p-3.5 sm:p-4 max-w-sm w-full flex flex-col gap-2.5">
+      <div className="flex items-center justify-between gap-2 pb-2 border-b border-surface-border">
+        <div className="flex items-center gap-1.5 font-bold text-xs text-on-surface">
+          <Tag className="w-3.5 h-3.5 text-brand-primary" />
+          <span>Penawaran Harga</span>
         </div>
-
-        <div className="flex items-center gap-1 text-[11px] font-semibold text-text-muted bg-white/70 px-2 py-0.5 rounded-full shadow-xs">
-          <Clock className="w-3 h-3 text-[#B26A00]" />
-          <span>Berlaku 24 Jam</span>
-        </div>
+        <span
+          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${badge.bg} ${badge.text}`}
+        >
+          {badge.label}
+        </span>
       </div>
 
-      {/* Product Summary Row */}
-      <div className="bg-white p-2.5 rounded-xl border border-surface-border flex items-center gap-3">
-        <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-surface-subtle shrink-0">
-          <Image
-            src={listing.images[0] || "/assets/products/ipad-mini-unboxing.png"}
-            alt={listing.title}
-            fill
-            sizes="48px"
-            className="object-cover"
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="font-bold text-xs text-on-surface truncate">
-            {listing.title}
-          </h4>
-          <span className="text-[11px] text-text-muted">{listing.conditionLabel}</span>
-        </div>
-      </div>
-
-      {/* Price Computation */}
-      <div className="bg-white p-3 rounded-xl border border-surface-border flex flex-col gap-1.5 shadow-xs">
-        <div className="flex items-center justify-between text-xs text-text-muted">
-          <span>Harga Asli Listing:</span>
-          <span className="line-through tabular-nums">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <span className="text-[11px] text-text-muted line-through block tabular-nums">
             {formatRupiah(offer.originalPrice)}
           </span>
-        </div>
-
-        <div className="flex items-center justify-between pt-1 border-t border-surface-border">
-          <span className="font-bold text-xs sm:text-sm text-on-surface">
-            Harga Penawaran:
+          <span className="text-lg font-black text-brand-primary tabular-nums">
+            {formatRupiah(offer.offerPrice)}
           </span>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold bg-brand-secondary-light text-brand-secondary px-1.5 py-0.5 rounded">
-              Hemat {offer.discountPercent}%
-            </span>
-            <span
-              className={`font-black text-base sm:text-lg tabular-nums ${
-                isAccepted ? "text-brand-secondary" : "text-brand-primary"
-              }`}
-            >
-              {formatRupiah(offer.offerPrice)}
-            </span>
-          </div>
         </div>
+        <span className="text-[11px] font-bold bg-brand-secondary-light text-brand-secondary px-2 py-0.5 rounded-md">
+          Hemat {offer.discountPercent}%
+        </span>
       </div>
 
-      {/* Accepted State: Instant Checkout CTA */}
-      {isAccepted && (
-        <div className="flex flex-col gap-2 pt-1">
-          <div className="flex items-center gap-1.5 text-[11px] text-on-secondary-container leading-tight">
-            <Lock className="w-3.5 h-3.5 shrink-0" />
-            <span>
-              Harga Rp {offer.offerPrice.toLocaleString("id-ID")} terkunci khusus untuk akunmu.
-            </span>
-          </div>
-
-          <Link href="/checkout" onClick={handleCheckoutClick}>
-            <Button
-              variant="primary"
-              size="lg"
-              className="w-full font-bold shadow-lg gap-2"
-            >
-              <ShoppingBag className="w-5 h-5" />
-              <span>Checkout {formatRupiah(offer.offerPrice)} Sekarang</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
-
-          <p className="text-[10px] text-center text-text-muted">
-            Dilindungi Rekber Resmi NgeBekasinYuk • Uang aman sampai paket diinspeksi.
-          </p>
+      {displayStatus === "COUNTERED" && offer.counterPrice != null && (
+        <div className="p-2.5 rounded-xl bg-brand-primary-soft/50 border border-brand-primary/20 flex items-center justify-between gap-2 text-xs">
+          <span className="text-text-secondary font-medium">
+            Harga tanding penjual:
+          </span>
+          <span className="font-extrabold text-brand-primary tabular-nums">
+            {formatRupiah(offer.counterPrice)}
+          </span>
         </div>
       )}
 
-      {/* Pending State: Seller Actions */}
-      {isPending && (
-        <div className="flex flex-col gap-2 pt-1">
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => rejectOffer(convoId, offer.id)}
-            >
-              Tolak
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setCounterOpen(!counterOpen)}
-            >
-              Tawar Balik
-            </Button>
-            <Button
-              variant="success"
-              size="sm"
-              onClick={() => acceptOffer(convoId, offer.id)}
-            >
-              Terima
-            </Button>
-          </div>
+      {(displayStatus === "PENDING" || displayStatus === "ACCEPTED") && (
+        <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
+          <Clock className="w-3.5 h-3.5 shrink-0" />
+          <span>
+            Berlaku s/d{" "}
+            {new Date(offer.expiresAt).toLocaleString("id-ID", {
+              dateStyle: "short",
+              timeStyle: "short",
+            })}
+          </span>
+        </div>
+      )}
 
-          {counterOpen && (
-            <div className="p-3 bg-white rounded-xl border border-surface-border flex flex-col gap-2">
-              <label className="text-xs font-bold text-on-surface">
-                Masukkan Harga Tawaran Balik:
-              </label>
+      {/* Seller Actions on active PENDING offer */}
+      {isLatestForOffer && displayStatus === "PENDING" && isSeller && (
+        <div className="flex flex-col gap-2 pt-1">
+          {!isListingActive ? (
+            <div className="text-[11px] font-semibold text-text-muted bg-surface-subtle rounded-lg px-2.5 py-2">
+              Barang sedang tidak aktif ({listing.status}); tindakan penawaran
+              dinonaktifkan.
+            </div>
+          ) : (
+            <>
               <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={counterPrice}
-                  onChange={(e) => setCounterPrice(Number(e.target.value))}
-                  className="flex-1 px-3 py-1.5 bg-surface-subtle rounded-lg text-xs font-mono font-bold"
-                />
                 <Button
+                  type="button"
                   size="sm"
-                  variant="primary"
-                  onClick={() => {
-                    counterOffer(convoId, offer.id, counterPrice);
-                    setCounterOpen(false);
-                  }}
+                  variant="secondary"
+                  disabled={isBusy}
+                  onClick={() => onAccept?.(offer.id)}
+                  className="flex-1 text-xs font-bold gap-1"
                 >
-                  Kirim
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Terima</span>
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={isBusy}
+                  onClick={() => setCounterOpen((prev) => !prev)}
+                  className="flex-1 text-xs font-bold gap-1"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Tawar Balik</span>
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={isBusy}
+                  onClick={() => onReject?.(offer.id)}
+                  className="text-xs font-bold text-brand-danger border-red-200 hover:bg-red-50 px-2.5"
+                  aria-label="Tolak Penawaran"
+                >
+                  <X className="w-3.5 h-3.5" />
                 </Button>
               </div>
-            </div>
+
+              {counterOpen && (
+                <form
+                  onSubmit={handleCounterSubmit}
+                  className="flex flex-col gap-1.5 pt-1 border-t border-surface-border"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      min={1}
+                      max={listing.price}
+                      value={counterInput}
+                      onChange={(e) => setCounterInput(e.target.value)}
+                      placeholder="Nominal harga tanding"
+                      aria-label="Nominal harga tanding"
+                      className="flex-1 h-9 px-2.5 rounded-lg bg-surface-subtle text-xs font-mono font-bold text-on-surface border border-surface-border outline-none focus:border-brand-primary"
+                      required
+                    />
+                    <Button
+                      type="submit"
+                      size="sm"
+                      variant="primary"
+                      disabled={isBusy}
+                      aria-label="Kirim Harga Tanding"
+                      className="h-9 text-xs font-bold px-3"
+                    >
+                      Kirim
+                    </Button>
+                  </div>
+                  {counterError && (
+                    <p className="text-[11px] font-semibold text-brand-danger">
+                      {counterError}
+                    </p>
+                  )}
+                </form>
+              )}
+            </>
           )}
+        </div>
+      )}
+
+      {isLatestForOffer && displayStatus === "PENDING" && isBuyer && (
+        <div className="text-[11px] font-semibold text-text-secondary bg-surface-subtle rounded-lg px-2.5 py-2">
+          Penawaran terkirim. Menunggu keputusan penjual.
+        </div>
+      )}
+
+      {/* Buyer CTA on accepted, unexpired offer */}
+      {isLatestForOffer && displayStatus === "ACCEPTED" && isBuyer && (
+        <Button
+          type="button"
+          size="sm"
+          variant="primary"
+          disabled={isBusy || !isListingActive}
+          onClick={() => onBuyNegotiated?.(offer)}
+          className="w-full font-bold gap-1.5 shadow-sm disabled:opacity-60"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>
+            {isListingActive
+              ? "Beli Sekarang (Harga Nego)"
+              : `Barang Tidak Tersedia (${listing.status})`}
+          </span>
+          {isListingActive && <ArrowRight className="w-3.5 h-3.5" />}
+        </Button>
+      )}
+
+      {isLatestForOffer && displayStatus === "ACCEPTED" && isSeller && (
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-brand-secondary bg-brand-secondary-light/60 rounded-lg px-2.5 py-2">
+          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+          <span>Harga nego aktif — menunggu pembeli melakukan checkout.</span>
+        </div>
+      )}
+
+      {isLatestForOffer &&
+        displayStatus === "COUNTERED" &&
+        isBuyer &&
+        offer.counterPrice != null &&
+        onAcceptCounterAsBuyer && (
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={isBusy || !isListingActive || hasActivePendingOffer}
+            onClick={() => onAcceptCounterAsBuyer(offer.counterPrice!)}
+            className="w-full text-xs font-bold gap-1"
+          >
+            <Check className="w-3.5 h-3.5" />
+            <span>
+              {hasActivePendingOffer
+                ? "Ada Penawaran Pending Lain"
+                : `Ajukan Harga Penjual (${formatRupiah(offer.counterPrice)})`}
+            </span>
+          </Button>
+        )}
+
+      {displayStatus === "CONSUMED" && (
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 rounded-lg px-2.5 py-2">
+          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+          <span>Penawaran ini telah dipakai untuk membuat pesanan escrow.</span>
         </div>
       )}
     </div>
