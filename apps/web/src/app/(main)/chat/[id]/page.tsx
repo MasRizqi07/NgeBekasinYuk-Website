@@ -1,577 +1,823 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
-  ShieldCheck,
-  Star,
-  ExternalLink,
-  Tag,
+  ChevronLeft,
   Send,
-  CheckCircle2,
-  Lock,
-  Clock,
-  Check,
-  X,
+  Tag,
+  ShieldCheck,
   ShoppingBag,
+  Lock,
   Sparkles,
+  AlertCircle,
 } from "lucide-react";
+import type { ChatMessage, Conversation, Offer } from "@/types";
+import { useCartStore } from "@/stores/useCartStore";
 import { useChatStore } from "@/stores/useChatStore";
 import { formatRupiah } from "@/lib/utils";
+import { OfferCard } from "@/components/features/OfferCard";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import Modal from "@/components/ui/Modal";
-import confetti from "canvas-confetti";
 
-export default function ChatDetailPage() {
-  const params = useParams();
+const BASE_POLL_MS = 3000;
+const MAX_POLL_BACKOFF_MS = 30000;
+
+export default function ChatDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id: convoId } = use(params);
   const router = useRouter();
-  const convoId = params.id as string;
-  const {
-    conversations,
-    getConversationById,
-    sendMessage,
-    sendOffer,
-    acceptOffer,
-    rejectOffer,
-    isCounterpartTyping,
-  } = useChatStore();
   const { showToast } = useToast();
+  const { addItem } = useCartStore();
+  const { syncInbox } = useChatStore();
+
+  const [viewerId, setViewerId] = useState<string | null>(null);
+  const [convo, setConvo] = useState<Conversation | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState<
+    "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | null
+  >(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [inputText, setInputText] = useState("");
-  const [showNegoModal, setShowNegoModal] = useState(false);
-  const [showSafetyModal, setShowSafetyModal] = useState(false);
-  const [customOfferPrice, setCustomOfferPrice] = useState<number>(6900000);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isSendingMsg, setIsSendingMsg] = useState(false);
+  const [isOfferBusy, setIsOfferBusy] = useState(false);
 
-  const conversation =
-    getConversationById(convoId) ||
-    conversations[0] || {
-      id: convoId,
-      listingId: "prod-ipad-air5",
-      counterpart: {
-        id: "usr-seller-dimas",
-        name: "Dimas Aditya",
-        avatar: "/assets/products/ipad-mini-unboxing.png",
-        verifiedKYC: true,
-        trustScore: 98,
-        rating: 4.9,
-        reviewCount: 52,
-        location: "Jakarta Barat",
-        city: "Jakarta Barat",
-        joinedDate: "Maret 2023",
-        responseTime: "< 5 menit",
-        successTransactions: 48,
+  const [offerModalOpen, setOfferModalOpen] = useState(false);
+  const [offerAmountInput, setOfferAmountInput] = useState(0);
+  const [nowMs, setNowMs] = useState(0);
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const afterCursorRef = useRef<string | null>(null);
+  const backoffMsRef = useRef<number>(BASE_POLL_MS);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const mergePolledUpdates = useCallback(
+    (
+      payload: {
+        data?: ChatMessage[];
+        offers?: Offer[];
+        listingStatus?: string;
+        nextCursor?: string | null;
       },
-      listing: {
-        id: "prod-ipad-air5",
-        slug: "ipad-air-5-64gb-wifi-starlight",
-        title: "iPad Air 5 M1 64GB WiFi Only Starlight",
-        price: 7500000,
-        category: "smartphone" as const,
-        categoryLabel: "Smartphone & Tablet",
-        brand: "Apple",
-        model: "iPad Air 5",
-        condition: "LIKE_NEW" as const,
-        conditionLabel: "Seperti Baru (99%)",
-        conditionScore: 99,
-        canNego: true,
-        images: ["/assets/products/ipad-mini-unboxing.png"],
-        location: "Jakarta Selatan",
-        city: "Jakarta Selatan",
-        description: "Unit siap transaksi via Escrow.",
-        specifications: { Merek: "Apple" },
-        completeness: ["Unit Utama"],
-        diagnosticPassed: true,
-        seller: {
-          id: "usr-seller-dimas",
-          name: "Dimas Aditya",
-          avatar: "/assets/products/ipad-mini-unboxing.png",
-          verifiedKYC: true,
-          trustScore: 98,
-          rating: 4.9,
-          reviewCount: 52,
-          location: "Jakarta Barat",
-          city: "Jakarta Barat",
-          joinedDate: "Maret 2023",
-          responseTime: "< 5 menit",
-          successTransactions: 48,
-        },
-        createdAt: "2026-09-10T09:00:00.000Z",
-        viewsCount: 0,
-        favoritesCount: 0,
-      },
-      lastMessage: "Harga penawarannya sudah saya acc ya kak!",
-      lastTimestamp: new Date().toISOString(),
-      unreadCount: 0,
-      messages: [],
+      advanceCursor = true
+    ) => {
+      if (advanceCursor && payload.nextCursor) {
+        afterCursorRef.current = payload.nextCursor;
+      }
+
+      setConvo((prev) => {
+        if (!prev) return prev;
+        const incoming = Array.isArray(payload.data) ? payload.data : [];
+        const existingIds = new Set(prev.messages.map((m) => m.id));
+        const mergedMessages = [...prev.messages];
+
+        for (const msg of incoming) {
+          if (!existingIds.has(msg.id)) {
+            existingIds.add(msg.id);
+            mergedMessages.push(msg);
+          }
+        }
+
+        const nextStatus = payload.listingStatus
+          ? (payload.listingStatus as Conversation["listing"]["status"])
+          : prev.listing.status;
+
+        const nextOffers = Array.isArray(payload.offers)
+          ? payload.offers
+          : prev.offers;
+
+        const lastMsg = mergedMessages[mergedMessages.length - 1];
+
+        return {
+          ...prev,
+          messages: mergedMessages,
+          offers: nextOffers,
+          lastMessage: lastMsg ? lastMsg.text.slice(0, 140) : prev.lastMessage,
+          lastTimestamp: lastMsg ? lastMsg.timestamp : prev.lastTimestamp,
+          listing: {
+            ...prev.listing,
+            status: nextStatus,
+          },
+        };
+      });
+    },
+    []
+  );
+
+  const loadInitialConversation = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const [sessionRes, convoRes] = await Promise.all([
+        fetch("/api/auth/session", { cache: "no-store" }),
+        fetch(`/api/conversations/${encodeURIComponent(convoId)}`, {
+          cache: "no-store",
+        }),
+      ]);
+
+      const sessionJson = (await sessionRes.json().catch(() => null)) as {
+        authenticated?: boolean;
+        user?: { id: string } | null;
+      } | null;
+
+      if (!sessionJson?.authenticated || !sessionJson.user?.id || convoRes.status === 401) {
+        setAccessDenied("UNAUTHORIZED");
+        setIsLoading(false);
+        return false;
+      }
+
+      if (convoRes.status === 403) {
+        setAccessDenied("FORBIDDEN");
+        setIsLoading(false);
+        return false;
+      }
+
+      if (convoRes.status === 404) {
+        setAccessDenied("NOT_FOUND");
+        setIsLoading(false);
+        return false;
+      }
+
+      const convoJson = (await convoRes.json().catch(() => null)) as
+        | (Conversation & { message?: string })
+        | null;
+
+      if (!convoRes.ok || !convoJson) {
+        throw new Error(convoJson?.message || "Gagal memuat percakapan.");
+      }
+
+      setViewerId(sessionJson.user.id);
+      setConvo(convoJson);
+      setNowMs(Date.now());
+      setOfferAmountInput(Math.max(10000, Math.round(convoJson.listing.price * 0.9)));
+      setAccessDenied(null);
+      setIsLoading(false);
+
+      const lastMsg = convoJson.messages[convoJson.messages.length - 1];
+      afterCursorRef.current = lastMsg ? lastMsg.id : null;
+      backoffMsRef.current = BASE_POLL_MS;
+      void syncInbox();
+      return true;
+    } catch (err) {
+      setLoadError(
+        err instanceof Error ? err.message : "Gagal memuat percakapan."
+      );
+      setIsLoading(false);
+      return false;
+    }
+  }, [convoId, syncInbox]);
+
+  const pollOnce = useCallback(async (): Promise<"ok" | "stop" | "retry"> => {
+    try {
+      const qs = new URLSearchParams();
+      if (afterCursorRef.current) {
+        qs.set("after", afterCursorRef.current);
+      }
+      const res = await fetch(
+        `/api/conversations/${encodeURIComponent(convoId)}/messages?${qs.toString()}`,
+        { cache: "no-store" }
+      );
+
+      if (res.status === 401 || res.status === 403 || res.status === 404) {
+        return "stop";
+      }
+
+      if (!res.ok) {
+        backoffMsRef.current = Math.min(
+          MAX_POLL_BACKOFF_MS,
+          backoffMsRef.current * 2
+        );
+        return "retry";
+      }
+
+      const payload = (await res.json()) as {
+        data?: ChatMessage[];
+        offers?: Offer[];
+        listingStatus?: string;
+        nextCursor?: string | null;
+      };
+      backoffMsRef.current = BASE_POLL_MS;
+      setNowMs(Date.now());
+      mergePolledUpdates(payload);
+      return "ok";
+    } catch {
+      backoffMsRef.current = Math.min(
+        MAX_POLL_BACKOFF_MS,
+        backoffMsRef.current * 2
+      );
+      return "retry";
+    }
+  }, [convoId, mergePolledUpdates]);
+
+  useEffect(() => {
+    let active = true;
+
+    const clearTimer = () => {
+      if (pollTimerRef.current) {
+        clearTimeout(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
     };
+
+    const schedulePoll = () => {
+      clearTimer();
+      if (!active || document.visibilityState !== "visible") return;
+      pollTimerRef.current = setTimeout(async () => {
+        if (!active || document.visibilityState !== "visible") return;
+        const status = await pollOnce();
+        if (active && status !== "stop" && document.visibilityState === "visible") {
+          schedulePoll();
+        }
+      }, backoffMsRef.current);
+    };
+
+    const start = async () => {
+      const loaded = await loadInitialConversation();
+      if (active && loaded && document.visibilityState === "visible") {
+        schedulePoll();
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void pollOnce().then((status) => {
+          if (active && status !== "stop") {
+            schedulePoll();
+          }
+        });
+      } else {
+        clearTimer();
+      }
+    };
+
+    void start();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      active = false;
+      clearTimer();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [loadInitialConversation, pollOnce]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [conversation?.messages, isCounterpartTyping]);
+  }, [convo?.messages.length]);
 
-  const handleSend = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!inputText.trim()) return;
+  const offersById = useMemo(() => {
+    const map = new Map<string, Offer>();
+    for (const offer of convo?.offers ?? []) {
+      map.set(offer.id, offer);
+    }
+    return map;
+  }, [convo?.offers]);
 
-    sendMessage(conversation.id, inputText.trim());
-    setInputText("");
+  const latestMsgIdForOffer = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of convo?.messages ?? []) {
+      if (m.offer?.id) {
+        map.set(m.offer.id, m.id);
+      }
+    }
+    return map;
+  }, [convo?.messages]);
+
+  const activeAcceptedOffer = useMemo(() => {
+    return (convo?.offers ?? []).find(
+      (o) =>
+        o.status === "ACCEPTED" &&
+        (nowMs <= 0 || new Date(o.expiresAt).getTime() > nowMs)
+    );
+  }, [convo?.offers, nowMs]);
+
+  const hasActivePendingOffer = useMemo(() => {
+    return (convo?.offers ?? []).some(
+      (o) =>
+        o.status === "PENDING" &&
+        (nowMs <= 0 || new Date(o.expiresAt).getTime() > nowMs)
+    );
+  }, [convo?.offers, nowMs]);
+
+  const isBuyer = Boolean(viewerId && convo?.buyerId === viewerId);
+  const isListingActive = !convo?.listing.status || convo.listing.status === "ACTIVE";
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = inputText.trim();
+    if (!trimmed || isSendingMsg) return;
+
+    setIsSendingMsg(true);
+    try {
+      const res = await fetch(
+        `/api/conversations/${encodeURIComponent(convoId)}/messages`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: trimmed }),
+        }
+      );
+
+      const json = (await res.json().catch(() => null)) as {
+        message?: ChatMessage;
+        cursor?: string;
+        detail?: string;
+        error?: string;
+      } | null;
+
+      if (!res.ok || !json?.message) {
+        showToast(
+          json?.detail || "Gagal mengirim pesan. Coba lagi sebentar.",
+          "error"
+        );
+        setIsSendingMsg(false);
+        return;
+      }
+
+      setInputText("");
+      mergePolledUpdates(
+        {
+          data: [json.message],
+        },
+        false
+      );
+    } catch {
+      showToast("Koneksi terputus saat mengirim pesan.", "error");
+    } finally {
+      setIsSendingMsg(false);
+    }
   };
 
-  const handleCreateOffer = () => {
-    sendOffer(conversation.id, customOfferPrice);
-    setShowNegoModal(false);
-    showToast(`Penawaran ${formatRupiah(customOfferPrice)} berhasil diajukan!`, "info");
+  const submitOfferAmount = async (amount: number) => {
+    if (isOfferBusy) return false;
+    setIsOfferBusy(true);
+    try {
+      const res = await fetch(
+        `/api/conversations/${encodeURIComponent(convoId)}/offers`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount }),
+        }
+      );
+
+      const json = (await res.json().catch(() => null)) as {
+        offer?: Offer;
+        message?: ChatMessage;
+        detail?: string;
+      } | null;
+
+      if (!res.ok || !json?.offer || !json?.message) {
+        showToast(
+          json?.detail || "Gagal mengajukan penawaran harga.",
+          "error"
+        );
+        return false;
+      }
+
+      setConvo((prev) => {
+        if (!prev) return prev;
+        const offers = [json.offer!, ...(prev.offers ?? [])];
+        const existingIds = new Set(prev.messages.map((m) => m.id));
+        const messages = existingIds.has(json.message!.id)
+          ? prev.messages
+          : [...prev.messages, json.message!];
+        return {
+          ...prev,
+          offers,
+          messages,
+          lastMessage: json.message!.text,
+          lastTimestamp: json.message!.timestamp,
+        };
+      });
+      showToast(`Penawaran ${formatRupiah(amount)} dikirim!`, "success");
+      return true;
+    } catch {
+      showToast("Gagal mengirim penawaran karena masalah jaringan.", "error");
+      return false;
+    } finally {
+      setIsOfferBusy(false);
+    }
   };
 
-  const handleAcceptOffer = (offerId: string) => {
-    acceptOffer(conversation.id, offerId);
-    confetti({
-      particleCount: 70,
-      spread: 60,
-      origin: { y: 0.6 },
-    });
-    showToast("Tawaran diterima! Harga khusus terkunci 2 jam.", "success");
+  const handleOfferModalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const ok = await submitOfferAmount(Math.trunc(offerAmountInput));
+    if (ok) setOfferModalOpen(false);
   };
+
+  const handleOfferAction = async (
+    offerId: string,
+    action: "accept" | "reject" | "counter",
+    amount?: number
+  ) => {
+    if (isOfferBusy) return;
+    setIsOfferBusy(true);
+    try {
+      const res = await fetch(
+        `/api/conversations/${encodeURIComponent(convoId)}/offers/${encodeURIComponent(
+          offerId
+        )}/${action}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          ...(action === "counter"
+            ? { body: JSON.stringify({ amount }) }
+            : {}),
+        }
+      );
+
+      const json = (await res.json().catch(() => null)) as {
+        offer?: Offer;
+        message?: ChatMessage;
+        detail?: string;
+      } | null;
+
+      if (!res.ok || !json?.offer || !json?.message) {
+        showToast(json?.detail || "Gagal memperbarui penawaran.", "error");
+        void pollOnce();
+        return;
+      }
+
+      setConvo((prev) => {
+        if (!prev) return prev;
+        const existingOffers = prev.offers ?? [];
+        const updatedOffers = existingOffers.map((o) =>
+          o.id === json.offer!.id ? json.offer! : o
+        );
+        const existingIds = new Set(prev.messages.map((m) => m.id));
+        const messages = existingIds.has(json.message!.id)
+          ? prev.messages
+          : [...prev.messages, json.message!];
+        return {
+          ...prev,
+          offers: updatedOffers,
+          messages,
+          lastMessage: json.message!.text,
+          lastTimestamp: json.message!.timestamp,
+        };
+      });
+      showToast(
+        action === "accept"
+          ? "Penawaran disetujui! Pembeli dapat checkout harga nego."
+          : action === "reject"
+          ? "Penawaran ditolak."
+          : "Harga tanding berhasil dikirim ke pembeli.",
+        "info"
+      );
+    } catch {
+      showToast("Gagal menghubungi server saat memproses penawaran.", "error");
+    } finally {
+      setIsOfferBusy(false);
+    }
+  };
+
+  const handleCheckoutWithOffer = (offer: Offer) => {
+    if (!convo) return;
+    addItem(convo.listing.id, offer.id);
+    router.push("/checkout");
+  };
+
+  const handleDirectCheckout = () => {
+    if (!convo) return;
+    addItem(convo.listing.id);
+    router.push("/checkout");
+  };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
+        <div className="h-16 rounded-2xl bg-surface-subtle animate-pulse" />
+        <div className="h-96 rounded-2xl bg-surface-subtle animate-pulse" />
+      </div>
+    );
+  }
+
+  if (accessDenied === "UNAUTHORIZED") {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center flex flex-col items-center gap-4">
+        <Lock className="w-10 h-10 text-brand-primary" />
+        <h2 className="font-extrabold text-lg text-on-surface">
+          Silakan Login untuk Mengakses Percakapan
+        </h2>
+        <Link href={`/login?next=/chat/${encodeURIComponent(convoId)}`}>
+          <Button variant="primary" size="md">
+            Masuk ke Akun
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  if (accessDenied || loadError || !convo || !viewerId) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center flex flex-col items-center gap-4">
+        <AlertCircle className="w-10 h-10 text-brand-danger" />
+        <h2 className="font-bold text-lg text-on-surface">
+          {accessDenied === "FORBIDDEN"
+            ? "Akses Percakapan Ditolak"
+            : loadError || "Percakapan Tidak Ditemukan"}
+        </h2>
+        <p className="text-xs text-text-secondary">
+          {accessDenied === "FORBIDDEN"
+            ? "Hanya pembeli dan penjual terkait yang dapat melihat atau mengirim pesan di ruang ini."
+            : "Obrolan tidak tersedia atau telah dihapus."}
+        </p>
+        <Link href="/chat">
+          <Button variant="primary" size="sm">
+            Kembali ke Daftar Chat
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const coverImg =
+    convo.listing.images[0] || "/assets/products/ipad-mini-unboxing.png";
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col pb-28">
-      {/* Pinned Subheader */}
-      <div className="sticky top-0 z-30 bg-surface-container-lowest/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-xs">
-        {/* Partner Info Row */}
-        <div className="px-4 py-2.5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <button
-              onClick={() => router.push("/chat")}
-              className="w-9 h-9 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface transition-colors shrink-0"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="relative shrink-0">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-surface-container relative">
-                <Image
-                  src={
-                    conversation.counterpart.avatar ||
-                    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80"
-                  }
-                  alt={conversation.counterpart.name}
-                  fill
-                  sizes="40px"
-                  className="object-cover"
-                />
-              </div>
-              {conversation.counterpart.isOnline && (
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-secondary rounded-full border-2 border-surface-container-lowest"></span>
-              )}
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1">
-                <span className="font-bold text-xs md:text-sm text-on-surface truncate">
-                  {conversation.counterpart.name}
-                </span>
-                {conversation.counterpart.isVerified && (
-                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold">
-                    <CheckCircle2 className="w-3 h-3 text-secondary" />
-                    <span>KYC</span>
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 text-on-surface-variant text-[11px]">
-                <span className="text-secondary font-semibold">Online</span>
-                <span>•</span>
-                <span>Balas &lt;5 mnt</span>
-                <span>•</span>
-                <span className="flex items-center gap-0.5 text-amber-600 font-semibold">
-                  <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                  <span>4.9 (52)</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={() => setShowSafetyModal(true)}
-              className="h-8 px-2.5 rounded-full bg-surface-container-low hover:bg-surface-container flex items-center gap-1 text-primary text-xs font-bold transition-all"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Tips Aman</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Pinned Product Listing Context Strip */}
-        <div className="px-4 py-2 bg-surface-container-low/70 border-t border-outline-variant/20 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="w-10 h-10 rounded-lg overflow-hidden bg-surface-container shrink-0 relative border border-outline-variant/20">
-              <Image
-                src={conversation.listing.images[0] || "/assets/products/ipad-mini-unboxing.png"}
-                alt={conversation.listing.title}
-                fill
-                sizes="40px"
-                className="object-cover"
-              />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <p className="text-xs text-on-surface truncate font-semibold">
-                {conversation.listing.title}
-              </p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs font-bold text-primary">
-                  {formatRupiah(conversation.listing.price)}
-                </span>
-                <span className="px-1.5 py-0.2 rounded-md bg-amber-500/10 text-amber-700 text-[10px] uppercase font-bold">
-                  Bisa Nego
-                </span>
-              </div>
-            </div>
-          </div>
-
+    <div className="max-w-3xl mx-auto px-2 sm:px-4 pt-3 pb-24 sm:pb-6 flex flex-col h-[calc(100vh-80px)]">
+      {/* Header Counterpart Info */}
+      <div className="bg-white p-3 sm:p-4 rounded-t-2xl border border-surface-border flex items-center justify-between gap-3 shrink-0 shadow-xs">
+        <div className="flex items-center gap-2.5 min-w-0">
           <Link
-            href={`/product/${conversation.listing.slug}`}
-            className="shrink-0 px-2.5 py-1 rounded-full bg-surface-container-lowest text-primary hover:bg-surface-container text-xs font-semibold shadow-xs flex items-center gap-1 transition-colors"
+            href="/chat"
+            className="w-8 h-8 rounded-xl bg-surface-subtle hover:bg-outline-variant flex items-center justify-center text-text-secondary shrink-0"
+            aria-label="Kembali ke inbox"
           >
-            <span>Detail</span>
-            <ExternalLink className="w-3 h-3" />
+            <ChevronLeft className="w-4 h-4" />
           </Link>
-        </div>
-      </div>
 
-      {/* Messages Stream */}
-      <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-4 space-y-4">
-        {/* Date Divider */}
-        <div className="flex justify-center">
-          <span className="px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-medium">
-            Hari Ini • Terenkripsi End-to-End
-          </span>
-        </div>
-
-        {/* Escrow Banner Guard */}
-        <div className="p-3 rounded-2xl bg-secondary-fixed/40 text-on-secondary-fixed flex items-start gap-2.5 shadow-xs">
-          <ShieldCheck className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
-          <div className="text-xs leading-relaxed">
-            <span className="font-bold text-secondary">Tips Keamanan Rekber Escrow: </span>
-            <span>
-              Wajib transaksi via escrow resmi <strong>NgeBekasinYuk</strong>. Jangan pernah transfer langsung ke rekening pribadi untuk melindungi jaminan retur barang 2x24 jam.
-            </span>
-          </div>
-        </div>
-
-        {/* Render Conversation Messages */}
-        {conversation.messages.map((msg) => {
-          const isMe = msg.senderId === "user-budi";
-
-          return (
-            <div
-              key={msg.id}
-              className={`flex flex-col ${isMe ? "items-end self-end" : "items-start self-start"} max-w-[85%]`}
-            >
-              {/* If message has an Offer attached */}
-              {msg.offer ? (
-                <div className="w-full my-1">
-                  {msg.offer.status === "ACCEPTED" ? (
-                    <div className="bg-secondary-fixed/30 border border-secondary/30 rounded-2xl p-4 shadow-sm space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-secondary text-on-secondary flex items-center justify-center shrink-0">
-                          <Sparkles className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-xs text-secondary leading-tight">
-                            Tawaran Disetujui Penjual!
-                          </h4>
-                          <span className="text-[11px] text-on-surface-variant">
-                            Harga khusus telah disepakati
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-surface-container-lowest p-3 rounded-xl space-y-1">
-                        <div className="flex justify-between items-center text-xs">
-                          <span>Harga Kesepakatan:</span>
-                          <span className="font-bold text-base text-secondary">
-                            {formatRupiah(msg.offer.offerPrice)}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-on-surface-variant">
-                          Harga terkunci untuk akun kamu hingga 2 jam ke depan.
-                        </p>
-                      </div>
-
-                      <button
-                        disabled
-                        className="w-full py-2.5 px-4 rounded-xl bg-surface-container-high text-on-surface-variant font-bold text-xs flex items-center justify-center gap-2 opacity-60 cursor-not-allowed"
-                        title="Fitur checkout harga negosiasi belum didukung di versi ini"
-                      >
-                        <ShoppingBag className="w-4 h-4" />
-                        <span>Checkout Harga Nego (Belum Didukung)</span>
-                      </button>
-                    </div>
-                  ) : msg.offer.status === "REJECTED" ? (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-3.5 text-xs text-red-700 space-y-1">
-                      <div className="flex items-center gap-1.5 font-bold">
-                        <X className="w-4 h-4 text-red-600" />
-                        <span>Penawaran Ditolak</span>
-                      </div>
-                      <p className="text-[11px] text-on-surface-variant">
-                        Penawaran seharga {formatRupiah(msg.offer.offerPrice)} belum disepakati. Silakan ajukan nominal baru.
-                      </p>
-                    </div>
-                  ) : (
-                    /* PENDING OFFER */
-                    <div className="bg-surface-container-low border border-outline-variant/30 rounded-2xl p-4 shadow-sm space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
-                          <Tag className="w-4 h-4" />
-                          <span>Penawaran Harga Diajukan</span>
-                        </div>
-                        <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 text-[10px] font-bold">
-                          Berlaku 24 Jam
-                        </span>
-                      </div>
-
-                      <div className="bg-surface-container-lowest p-3 rounded-xl space-y-1 text-xs">
-                        <div className="flex justify-between text-on-surface-variant">
-                          <span>Harga Asli Listing:</span>
-                          <span className="line-through">{formatRupiah(msg.offer.originalPrice)}</span>
-                        </div>
-                        <div className="flex justify-between items-center pt-1 font-bold">
-                          <span className="text-on-surface">Harga Tawaran:</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="px-1.5 py-0.2 rounded bg-secondary-fixed text-on-secondary-fixed text-[10px]">
-                              -{msg.offer.discountPercent}%
-                            </span>
-                            <span className="text-primary text-sm font-bold">
-                              {formatRupiah(msg.offer.offerPrice)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Buyer perspective or Seller interactive buttons */}
-                      <div className="grid grid-cols-2 gap-2 pt-1">
-                        <button
-                          onClick={() => rejectOffer(conversation.id, msg.offer!.id)}
-                          className="py-2 px-3 rounded-xl bg-surface-container-high hover:bg-surface-container text-error text-xs font-bold transition-all"
-                        >
-                          Tolak
-                        </button>
-                        <button
-                          onClick={() => handleAcceptOffer(msg.offer!.id)}
-                          className="py-2 px-3 rounded-xl bg-secondary hover:bg-secondary/90 text-on-secondary text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Terima Tawaran</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                /* Standard Message Bubble */
-                <div
-                  className={`p-3.5 rounded-2xl shadow-xs space-y-1 text-xs leading-relaxed ${
-                    isMe
-                      ? "bg-primary text-on-primary rounded-tr-xs"
-                      : "bg-surface-container-lowest text-on-surface rounded-tl-xs border border-outline-variant/20"
-                  }`}
-                >
-                  <p>{msg.text}</p>
-                  <div
-                    className={`flex items-center justify-end gap-1 text-[10px] ${
-                      isMe ? "text-primary-fixed" : "text-on-surface-variant"
-                    }`}
-                  >
-                    <span>{msg.timestamp}</span>
-                    {isMe && <Check className="w-3 h-3" />}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Counterpart Typing Indicator */}
-        {isCounterpartTyping && (
-          <div className="flex items-center gap-2 self-start bg-surface-container-lowest px-3 py-2 rounded-2xl rounded-tl-xs border border-outline-variant/20 shadow-xs">
-            <span className="text-xs text-on-surface-variant font-medium">
-              {conversation.counterpart.name} sedang mengetik
-            </span>
-            <span className="flex gap-1">
-              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></span>
-              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.2s]"></span>
-              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.4s]"></span>
-            </span>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Sticky Bottom Message & Negotiation Input Bar */}
-      <div className="fixed bottom-0 inset-x-0 z-40 bg-surface-container-lowest border-t border-outline-variant/30 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] pb-safe">
-        <form
-          onSubmit={handleSend}
-          className="max-w-2xl mx-auto px-4 py-2.5 flex items-center gap-2"
-        >
-          {/* Nego Trigger Button */}
-          <button
-            type="button"
-            onClick={() => setShowNegoModal(true)}
-            className="h-10 px-3 rounded-full bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all active:scale-95"
-          >
-            <Tag className="w-4 h-4 text-amber-600" />
-            <span>Tawar</span>
-          </button>
-
-          {/* Text Input */}
-          <div className="relative flex-1 flex items-center">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder={`Ketik pesan untuk ${conversation.counterpart.name}...`}
-              className="w-full bg-surface-container-low text-on-surface placeholder:text-outline-variant text-xs pl-4 pr-10 py-2.5 rounded-full focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary shadow-inner"
+          <div className="relative w-10 h-10 rounded-full overflow-hidden bg-brand-primary-soft shrink-0">
+            <Image
+              src={convo.counterpart.avatar}
+              alt={convo.counterpart.name}
+              fill
+              sizes="40px"
+              className="object-cover"
             />
           </div>
 
-          {/* Send Button */}
-          <button
-            type="submit"
-            disabled={!inputText.trim()}
-            className="w-10 h-10 rounded-full bg-primary hover:bg-primary/90 text-on-primary flex items-center justify-center shrink-0 shadow-xs transition-all active:scale-95 disabled:opacity-50"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </form>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-bold text-sm text-on-surface truncate">
+                {convo.counterpart.name}
+              </h1>
+              {convo.counterpart.verifiedKYC && (
+                <ShieldCheck className="w-3.5 h-3.5 text-brand-secondary shrink-0" />
+              )}
+            </div>
+            <span className="text-[11px] text-text-muted">
+              {isBuyer ? "Penjual" : "Pembeli"} • {convo.counterpart.location}
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Negotiation Drawer Modal */}
-      <Modal
-        isOpen={showNegoModal}
-        onClose={() => setShowNegoModal(false)}
-        title="Ajukan Penawaran Harga Baru"
-      >
-        <div className="space-y-4 text-xs">
-          <div className="bg-surface-container-low p-3 rounded-xl flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg overflow-hidden bg-surface-container shrink-0 relative">
-              <Image
-                src={conversation.listing.images[0] || "/assets/products/ipad-mini-unboxing.png"}
-                alt={conversation.listing.title}
-                fill
-                sizes="48px"
-                className="object-cover"
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="font-bold text-xs text-on-surface truncate">
-                {conversation.listing.title}
-              </p>
-              <p className="text-on-surface-variant text-[11px]">
-                Harga Listing:{" "}
-                <span className="font-bold text-on-surface">
-                  {formatRupiah(conversation.listing.price)}
-                </span>
-              </p>
-            </div>
+      {/* Linked Product Sticky Context Strip */}
+      <div className="bg-surface-subtle border-x border-b border-surface-border p-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <Link
+          href={`/product/${convo.listing.slug}`}
+          className="flex items-center gap-2.5 min-w-0 flex-1 group"
+        >
+          <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-white shrink-0 border border-surface-border">
+            <Image
+              src={coverImg}
+              alt={convo.listing.title}
+              fill
+              unoptimized={coverImg.startsWith("/api/")}
+              sizes="48px"
+              className="object-cover"
+            />
           </div>
-
-          {/* Quick preset chips */}
-          <div className="space-y-1.5">
-            <label className="font-bold text-on-surface">Pilih Cepat Persentase Nego:</label>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { pct: 5, price: Math.round(conversation.listing.price * 0.95) },
-                { pct: 8, price: Math.round(conversation.listing.price * 0.92) },
-                { pct: 10, price: Math.round(conversation.listing.price * 0.9) },
-              ].map((item) => (
-                <button
-                  key={item.pct}
-                  type="button"
-                  onClick={() => setCustomOfferPrice(item.price)}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all text-center border ${
-                    customOfferPrice === item.price
-                      ? "bg-primary text-on-primary border-primary shadow-xs"
-                      : "bg-surface-container-low text-on-surface border-outline-variant/30 hover:bg-surface-container"
-                  }`}
-                >
-                  -{item.pct}% ({formatRupiah(item.price)})
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Custom Nominal Input */}
-          <div className="space-y-1">
-            <label className="font-bold text-on-surface">Nominal Penawaran (Rp)</label>
-            <div className="relative flex items-center">
-              <span className="absolute left-3.5 text-on-surface-variant font-bold text-sm">
-                Rp
+          <div className="min-w-0">
+            <h2 className="font-bold text-xs text-on-surface truncate group-hover:text-brand-primary transition-colors">
+              {convo.listing.title}
+            </h2>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="font-extrabold text-xs text-brand-primary tabular-nums">
+                {formatRupiah(convo.listing.price)}
               </span>
-              <input
-                type="number"
-                value={customOfferPrice}
-                onChange={(e) => setCustomOfferPrice(Number(e.target.value))}
-                className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface font-bold text-base focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30"
-              />
+              {!isListingActive && (
+                <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+                  {convo.listing.status}
+                </span>
+              )}
             </div>
-            <p className="text-[11px] text-on-surface-variant">
-              Penjual dapat menyetujui, menolak, atau memberikan penawaran balik.
-            </p>
           </div>
+        </Link>
 
-          {/* Rekber Info */}
-          <div className="p-3 rounded-xl bg-secondary-fixed/40 text-on-secondary-fixed flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-secondary shrink-0" />
-            <span>Penawaran mengikat selama 24 jam dengan proteksi Rekber resmi.</span>
-          </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {isBuyer && convo.listing.canNego && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!isListingActive || hasActivePendingOffer || isOfferBusy}
+              onClick={() => setOfferModalOpen(true)}
+              className="text-xs font-bold gap-1"
+            >
+              <Tag className="w-3.5 h-3.5" />
+              <span>
+                {hasActivePendingOffer ? "Menunggu Seller" : "Tawar Harga"}
+              </span>
+            </Button>
+          )}
 
-          <button
-            onClick={handleCreateOffer}
-            className="w-full py-3 rounded-xl bg-primary text-on-primary font-bold text-xs shadow-xs hover:bg-primary/90 transition-all"
-          >
-            Kirim Penawaran {formatRupiah(customOfferPrice)}
-          </button>
+          {isBuyer &&
+            (activeAcceptedOffer && isListingActive ? (
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => handleCheckoutWithOffer(activeAcceptedOffer)}
+                className="text-xs font-bold gap-1"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>
+                  Beli Sekarang (Harga Nego{" "}
+                  {formatRupiah(activeAcceptedOffer.offerPrice)})
+                </span>
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                disabled={!isListingActive}
+                onClick={handleDirectCheckout}
+                className="text-xs font-bold gap-1"
+              >
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span>
+                  {isListingActive ? "Beli Sekarang" : convo.listing.status}
+                </span>
+              </Button>
+            ))}
         </div>
-      </Modal>
+      </div>
 
-      {/* Safety Tips Modal */}
-      <Modal
-        isOpen={showSafetyModal}
-        onClose={() => setShowSafetyModal(false)}
-        title="Panduan Transaksi Aman & SOP Rekber"
+      {/* Chat Messages Thread */}
+      <div className="flex-1 bg-white border-x border-surface-border overflow-y-auto p-4 space-y-3">
+        {convo.messages.length === 0 ? (
+          <div className="text-center py-12 text-xs text-text-muted">
+            Belum ada pesan. Mulailah bertanya kondisi unit atau mengajukan
+            penawaran harga.
+          </div>
+        ) : (
+          convo.messages.map((msg) => {
+            const isMe = msg.senderId === viewerId;
+            const syncedOffer = msg.offer
+              ? offersById.get(msg.offer.id) ?? msg.offer
+              : undefined;
+
+            return (
+              <div
+                key={msg.id}
+                className={`flex flex-col ${
+                  isMe ? "items-end" : "items-start"
+                } gap-1.5`}
+              >
+                {syncedOffer ? (
+                  <OfferCard
+                    offer={syncedOffer}
+                    listing={convo.listing}
+                    viewerId={viewerId}
+                    nowMs={nowMs}
+                    isLatestForOffer={
+                      latestMsgIdForOffer.get(syncedOffer.id) === msg.id
+                    }
+                    hasActivePendingOffer={hasActivePendingOffer}
+                    isBusy={isOfferBusy}
+                    onAccept={(id) => handleOfferAction(id, "accept")}
+                    onReject={(id) => handleOfferAction(id, "reject")}
+                    onCounter={(id, amount) =>
+                      handleOfferAction(id, "counter", amount)
+                    }
+                    onBuyNegotiated={handleCheckoutWithOffer}
+                    onAcceptCounterAsBuyer={async (amount) => {
+                      await submitOfferAmount(amount);
+                    }}
+                  />
+                ) : (
+                  <div
+                    className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed shadow-xs ${
+                      isMe
+                        ? "bg-brand-primary text-white rounded-br-sm"
+                        : "bg-surface-subtle text-on-surface rounded-bl-sm border border-surface-border"
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                    <span
+                      className={`block text-[10px] mt-1 text-right ${
+                        isMe ? "text-white/75" : "text-text-muted"
+                      }`}
+                    >
+                      {new Date(msg.timestamp).toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Message Composer */}
+      <form
+        onSubmit={handleSendMessage}
+        className="bg-white p-3 rounded-b-2xl border border-surface-border flex items-center gap-2 shrink-0"
       >
-        <div className="space-y-3 text-xs text-on-surface-variant leading-relaxed">
-          <div className="flex items-start gap-2.5 bg-surface-container-low p-3 rounded-xl">
-            <Lock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-            <div>
-              <strong className="text-on-surface">Gunakan Sistem Escrow Resmi:</strong>
-              <p>Jangan pernah transfer langsung ke rekening pribadi di luar platform.</p>
-            </div>
+        <input
+          type="text"
+          value={inputText}
+          maxLength={1000}
+          onChange={(e) => setInputText(e.target.value)}
+          placeholder="Tulis pesan ke penjual/pembeli..."
+          aria-label="Tulis pesan chat"
+          className="flex-1 h-11 px-4 rounded-xl bg-surface-subtle text-xs sm:text-sm text-on-surface border border-transparent focus:border-brand-primary focus:bg-white outline-none"
+        />
+        <Button
+          type="submit"
+          variant="primary"
+          size="md"
+          disabled={!inputText.trim() || isSendingMsg}
+          className="h-11 px-4 font-bold gap-1.5 shrink-0"
+        >
+          <Send className="w-4 h-4" />
+          <span className="hidden sm:inline">Kirim</span>
+        </Button>
+      </form>
+
+      {/* Offer Submission Modal */}
+      <Modal
+        isOpen={offerModalOpen}
+        onClose={() => setOfferModalOpen(false)}
+        title="Ajukan Penawaran Harga"
+        description="Jika disetujui penjual, harga terkunci selama 24 jam khusus untuk akunmu."
+      >
+        <form onSubmit={handleOfferModalSubmit} className="flex flex-col gap-4">
+          <div className="p-3 rounded-xl bg-surface-subtle text-xs">
+            <span className="text-text-muted">Harga Listing Saat Ini: </span>
+            <strong className="text-on-surface">
+              {formatRupiah(convo.listing.price)}
+            </strong>
           </div>
-          <div className="flex items-start gap-2.5 bg-surface-container-low p-3 rounded-xl">
-            <ShieldCheck className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
-            <div>
-              <strong className="text-on-surface">Wajib Video Unboxing 360°:</strong>
-              <p>Rekam video pembukaan paket tanpa jeda memperlihatkan resi kurir dan fisik unit.</p>
-            </div>
+
+          <div>
+            <label className="text-xs font-bold text-on-surface block mb-1">
+              Nominal Tawaran (Rp):
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={convo.listing.price}
+              value={offerAmountInput}
+              onChange={(e) => setOfferAmountInput(Number(e.target.value))}
+              className="w-full h-11 px-3 rounded-xl bg-surface-subtle text-base font-mono font-bold text-on-surface border border-transparent focus:border-brand-primary focus:bg-white outline-none"
+              required
+            />
           </div>
-          <div className="flex items-start gap-2.5 bg-surface-container-low p-3 rounded-xl">
-            <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <strong className="text-on-surface">Masa Inspeksi 2x24 Jam:</strong>
-              <p>Uji layar, sensor, kamera, baterai, dan IMEI sebelum menyetujui pencairan dana.</p>
-            </div>
+
+          <div className="flex items-center gap-2">
+            {[0.95, 0.9, 0.85].map((ratio) => {
+              const val = Math.round(convo.listing.price * ratio);
+              return (
+                <button
+                  key={ratio}
+                  type="button"
+                  onClick={() => setOfferAmountInput(val)}
+                  className="flex-1 py-1.5 rounded-lg bg-surface-subtle text-xs font-semibold text-text-secondary hover:bg-outline-variant"
+                >
+                  -{Math.round((1 - ratio) * 100)}% ({formatRupiah(val)})
+                </button>
+              );
+            })}
           </div>
-          <button
-            onClick={() => setShowSafetyModal(false)}
-            className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-bold text-xs hover:bg-primary/90 transition-all mt-2"
-          >
-            Saya Mengerti
-          </button>
-        </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOfferModalOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button type="submit" variant="primary" disabled={isOfferBusy}>
+              Kirim Penawaran
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

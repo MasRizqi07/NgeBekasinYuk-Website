@@ -9,7 +9,7 @@
 | disputes | yes | `apps/web/src/app/api/disputes/[id]/verdict/route.ts`, `apps/web/test/integration/disputeResolution.test.ts` |
 | listings (status) | yes | `apps/web/src/app/api/orders/route.ts`, `apps/web/src/app/api/listings/[id]/archive/route.ts`, `apps/web/src/app/api/listings/[id]/relist/route.ts`, `apps/web/test/integration/orderReservationConcurrency.test.ts` |
 | listings (catalog) | yes | `apps/web/src/app/api/listings/*`, `apps/web/test/integration/listingsApi.test.ts`, `apps/web/test/e2e/seller-listing.spec.ts` |
-| chat/offers | client simulation | client simulation |
+| chat/offers | yes | `apps/web/src/app/api/conversations/*`, `apps/web/src/app/api/orders/route.ts`, `apps/web/test/integration/chatOffers.test.ts`, `apps/web/test/integration/offerCheckoutConcurrency.test.ts`, `apps/web/test/e2e/chat-offers.spec.ts` |
 | cart | IDs-only client convenience; live prices/availability server-validated | `apps/web/src/stores/useCartStore.ts`, `apps/web/src/hooks/useResolvedCartListings.ts`, `apps/web/src/app/api/orders/route.ts` |
 | notifications | client simulation | client simulation |
 | KYC | client simulation | client simulation |

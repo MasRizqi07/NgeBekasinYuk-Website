@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
+import type { Conversation, Offer } from "@/types";
 import { useCartStore, AVAILABLE_COURIERS } from "@/stores/useCartStore";
 import { useUserStore } from "@/stores/useUserStore";
 import { useResolvedCartListings } from "@/hooks/useResolvedCartListings";
@@ -22,7 +23,8 @@ import { useToast } from "@/components/ui/Toast";
 export default function CheckoutPage() {
   const router = useRouter();
   const { showToast } = useToast();
-  const { items, selectedCourier, setSelectedCourier, clearCart } = useCartStore();
+  const { items, selectedCourier, setSelectedCourier, clearCart, addItem } =
+    useCartStore();
   const { user } = useUserStore();
   const { listings, isLoading, droppedNotice } = useResolvedCartListings({
     fallbackToFirstActive: true,
@@ -30,6 +32,7 @@ export default function CheckoutPage() {
 
   const [clientRequestId, setClientRequestId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [verifiedOffer, setVerifiedOffer] = useState<Offer | null>(null);
 
   type PaymentMethod = "BCA_VA" | "MANDIRI_VA" | "BRI_VA" | "BNI_VA" | "QRIS";
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("BCA_VA");
@@ -52,6 +55,61 @@ export default function CheckoutPage() {
   const activeOfferId = activeListing
     ? items.find((i) => i.listingId === activeListing.id)?.offerId
     : undefined;
+
+  useEffect(() => {
+    let active = true;
+    async function verifyOfferPrice() {
+      if (!activeListing || !activeOfferId) {
+        if (active) setVerifiedOffer(null);
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/conversations?limit=50", {
+          cache: "no-store",
+        });
+        if (!res.ok) {
+          if (active) setVerifiedOffer(null);
+          return;
+        }
+        const json = (await res.json()) as { data?: Conversation[] };
+        const convos = Array.isArray(json.data) ? json.data : [];
+        let matched: Offer | null = null;
+        for (const c of convos) {
+          const found = (c.offers ?? []).find(
+            (o) =>
+              o.id === activeOfferId &&
+              o.listingId === activeListing.id &&
+              o.status === "ACCEPTED" &&
+              Date.now() < new Date(o.expiresAt).getTime()
+          );
+          if (found) {
+            matched = found;
+            break;
+          }
+        }
+
+        if (!active) return;
+        if (matched) {
+          setVerifiedOffer(matched);
+        } else {
+          setVerifiedOffer(null);
+          addItem(activeListing.id);
+          showToast(
+            "Penawaran harga nego sudah tidak berlaku. Harga kembali ke harga iklan.",
+            "info"
+          );
+        }
+      } catch {
+        if (active) setVerifiedOffer(null);
+      }
+    }
+
+    void verifyOfferPrice();
+    return () => {
+      active = false;
+    };
+  }, [activeListing, activeOfferId, addItem, showToast]);
 
   const address = user.addresses.find((a) => a.isDefault) || user.addresses[0];
   const shippingFee = selectedCourier.price;
@@ -94,7 +152,7 @@ export default function CheckoutPage() {
     );
   }
 
-  const activePrice = activeListing.price;
+  const activePrice = verifiedOffer ? verifiedOffer.offerPrice : activeListing.price;
   const totalAmount = activePrice + shippingFee + escrowFee;
   const activeCover =
     activeListing.images[0] || "/assets/products/ipad-mini-unboxing.png";
@@ -227,9 +285,15 @@ export default function CheckoutPage() {
                     <span className="font-bold text-xs text-on-surface">
                       {activeListing.seller.name}
                     </span>
-                    <span className="text-[10px] font-bold bg-brand-secondary-light text-brand-secondary px-1.5 py-0.2 rounded">
-                      KYC Aktif
-                    </span>
+                    {activeListing.seller.verifiedKYC ? (
+                      <span className="text-[10px] font-bold bg-brand-secondary-light text-brand-secondary px-1.5 py-0.2 rounded">
+                        KYC Aktif
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold bg-surface-subtle text-text-muted px-1.5 py-0.2 rounded">
+                        Penjual Terdaftar
+                      </span>
+                    )}
                   </div>
                   <span className="text-[11px] text-text-muted">
                     {activeListing.seller.location}
@@ -260,6 +324,16 @@ export default function CheckoutPage() {
                   <span className="font-extrabold text-sm sm:text-base text-brand-primary tabular-nums">
                     {formatRupiah(activePrice)}
                   </span>
+                  {verifiedOffer && (
+                    <>
+                      <span className="text-xs text-text-muted line-through tabular-nums">
+                        {formatRupiah(activeListing.price)}
+                      </span>
+                      <span className="text-[10px] font-bold bg-brand-secondary-light text-brand-secondary px-1.5 py-0.5 rounded">
+                        Harga Nego Disetujui
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

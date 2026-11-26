@@ -11,6 +11,8 @@ export interface ResolvedCartState {
   clearDroppedNotice: () => void;
 }
 
+const MAX_LOOKUP_BATCH_SIZE = 20;
+
 const subscribeCartHydration = (onStoreChange: () => void) => {
   const api = (
     useCartStore as unknown as {
@@ -33,9 +35,65 @@ const getCartHydratedSnapshot = () => {
   return api?.hasHydrated?.() ?? true;
 };
 
+export function chunkIds(ids: string[], size: number): string[][] {
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += size) {
+    chunks.push(ids.slice(i, i + size));
+  }
+  return chunks;
+}
+
+export interface CartBatchLookupResult {
+  batch: string[];
+  ok: boolean;
+  json: unknown;
+}
+
+export function partitionResolvedCartBatches(results: CartBatchLookupResult[]): {
+  activeMap: Map<string, ProductListing>;
+  confirmedUnavailableIds: string[];
+  hasLookupError: boolean;
+} {
+  const activeMap = new Map<string, ProductListing>();
+  const confirmedUnavailableIds: string[] = [];
+  let hasLookupError = false;
+
+  for (const result of results) {
+    const payload = result.json as { object?: unknown; data?: unknown } | null;
+    const isValidEnvelope =
+      result.ok &&
+      payload !== null &&
+      typeof payload === "object" &&
+      payload.object === "list" &&
+      Array.isArray(payload.data);
+
+    if (!isValidEnvelope) {
+      hasLookupError = true;
+      continue;
+    }
+
+    const batchActiveMap = new Map<string, ProductListing>();
+    for (const entry of payload.data as ProductListing[]) {
+      if (!entry.status || entry.status === "ACTIVE") {
+        batchActiveMap.set(entry.id, entry);
+        activeMap.set(entry.id, entry);
+      }
+    }
+
+    for (const id of result.batch) {
+      if (!batchActiveMap.has(id)) {
+        confirmedUnavailableIds.push(id);
+      }
+    }
+  }
+
+  return { activeMap, confirmedUnavailableIds, hasLookupError };
+}
+
 /**
  * Fetches live PostgreSQL listing data for listing IDs stored in useCartStore.
- * Automatically drops SOLD, RESERVED, or ARCHIVED items with a visible notice.
+ * Batches lookups <= 20 IDs, preserves IDs on lookup errors, and removes only
+ * confirmed non-ACTIVE items when the API explicitly succeeds.
  */
 export function useResolvedCartListings(options?: {
   fallbackToFirstActive?: boolean;
@@ -72,9 +130,9 @@ export function useResolvedCartListings(options?: {
 
         try {
           const res = await fetch("/api/listings?limit=1", { cache: "no-store" });
-          const json = await res.json();
+          const json = await res.json().catch(() => null);
           if (!cancelled) {
-            setListings(Array.isArray(json?.data) ? json.data : []);
+            setListings(res.ok && Array.isArray(json?.data) ? json.data : []);
             setIsLoading(false);
           }
         } catch {
@@ -87,25 +145,30 @@ export function useResolvedCartListings(options?: {
       }
 
       try {
-        const res = await fetch(
-          `/api/listings?ids=${encodeURIComponent(ids.join(","))}`,
-          { cache: "no-store" }
+        const batches = chunkIds(ids, MAX_LOOKUP_BATCH_SIZE);
+        const batchResults = await Promise.all(
+          batches.map(async (batch) => {
+            const res = await fetch(
+              `/api/listings?ids=${encodeURIComponent(batch.join(","))}&limit=${batch.length}`,
+              { cache: "no-store" }
+            );
+            const json = await res.json().catch(() => null);
+            return { batch, ok: res.ok, json };
+          })
         );
-        const json = await res.json();
-        const activeList: ProductListing[] = Array.isArray(json?.data)
-          ? json.data.filter(
-              (item: ProductListing) => !item.status || item.status === "ACTIVE"
-            )
-          : [];
 
-        const activeMap = new Map(activeList.map((item) => [item.id, item]));
-        const unavailableIds = ids.filter((id) => !activeMap.has(id));
+        const { activeMap, confirmedUnavailableIds, hasLookupError } =
+          partitionResolvedCartBatches(batchResults);
 
-        if (!cancelled && unavailableIds.length > 0) {
+        if (!cancelled && confirmedUnavailableIds.length > 0) {
           hadDroppedRef.current = true;
-          removeItems(unavailableIds);
+          removeItems(confirmedUnavailableIds);
           setDroppedNotice(
-            `${unavailableIds.length} barang di keranjang tidak lagi tersedia (terjual, dipesan, atau diarsipkan) dan telah otomatis dihapus.`
+            `${confirmedUnavailableIds.length} barang di keranjang tidak lagi tersedia (terjual, dipesan, atau diarsipkan) dan telah otomatis dihapus.`
+          );
+        } else if (!cancelled && hasLookupError) {
+          setDroppedNotice(
+            "Gagal memverifikasi sebagian isi keranjang karena gangguan server. Item Anda tetap disimpan, silakan muat ulang."
           );
         }
 
@@ -118,7 +181,9 @@ export function useResolvedCartListings(options?: {
         }
       } catch {
         if (!cancelled) {
-          setListings([]);
+          setDroppedNotice(
+            "Koneksi gagal saat memeriksa ketersediaan keranjang. Item Anda tetap disimpan."
+          );
           setIsLoading(false);
         }
       }

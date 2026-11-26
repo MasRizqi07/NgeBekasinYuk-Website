@@ -11,6 +11,7 @@ import {
   LISTING_STATUS,
   TERMINAL_ORDER_STATUSES,
   isPendingOrderExpired,
+  isPriceOfferExpired,
 } from "@/domain/listing/listingStatus";
 
 export async function POST(request: Request) {
@@ -90,12 +91,13 @@ export async function POST(request: Request) {
 
     const { listingId, shippingAddress, courier, paymentMethod, offerId } = validated.data;
 
-    // 5. Load and Validate Listing from Postgres
-    const listing = await prisma.productListing.findUnique({
+    // 5. Fast-path validation before locking transaction
+    const existingListing = await prisma.productListing.findUnique({
       where: { id: listingId },
+      select: { id: true, sellerId: true },
     });
 
-    if (!listing) {
+    if (!existingListing) {
       return NextResponse.json(
         { error: "LISTING_NOT_FOUND", message: "Barang tidak ditemukan." },
         { status: 404 }
@@ -103,7 +105,7 @@ export async function POST(request: Request) {
     }
 
     // 6. Anti-Self-Dealing: Seller cannot buy own listing
-    if (listing.sellerId === session.id) {
+    if (existingListing.sellerId === session.id) {
       return NextResponse.json(
         {
           error: "CANNOT_BUY_OWN_LISTING",
@@ -113,49 +115,96 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7. Price Determination & Offer Support Check (DECISION D1)
-    let itemPrice = listing.price;
+    // 7. Lazy-expire stale offer status before transactional offer verification
     if (offerId) {
-      const offer = await prisma.priceOffer.findUnique({
-        where: { id: offerId },
-        include: { conversation: true },
+      await prisma.priceOffer.updateMany({
+        where: {
+          id: offerId,
+          status: { in: ["PENDING", "ACCEPTED"] },
+          expiresAt: { lt: new Date() },
+        },
+        data: { status: "EXPIRED" },
       });
-
-      if (
-        !offer ||
-        offer.status !== "ACCEPTED" ||
-        offer.conversation.buyerId !== session.id ||
-        offer.conversation.listingId !== listing.id ||
-        new Date() > offer.expiresAt
-      ) {
-        return NextResponse.json(
-          {
-            error: "OFFER_NOT_SUPPORTED",
-            message: "Penawaran harga tidak valid atau belum didukung di server.",
-          },
-          { status: 422 }
-        );
-      }
-      itemPrice = offer.offerPrice;
     }
-
-    // 8. Server-Authoritative Fee Calculation
-    const shippingFee = calculateShippingFee(courier);
-    const breakdown = calculateEscrowBreakdown(itemPrice, shippingFee, 0);
-    const escrowFee = breakdown.escrowFee;
-    const totalAmount = breakdown.totalBuyerPays;
 
     const orderId = generateInternalId("ord");
     const orderNumber = generateOrderNumber();
 
-    // 9. Atomic Postgres Transaction
+    // 8. Atomic Postgres Transaction (Row lock -> offer CAS -> authoritative price -> reserve -> order)
     try {
       const createdDto = await prisma.$transaction(async (tx) => {
+        const lockedListings = await tx.$queryRaw<
+          Array<{ id: string; price: number; sellerId: string; status: string }>
+        >`
+          SELECT "id", "price", "sellerId", "status"
+          FROM "ProductListing"
+          WHERE "id" = ${listingId}
+          FOR UPDATE
+        `;
+        const lockedListing = lockedListings[0];
+        if (!lockedListing) {
+          throw new Error("LISTING_NOT_FOUND");
+        }
+        if (lockedListing.sellerId === session.id) {
+          throw new Error("CANNOT_BUY_OWN_LISTING");
+        }
+
+        // Compute authoritative item price inside transaction (supports accepted single-use offer)
+        let itemPrice = lockedListing.price;
+        let consumedOfferId: string | null = null;
+
+        if (offerId) {
+          const offer = await tx.priceOffer.findUnique({
+            where: { id: offerId },
+            include: {
+              conversation: {
+                select: {
+                  buyerId: true,
+                  listingId: true,
+                },
+              },
+            },
+          });
+
+          if (
+            !offer ||
+            offer.conversation.buyerId !== session.id ||
+            offer.conversation.listingId !== lockedListing.id ||
+            offer.status !== "ACCEPTED" ||
+            isPriceOfferExpired(offer)
+          ) {
+            throw new Error("OFFER_INVALID");
+          }
+
+          const consumeResult = await tx.priceOffer.updateMany({
+            where: {
+              id: offer.id,
+              status: "ACCEPTED",
+            },
+            data: {
+              status: "CONSUMED",
+              consumedAt: new Date(),
+            },
+          });
+
+          if (consumeResult.count !== 1) {
+            throw new Error("OFFER_INVALID");
+          }
+
+          itemPrice = offer.offerPrice;
+          consumedOfferId = offer.id;
+        }
+
+        const shippingFee = calculateShippingFee(courier);
+        const breakdown = calculateEscrowBreakdown(itemPrice, shippingFee, 0);
+        const escrowFee = breakdown.escrowFee;
+        const totalAmount = breakdown.totalBuyerPays;
+
         // Atomic Listing Reservation (Task 7.1 / I1 Concurrency Defense)
         // 1. Normal path: Attempt atomic reservation on ACTIVE listing
         const reserveAttempt = await tx.productListing.updateMany({
           where: {
-            id: listing.id,
+            id: lockedListing.id,
             status: LISTING_STATUS.ACTIVE,
           },
           data: {
@@ -167,7 +216,7 @@ export async function POST(request: Request) {
           // 2. Expiry recovery path: Check if listing is RESERVED by a stale expired unpaid order
           const blockingOrder = await tx.order.findFirst({
             where: {
-              listingId: listing.id,
+              listingId: lockedListing.id,
               status: { notIn: [...TERMINAL_ORDER_STATUSES] },
             },
             include: {
@@ -231,8 +280,9 @@ export async function POST(request: Request) {
             id: orderId,
             orderNumber,
             buyerId: session.id,
-            sellerId: listing.sellerId,
-            listingId: listing.id,
+            sellerId: lockedListing.sellerId,
+            listingId: lockedListing.id,
+            ...(consumedOfferId ? { offerId: consumedOfferId } : {}),
             itemPrice,
             shippingFee,
             escrowFee,
@@ -279,6 +329,7 @@ export async function POST(request: Request) {
               shippingFee,
               courier,
               paymentMethod,
+              ...(consumedOfferId ? { offerId: consumedOfferId } : {}),
             }),
           },
         });
@@ -351,6 +402,34 @@ export async function POST(request: Request) {
       throw txError;
     }
   } catch (error) {
+    if (error instanceof Error && error.message === "LISTING_NOT_FOUND") {
+      return NextResponse.json(
+        { error: "LISTING_NOT_FOUND", message: "Barang tidak ditemukan." },
+        { status: 404 }
+      );
+    }
+
+    if (error instanceof Error && error.message === "CANNOT_BUY_OWN_LISTING") {
+      return NextResponse.json(
+        {
+          error: "CANNOT_BUY_OWN_LISTING",
+          message: "Anda tidak dapat membeli barang dagangan milik sendiri.",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (error instanceof Error && error.message === "OFFER_INVALID") {
+      return NextResponse.json(
+        {
+          error: "OFFER_INVALID",
+          message:
+            "Penawaran harga tidak valid, sudah digunakan, atau masa berlakunya telah berakhir.",
+        },
+        { status: 422 }
+      );
+    }
+
     if (
       error instanceof Error &&
       (error.message === "LISTING_NOT_ACTIVE" || error.message === "LISTING_ALREADY_RESERVED")

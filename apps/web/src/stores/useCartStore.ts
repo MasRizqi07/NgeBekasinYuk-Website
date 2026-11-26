@@ -117,7 +117,7 @@ export const useCartStore = create<CartStore>()(
             return {
               items: state.items.map((i) =>
                 i.listingId === listingId
-                  ? { ...i, ...(offerId ? { offerId } : {}) }
+                  ? { listingId, ...(offerId ? { offerId } : {}) }
                   : i
               ),
             };

@@ -44,6 +44,8 @@ model User {
   wallet            Wallet?
   buyerOrders       Order[]        @relation("BuyerOrders")
   sellerOrders      Order[]        @relation("SellerOrders")
+  buyerConversations  Conversation[] @relation("BuyerConversations")
+  sellerConversations Conversation[] @relation("SellerConversations")
   listings          ProductListing[]
   auditLogs         AuditLog[]
   notifications     Notification[]
@@ -162,13 +164,19 @@ model Conversation {
   listingId     String
   listing       ProductListing @relation(fields: [listingId], references: [id])
   buyerId       String
+  buyer         User           @relation("BuyerConversations", fields: [buyerId], references: [id])
   sellerId      String
+  seller        User           @relation("SellerConversations", fields: [sellerId], references: [id])
   lastMessage   String?
   lastTimestamp DateTime       @default(now())
   messages      ChatMessage[]
   offers        PriceOffer[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+
+  @@unique([buyerId, listingId])
+  @@index([buyerId, lastTimestamp(sort: Desc), id])
+  @@index([sellerId, lastTimestamp(sort: Desc), id])
 }
 
 model ChatMessage {
@@ -179,21 +187,32 @@ model ChatMessage {
   senderName     String
   text           String
   imageUrl       String?
+  offerId        String?
+  offer          PriceOffer?  @relation(fields: [offerId], references: [id], onDelete: SetNull)
   isRead         Boolean      @default(false)
   createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt, id])
+  @@index([senderId, createdAt])
 }
 
 model PriceOffer {
-  id             String       @id @default(cuid())
+  id             String        @id @default(cuid())
   conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId       String
-  offerPrice     Int          // In IDR
-  status         String       @default("PENDING") // PENDING, ACCEPTED, REJECTED, COUNTERED, EXPIRED
+  offerPrice     Int           // In IDR
+  status         String        @default("PENDING") // PENDING, ACCEPTED, REJECTED, COUNTERED, EXPIRED, CONSUMED
   counterPrice   Int?
   expiresAt      DateTime
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  consumedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  messages       ChatMessage[]
+  order          Order?
+
+  @@index([conversationId, createdAt])
 }
 
 // --------------------------------------------------------
@@ -209,6 +228,8 @@ model Order {
   seller               User                @relation("SellerOrders", fields: [sellerId], references: [id])
   listingId            String
   listing              ProductListing      @relation(fields: [listingId], references: [id])
+  offerId              String?             @unique
+  offer                PriceOffer?         @relation(fields: [offerId], references: [id])
   
   // Financial breakdown (all in IDR safe integers)
   itemPrice            Int

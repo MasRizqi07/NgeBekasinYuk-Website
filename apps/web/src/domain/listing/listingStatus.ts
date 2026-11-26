@@ -28,6 +28,9 @@ export type TerminalOrderStatus = (typeof TERMINAL_ORDER_STATUSES)[number];
  * 2. Either its latest PaymentAttempt expiresAt is in the past, OR
  *    it was created more than 2 hours ago.
  */
+export const PENDING_PAYMENT_EXPIRY_MS = 2 * 60 * 60 * 1000;
+export const OFFER_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
 export function isPendingOrderExpired(order: {
   status: string;
   createdAt: Date;
@@ -42,7 +45,23 @@ export function isPendingOrderExpired(order: {
     : undefined;
 
   const isAttemptExpired = latestAttempt ? new Date() > new Date(latestAttempt.expiresAt) : false;
-  const isTimeLimitExceeded = Date.now() - new Date(order.createdAt).getTime() > 2 * 60 * 60 * 1000;
+  const isTimeLimitExceeded = Date.now() - new Date(order.createdAt).getTime() > PENDING_PAYMENT_EXPIRY_MS;
 
   return isAttemptExpired || isTimeLimitExceeded;
+}
+
+/**
+ * Evaluates whether a price offer has passed its validity window.
+ */
+export function isPriceOfferExpired(offer: {
+  status: string;
+  expiresAt: Date;
+}): boolean {
+  if (offer.status === "EXPIRED") {
+    return true;
+  }
+  if (offer.status !== "PENDING" && offer.status !== "ACCEPTED") {
+    return false;
+  }
+  return Date.now() > new Date(offer.expiresAt).getTime();
 }

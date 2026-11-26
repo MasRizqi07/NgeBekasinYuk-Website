@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -22,7 +21,6 @@ import {
 import type { ListingPublicDto } from "@/domain/listing/listingDto";
 import { useCartStore } from "@/stores/useCartStore";
 import { useUserStore } from "@/stores/useUserStore";
-import { useChatStore } from "@/stores/useChatStore";
 import { formatRupiah, copyTextToClipboard } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -38,7 +36,6 @@ export function ProductDetailClient({ listing }: ProductDetailClientProps) {
 
   const { addItem } = useCartStore();
   const { user, toggleFavorite } = useUserStore();
-  const { sendOffer } = useChatStore();
 
   const isFavorite = user.favorites.includes(listing.id);
   const images =
@@ -50,6 +47,71 @@ export function ProductDetailClient({ listing }: ProductDetailClientProps) {
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
   const [negoModalOpen, setNegoModalOpen] = useState(false);
   const [negoPrice, setNegoPrice] = useState(Math.round(listing.price * 0.9));
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((res) => res.json().catch(() => null))
+      .then((json: { authenticated?: boolean; user?: { id?: string } | null } | null) => {
+        if (active && json?.authenticated && json.user?.id) {
+          setSessionUserId(json.user.id);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const isOwnListing = Boolean(sessionUserId && sessionUserId === listing.sellerId);
+
+  const openOrCreateConversation = async (): Promise<string | null> => {
+    setIsChatLoading(true);
+    try {
+      const res = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId: listing.id }),
+      });
+
+      if (res.status === 401) {
+        showToast("Silakan login terlebih dahulu untuk memulai chat.", "info");
+        router.push(`/login?next=${encodeURIComponent(`/product/${listing.slug}`)}`);
+        return null;
+      }
+
+      const json = (await res.json().catch(() => null)) as {
+        id?: string;
+        detail?: string;
+        message?: string;
+      } | null;
+
+      if (!res.ok || !json?.id) {
+        showToast(
+          json?.detail || json?.message || "Tidak dapat membuka obrolan.",
+          "error"
+        );
+        return null;
+      }
+
+      return json.id;
+    } catch {
+      showToast("Gagal menghubungi server obrolan.", "error");
+      return null;
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  const handleOpenChat = async () => {
+    if (isChatLoading) return;
+    const convoId = await openOrCreateConversation();
+    if (convoId) {
+      router.push(`/chat/${convoId}`);
+    }
+  };
 
   const handleBuyNow = () => {
     if (!isAvailable) {
@@ -60,15 +122,44 @@ export function ProductDetailClient({ listing }: ProductDetailClientProps) {
     router.push("/checkout");
   };
 
-  const handleNegoSubmit = (e: React.FormEvent) => {
+  const handleNegoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    sendOffer("convo-dimas-ipad", negoPrice);
-    setNegoModalOpen(false);
-    showToast(
-      `Tawaran ${formatRupiah(negoPrice)} berhasil dikirim ke penjual!`,
-      "success"
-    );
-    router.push("/chat/convo-dimas-ipad");
+    if (isChatLoading) return;
+    const convoId = await openOrCreateConversation();
+    if (!convoId) return;
+
+    setIsChatLoading(true);
+    try {
+      const res = await fetch(`/api/conversations/${convoId}/offers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: Math.trunc(negoPrice) }),
+      });
+
+      const json = (await res.json().catch(() => null)) as {
+        detail?: string;
+        message?: string;
+      } | null;
+
+      if (!res.ok) {
+        showToast(
+          json?.detail || json?.message || "Gagal mengajukan penawaran harga.",
+          "error"
+        );
+        return;
+      }
+
+      setNegoModalOpen(false);
+      showToast(
+        `Tawaran ${formatRupiah(negoPrice)} berhasil dikirim ke penjual!`,
+        "success"
+      );
+      router.push(`/chat/${convoId}`);
+    } catch {
+      showToast("Koneksi terputus saat mengirim penawaran.", "error");
+    } finally {
+      setIsChatLoading(false);
+    }
   };
 
   const activeImage = images[activePhotoIdx] || images[0];
@@ -356,12 +447,17 @@ export function ProductDetailClient({ listing }: ProductDetailClientProps) {
               </div>
             </div>
 
-            <Link href="/chat/convo-dimas-ipad">
-              <Button variant="outline" size="sm" className="shrink-0 gap-1 font-semibold">
-                <MessageSquare className="w-4 h-4" />
-                <span>Chat</span>
-              </Button>
-            </Link>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isOwnListing || isChatLoading}
+              onClick={handleOpenChat}
+              className="shrink-0 gap-1 font-semibold"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>{isOwnListing ? "Iklan Anda" : "Chat"}</span>
+            </Button>
           </div>
         </div>
       </div>
@@ -377,17 +473,23 @@ export function ProductDetailClient({ listing }: ProductDetailClientProps) {
           </div>
 
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            <Link href="/chat/convo-dimas-ipad" className="flex-1 sm:flex-none">
-              <Button variant="outline" size="md" className="w-full gap-1.5 font-bold">
-                <MessageSquare className="w-4 h-4" />
-                <span>Chat</span>
-              </Button>
-            </Link>
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              disabled={isOwnListing || isChatLoading}
+              onClick={handleOpenChat}
+              className="flex-1 sm:flex-none gap-1.5 font-bold"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>{isOwnListing ? "Iklan Anda" : "Chat"}</span>
+            </Button>
 
-            {listing.canNego && isAvailable && (
+            {listing.canNego && isAvailable && !isOwnListing && (
               <Button
                 variant="secondary"
                 size="md"
+                disabled={isChatLoading}
                 className="flex-1 sm:flex-none gap-1.5 font-bold"
                 onClick={() => setNegoModalOpen(true)}
               >
@@ -399,13 +501,17 @@ export function ProductDetailClient({ listing }: ProductDetailClientProps) {
             <Button
               variant="primary"
               size="md"
-              disabled={!isAvailable}
+              disabled={!isAvailable || isOwnListing}
               className="flex-1 sm:flex-none gap-1.5 font-bold shadow-lg disabled:opacity-60"
               onClick={handleBuyNow}
             >
               <ShoppingBag className="w-4 h-4" />
               <span>
-                {isAvailable ? "Beli Sekarang (Escrow)" : `Tidak Tersedia (${listing.status})`}
+                {isOwnListing
+                  ? "Iklan Milik Anda"
+                  : isAvailable
+                  ? "Beli Sekarang (Escrow)"
+                  : `Tidak Tersedia (${listing.status})`}
               </span>
             </Button>
           </div>

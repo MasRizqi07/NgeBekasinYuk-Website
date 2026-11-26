@@ -186,6 +186,7 @@ export const CreateListingSchema = z
       .max(500000000)
       .nullable()
       .optional(),
+    deferPublish: z.boolean().optional().default(false),
     images: z
       .array(
         z
@@ -275,6 +276,53 @@ export const ListListingsQuerySchema = z.object({
   sort: z.enum(LISTING_SORT_OPTIONS).default("newest"),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   cursor: z.string().trim().max(500).optional(),
+});
+
+// Phase 11: Server-Authoritative Chat & Price Offer Schemas
+export const CreateConversationSchema = z
+  .object({
+    listingId: z.string().trim().min(1, "Listing ID wajib diisi.").max(120),
+  })
+  .strict();
+
+export const SendMessageSchema = z
+  .object({
+    text: z
+      .string()
+      .trim()
+      .min(1, "Pesan tidak boleh kosong.")
+      .max(1000, "Pesan maksimal 1.000 karakter."),
+  })
+  .strict();
+
+export const CreateOfferSchema = z
+  .object({
+    amount: z
+      .number()
+      .int("Nominal penawaran harus bilangan bulat Rupiah.")
+      .positive("Nominal penawaran harus lebih dari Rp 0.")
+      .max(500_000_000, "Nominal penawaran melebihi batas maksimum."),
+  })
+  .strict();
+
+export const CounterOfferSchema = z
+  .object({
+    amount: z
+      .number()
+      .int("Harga tanding harus bilangan bulat Rupiah.")
+      .positive("Harga tanding harus lebih dari Rp 0.")
+      .max(500_000_000, "Harga tanding melebihi batas maksimum."),
+  })
+  .strict();
+
+export const ListConversationsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  cursor: z.string().trim().max(500).optional(),
+});
+
+export const ListMessagesQuerySchema = z.object({
+  after: z.string().trim().max(500).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 
 

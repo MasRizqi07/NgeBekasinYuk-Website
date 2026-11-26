@@ -6,6 +6,7 @@ import { generateInternalId } from "@/domain/id";
 import {
   LISTING_STATUS,
   TERMINAL_ORDER_STATUSES,
+  isPendingOrderExpired,
   type ListingStatus,
 } from "@/domain/listing/listingStatus";
 import {
@@ -271,8 +272,130 @@ export function parseListListingsQuery(
 }
 
 /**
+ * Lazily cancels expired unpaid PENDING_PAYMENT orders on RESERVED listings
+ * and restores listing status to ACTIVE if no non-terminal order remains.
+ * Runs a single precheck query when nothing is expired so GET /api/listings stays <= 3 queries.
+ */
+export async function reconcileExpiredReservations(listingId?: string): Promise<number> {
+  const candidates = await prisma.$queryRaw<Array<{ id: string }>>`
+    SELECT DISTINCT o."id"
+    FROM "Order" o
+    INNER JOIN "ProductListing" l ON l."id" = o."listingId"
+    WHERE l."status" = 'RESERVED'
+      AND o."status" = 'PENDING_PAYMENT'
+      ${listingId ? Prisma.sql`AND l."id" = ${listingId}` : Prisma.empty}
+      AND (
+        o."createdAt" < (NOW() AT TIME ZONE 'UTC' - INTERVAL '2 hours')
+        OR EXISTS (
+          SELECT 1
+          FROM "PaymentAttempt" pa
+          WHERE pa."orderId" = o."id"
+            AND pa."id" = (
+              SELECT pa2."id"
+              FROM "PaymentAttempt" pa2
+              WHERE pa2."orderId" = o."id"
+              ORDER BY pa2."createdAt" DESC
+              LIMIT 1
+            )
+            AND pa."status" = 'PENDING'
+            AND pa."expiresAt" < (NOW() AT TIME ZONE 'UTC')
+        )
+      )
+    LIMIT 20
+  `;
+
+  if (candidates.length === 0) {
+    return 0;
+  }
+
+  let recoveredCount = 0;
+
+  for (const candidate of candidates) {
+    const recovered = await prisma.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({
+        where: { id: candidate.id },
+        include: {
+          paymentAttempts: {
+            where: { status: "PENDING" },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
+      });
+
+      if (!order || !isPendingOrderExpired(order)) {
+        return false;
+      }
+
+      const cancelResult = await tx.order.updateMany({
+        where: {
+          id: order.id,
+          status: "PENDING_PAYMENT",
+        },
+        data: {
+          status: "CANCELLED",
+          cancelledAt: new Date(),
+        },
+      });
+
+      if (cancelResult.count !== 1) {
+        return false;
+      }
+
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: order.id,
+          fromStatus: "PENDING_PAYMENT",
+          toStatus: "CANCELLED",
+          actorId: "SYSTEM",
+          actorRole: "SYSTEM",
+          reason: "Batas waktu pembayaran pesanan telah kadaluwarsa (lazy expiry).",
+        },
+      });
+
+      await tx.paymentAttempt.updateMany({
+        where: {
+          orderId: order.id,
+          status: "PENDING",
+        },
+        data: { status: "EXPIRED" },
+      });
+
+      const activeBlocking = await tx.order.findFirst({
+        where: {
+          listingId: order.listingId,
+          status: { notIn: [...TERMINAL_ORDER_STATUSES] },
+        },
+        select: { id: true },
+      });
+
+      if (!activeBlocking) {
+        const restored = await tx.productListing.updateMany({
+          where: {
+            id: order.listingId,
+            status: LISTING_STATUS.RESERVED,
+          },
+          data: {
+            status: LISTING_STATUS.ACTIVE,
+          },
+        });
+        return restored.count > 0;
+      }
+
+      return false;
+    });
+
+    if (recovered) {
+      recoveredCount++;
+    }
+  }
+
+  return recoveredCount;
+}
+
+/**
  * Shared server-side listing catalog query used by both GET /api/listings and Server Components.
- * Executes a single SQL query (<= 3 SQL query budget) with deterministic keyset pagination.
+ * Executes a <= 3 SQL query budget with deterministic keyset pagination.
  */
 export async function listListings(
   params: ListListingsInput = {},
@@ -288,6 +411,11 @@ export async function listListings(
       "Silakan login untuk melihat daftar iklan Anda.",
       401
     );
+  }
+
+  // Reconcile expired unpaid reservations before querying public catalog so stranded items recover to ACTIVE.
+  if (!params.status || params.status === LISTING_STATUS.ACTIVE) {
+    await reconcileExpiredReservations();
   }
 
   const targetSellerId = params.mine ? viewer!.id : params.sellerId;
@@ -476,14 +604,26 @@ export async function getListingByIdOrSlug(
   idOrSlug: string,
   viewer?: ListingAuthorViewer | null
 ): Promise<ListingPublicDto | null> {
-  const rows = await prisma.$queryRaw<ListingRawRow[]>`
+  let rows = await prisma.$queryRaw<ListingRawRow[]>`
     ${selectListingColumnsFragment()}
     WHERE l."id" = ${idOrSlug} OR l."slug" = ${idOrSlug}
     LIMIT 1
   `;
-  const row = rows[0];
+  let row = rows[0];
   if (!row) {
     return null;
+  }
+
+  if (row.status === LISTING_STATUS.RESERVED) {
+    const recovered = await reconcileExpiredReservations(row.id);
+    if (recovered > 0) {
+      rows = await prisma.$queryRaw<ListingRawRow[]>`
+        ${selectListingColumnsFragment()}
+        WHERE l."id" = ${row.id}
+        LIMIT 1
+      `;
+      row = rows[0] ?? row;
+    }
   }
 
   if (row.status === LISTING_STATUS.ARCHIVED) {
@@ -576,6 +716,10 @@ export async function createListing(params: {
         });
       }
 
+      const initialStatus = input.deferPublish
+        ? LISTING_STATUS.ARCHIVED
+        : LISTING_STATUS.ACTIVE;
+
       await tx.productListing.create({
         data: {
           id: newListingId,
@@ -591,7 +735,7 @@ export async function createListing(params: {
           condition: input.condition,
           canNego: input.canNego,
           minNegoPrice: input.canNego ? (input.minNegoPrice ?? null) : null,
-          status: LISTING_STATUS.ACTIVE,
+          status: initialStatus,
           sellerId: params.actor.id,
           ...(input.images && input.images.length > 0
             ? {
@@ -615,7 +759,7 @@ export async function createListing(params: {
           targetId: newListingId,
           details: JSON.stringify({
             actorRole: params.actor.role,
-            status: LISTING_STATUS.ACTIVE,
+            status: initialStatus,
             price: input.price,
             category: input.category,
           }),
@@ -1010,23 +1154,13 @@ export async function relistListing(params: {
   return mapListingToDto(row, params.actor);
 }
 
-export async function attachListingImage(params: {
+/**
+ * Authorizes listing image upload before any multipart body is buffered in memory.
+ */
+export async function authorizeListingImageUpload(params: {
   listingId: string;
   actor: { id: string; role: string };
-  buffer: Buffer;
-  claimedMimeType?: string | null;
-}): Promise<{ id: string; url: string; isPrimary: boolean; sortOrder: number }> {
-  let validated;
-  try {
-    validated = validateUploadedImageBuffer(params.buffer, params.claimedMimeType);
-  } catch (err) {
-    if (err instanceof ImageValidationError) {
-      throw new ListingServiceError(err.code, "Gambar Tidak Valid", err.message, err.status);
-    }
-    throw err;
-  }
-
-  // Authorize before touching disk.
+}): Promise<void> {
   const listing = await prisma.productListing.findUnique({
     where: { id: params.listingId },
     select: {
@@ -1063,6 +1197,49 @@ export async function attachListingImage(params: {
       400
     );
   }
+}
+
+export async function attachListingImage(params: {
+  listingId: string;
+  actor: { id: string; role: string };
+  buffer: Buffer;
+  claimedMimeType?: string | null;
+  idempotencyKey?: string | null;
+}): Promise<{ id: string; url: string; isPrimary: boolean; sortOrder: number }> {
+  const cleanKey = params.idempotencyKey?.trim();
+  const scopedKey = cleanKey
+    ? `listing:img:${params.listingId}:${params.actor.id}:${cleanKey}`
+    : null;
+
+  if (scopedKey) {
+    const existing = await prisma.idempotencyKey.findUnique({
+      where: { key: scopedKey },
+    });
+    if (existing && new Date() < existing.expiresAt && existing.resourceId) {
+      const existingImage = await prisma.listingImage.findFirst({
+        where: { id: existing.resourceId, listingId: params.listingId },
+        select: { id: true, url: true, isPrimary: true, sortOrder: true },
+      });
+      if (existingImage) {
+        return existingImage;
+      }
+    }
+  }
+
+  let validated;
+  try {
+    validated = validateUploadedImageBuffer(params.buffer, params.claimedMimeType);
+  } catch (err) {
+    if (err instanceof ImageValidationError) {
+      throw new ListingServiceError(err.code, "Gambar Tidak Valid", err.message, err.status);
+    }
+    throw err;
+  }
+
+  await authorizeListingImageUpload({
+    listingId: params.listingId,
+    actor: params.actor,
+  });
 
   const key = generateSafeImageStorageKey(validated.extension);
   const stored = await defaultListingStorage.put(key, params.buffer, validated.mimeType);
@@ -1070,7 +1247,7 @@ export async function attachListingImage(params: {
   try {
     const createdImage = await prisma.$transaction(async (tx) => {
       const count = await tx.listingImage.count({
-        where: { listingId: listing.id },
+        where: { listingId: params.listingId },
       });
 
       if (count >= MAX_LISTING_IMAGES_PER_LISTING) {
@@ -1084,7 +1261,7 @@ export async function attachListingImage(params: {
 
       const imageRow = await tx.listingImage.create({
         data: {
-          listingId: listing.id,
+          listingId: params.listingId,
           url: stored.url,
           isPrimary: count === 0,
           sortOrder: count,
@@ -1105,7 +1282,7 @@ export async function attachListingImage(params: {
           targetId: imageRow.id,
           details: JSON.stringify({
             actorRole: params.actor.role,
-            listingId: listing.id,
+            listingId: params.listingId,
             url: stored.url,
             mimeType: validated.mimeType,
             size: validated.size,
@@ -1113,12 +1290,41 @@ export async function attachListingImage(params: {
         },
       });
 
+      if (scopedKey) {
+        await tx.idempotencyKey.create({
+          data: {
+            key: scopedKey,
+            resource: "ListingImage",
+            resourceId: imageRow.id,
+            action: "UPLOAD",
+            result: JSON.stringify({ id: imageRow.id, url: imageRow.url }),
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          },
+        });
+      }
+
       return imageRow;
     });
 
     return createdImage;
   } catch (err) {
     await defaultListingStorage.delete(key);
+    if (
+      scopedKey &&
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      const raced = await prisma.idempotencyKey.findUnique({
+        where: { key: scopedKey },
+      });
+      if (raced?.resourceId) {
+        const img = await prisma.listingImage.findFirst({
+          where: { id: raced.resourceId, listingId: params.listingId },
+          select: { id: true, url: true, isPrimary: true, sortOrder: true },
+        });
+        if (img) return img;
+      }
+    }
     throw err;
   }
 }
