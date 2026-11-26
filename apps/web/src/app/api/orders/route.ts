@@ -11,6 +11,7 @@ import {
   LISTING_STATUS,
   TERMINAL_ORDER_STATUSES,
   isPendingOrderExpired,
+  isPriceOfferExpired,
 } from "@/domain/listing/listingStatus";
 
 export async function POST(request: Request) {
@@ -114,21 +115,22 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7. Offer Support Check (DECISION D1 — negotiated offers enabled in Phase 11)
+    // 7. Lazy-expire stale offer status before transactional offer verification
     if (offerId) {
-      return NextResponse.json(
-        {
-          error: "OFFER_NOT_SUPPORTED",
-          message: "Penawaran harga tidak valid atau belum didukung di server.",
+      await prisma.priceOffer.updateMany({
+        where: {
+          id: offerId,
+          status: { in: ["PENDING", "ACCEPTED"] },
+          expiresAt: { lt: new Date() },
         },
-        { status: 422 }
-      );
+        data: { status: "EXPIRED" },
+      });
     }
 
     const orderId = generateInternalId("ord");
     const orderNumber = generateOrderNumber();
 
-    // 8. Atomic Postgres Transaction (Row lock -> authoritative price -> reserve -> order)
+    // 8. Atomic Postgres Transaction (Row lock -> offer CAS -> authoritative price -> reserve -> order)
     try {
       const createdDto = await prisma.$transaction(async (tx) => {
         const lockedListings = await tx.$queryRaw<
@@ -147,8 +149,52 @@ export async function POST(request: Request) {
           throw new Error("CANNOT_BUY_OWN_LISTING");
         }
 
-        // Compute fees inside transaction from locked row price
-        const itemPrice = lockedListing.price;
+        // Compute authoritative item price inside transaction (supports accepted single-use offer)
+        let itemPrice = lockedListing.price;
+        let consumedOfferId: string | null = null;
+
+        if (offerId) {
+          const offer = await tx.priceOffer.findUnique({
+            where: { id: offerId },
+            include: {
+              conversation: {
+                select: {
+                  buyerId: true,
+                  listingId: true,
+                },
+              },
+            },
+          });
+
+          if (
+            !offer ||
+            offer.conversation.buyerId !== session.id ||
+            offer.conversation.listingId !== lockedListing.id ||
+            offer.status !== "ACCEPTED" ||
+            isPriceOfferExpired(offer)
+          ) {
+            throw new Error("OFFER_INVALID");
+          }
+
+          const consumeResult = await tx.priceOffer.updateMany({
+            where: {
+              id: offer.id,
+              status: "ACCEPTED",
+            },
+            data: {
+              status: "CONSUMED",
+              consumedAt: new Date(),
+            },
+          });
+
+          if (consumeResult.count !== 1) {
+            throw new Error("OFFER_INVALID");
+          }
+
+          itemPrice = offer.offerPrice;
+          consumedOfferId = offer.id;
+        }
+
         const shippingFee = calculateShippingFee(courier);
         const breakdown = calculateEscrowBreakdown(itemPrice, shippingFee, 0);
         const escrowFee = breakdown.escrowFee;
@@ -236,6 +282,7 @@ export async function POST(request: Request) {
             buyerId: session.id,
             sellerId: lockedListing.sellerId,
             listingId: lockedListing.id,
+            ...(consumedOfferId ? { offerId: consumedOfferId } : {}),
             itemPrice,
             shippingFee,
             escrowFee,
@@ -282,6 +329,7 @@ export async function POST(request: Request) {
               shippingFee,
               courier,
               paymentMethod,
+              ...(consumedOfferId ? { offerId: consumedOfferId } : {}),
             }),
           },
         });
@@ -368,6 +416,17 @@ export async function POST(request: Request) {
           message: "Anda tidak dapat membeli barang dagangan milik sendiri.",
         },
         { status: 403 }
+      );
+    }
+
+    if (error instanceof Error && error.message === "OFFER_INVALID") {
+      return NextResponse.json(
+        {
+          error: "OFFER_INVALID",
+          message:
+            "Penawaran harga tidak valid, sudah digunakan, atau masa berlakunya telah berakhir.",
+        },
+        { status: 422 }
       );
     }
 

@@ -98,18 +98,29 @@ export interface Order {
   createdAt: string;
 }
 
-export type OfferStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'COUNTERED' | 'EXPIRED';
+export type OfferStatus =
+  | 'PENDING'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'COUNTERED'
+  | 'EXPIRED'
+  | 'CONSUMED';
 
 export interface Offer {
   id: string;
+  conversationId?: string;
   listingId: string;
   buyerId: string;
   sellerId: string;
+  senderId?: string;
   originalPrice: number;
   offerPrice: number;
+  counterPrice?: number;
   discountPercent: number;
   status: OfferStatus;
   expiresAt: string;
+  consumedAt?: string;
+  createdAt?: string;
   checkoutWindowExpiresAt?: string;
 }
 
@@ -127,11 +138,14 @@ export interface ChatMessage {
 export interface Conversation {
   id: string;
   listingId: string;
+  buyerId?: string;
+  sellerId?: string;
   listing: ProductListing;
   counterpart: SellerProfile;
   lastMessage: string;
   lastTimestamp: string;
   unreadCount: number;
+  offers?: Offer[];
   messages: ChatMessage[];
 }
 
