@@ -119,7 +119,7 @@ export function ProductDetailClient({ listing }: ProductDetailClientProps) {
       return;
     }
     addItem(listing.id);
-    router.push("/checkout");
+    router.push(`/checkout?listingId=${encodeURIComponent(listing.id)}`);
   };
 
   const handleNegoSubmit = async (e: React.FormEvent) => {

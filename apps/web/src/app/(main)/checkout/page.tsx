@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
-import type { Conversation, Offer } from "@/types";
+import type { Offer } from "@/types";
 import { useCartStore, AVAILABLE_COURIERS } from "@/stores/useCartStore";
 import { useUserStore } from "@/stores/useUserStore";
 import { useResolvedCartListings } from "@/hooks/useResolvedCartListings";
@@ -20,14 +20,16 @@ import { formatRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const targetListingId = searchParams.get("listingId");
   const { showToast } = useToast();
   const { items, selectedCourier, setSelectedCourier, clearCart, addItem } =
     useCartStore();
   const { user } = useUserStore();
   const { listings, isLoading, droppedNotice } = useResolvedCartListings({
-    fallbackToFirstActive: true,
+    fallbackToFirstActive: !targetListingId,
   });
 
   const [clientRequestId, setClientRequestId] = useState<string | null>(null);
@@ -51,7 +53,9 @@ export default function CheckoutPage() {
     sessionStorage.setItem("checkout_paymentMethod", method);
   };
 
-  const activeListing = listings[0] ?? null;
+  const activeListing = targetListingId
+    ? listings.find((l) => l.id === targetListingId) ?? null
+    : listings[0] ?? null;
   const activeOfferId = activeListing
     ? items.find((i) => i.listingId === activeListing.id)?.offerId
     : undefined;
@@ -65,33 +69,40 @@ export default function CheckoutPage() {
       }
 
       try {
-        const res = await fetch("/api/conversations?limit=50", {
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `/api/offers/${encodeURIComponent(activeOfferId)}`,
+          { cache: "no-store" }
+        );
+
+        // Preserve offerId on unauthenticated/transient 5xx errors; clear only on confirmed invalid/expired
+        if (res.status === 404 || res.status === 422) {
+          if (!active) return;
+          setVerifiedOffer(null);
+          addItem(activeListing.id);
+          showToast(
+            "Penawaran harga nego sudah tidak berlaku. Harga kembali ke harga iklan.",
+            "info"
+          );
+          return;
+        }
+
         if (!res.ok) {
           if (active) setVerifiedOffer(null);
           return;
         }
-        const json = (await res.json()) as { data?: Conversation[] };
-        const convos = Array.isArray(json.data) ? json.data : [];
-        let matched: Offer | null = null;
-        for (const c of convos) {
-          const found = (c.offers ?? []).find(
-            (o) =>
-              o.id === activeOfferId &&
-              o.listingId === activeListing.id &&
-              o.status === "ACCEPTED" &&
-              Date.now() < new Date(o.expiresAt).getTime()
-          );
-          if (found) {
-            matched = found;
-            break;
-          }
-        }
+
+        const json = (await res.json()) as {
+          offer?: Offer;
+          isEligibleForCheckout?: boolean;
+        };
 
         if (!active) return;
-        if (matched) {
-          setVerifiedOffer(matched);
+        if (
+          json.isEligibleForCheckout &&
+          json.offer &&
+          json.offer.listingId === activeListing.id
+        ) {
+          setVerifiedOffer(json.offer);
         } else {
           setVerifiedOffer(null);
           addItem(activeListing.id);
@@ -486,5 +497,20 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-4">
+          <div className="h-24 rounded-2xl bg-surface-subtle animate-pulse" />
+          <div className="h-64 rounded-2xl bg-surface-subtle animate-pulse" />
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   );
 }

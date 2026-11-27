@@ -76,7 +76,7 @@ export async function GET(
   const cacheControl =
     imageRecord.listing.status === LISTING_STATUS.ARCHIVED
       ? "private, no-store"
-      : "public, max-age=31536000, immutable";
+      : "private, no-cache, must-revalidate";
 
   return new NextResponse(new Uint8Array(retrieved.buffer), {
     status: 200,

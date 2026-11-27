@@ -318,6 +318,7 @@ export const CounterOfferSchema = z
 export const ListConversationsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
   cursor: z.string().trim().max(500).optional(),
+  q: z.string().trim().max(100).optional(),
 });
 
 export const ListMessagesQuerySchema = z.object({

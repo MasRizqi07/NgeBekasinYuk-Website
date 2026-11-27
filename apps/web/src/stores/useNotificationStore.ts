@@ -28,7 +28,7 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
     message: "Dimas Aditya menerima tawaran Rp 6.900.000 untuk iPad Air 5. Segera checkout sebelum kedaluwarsa.",
     timestamp: "1 jam lalu",
     isRead: false,
-    link: "/chat/convo-dimas-ipad",
+    link: "/chat",
   },
   {
     id: "notif-3",
@@ -93,6 +93,20 @@ export const useNotificationStore = create<NotificationStore>()(
     }),
     {
       name: "ngebekasinyuk-notifications-storage",
+      merge: (persistedState, currentState) => {
+        const raw = (persistedState || {}) as {
+          notifications?: AppNotification[];
+        };
+        if (!Array.isArray(raw.notifications)) {
+          return currentState;
+        }
+        return {
+          ...currentState,
+          notifications: raw.notifications.map((n) =>
+            n.link === "/chat/convo-dimas-ipad" ? { ...n, link: "/chat" } : n
+          ),
+        };
+      },
     }
   )
 );
