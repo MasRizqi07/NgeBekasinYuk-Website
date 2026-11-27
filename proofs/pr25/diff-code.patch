@@ -1,0 +1,1231 @@
+diff --git a/apps/web/src/app/(main)/chat/[id]/page.tsx b/apps/web/src/app/(main)/chat/[id]/page.tsx
+index 490aa94..97ffd40 100644
+--- a/apps/web/src/app/(main)/chat/[id]/page.tsx
++++ b/apps/web/src/app/(main)/chat/[id]/page.tsx
+@@ -481,13 +481,13 @@ export default function ChatDetailPage({
+   const handleCheckoutWithOffer = (offer: Offer) => {
+     if (!convo) return;
+     addItem(convo.listing.id, offer.id);
+-    router.push("/checkout");
++    router.push(`/checkout?listingId=${encodeURIComponent(convo.listing.id)}`);
+   };
+ 
+   const handleDirectCheckout = () => {
+     if (!convo) return;
+     addItem(convo.listing.id);
+-    router.push("/checkout");
++    router.push(`/checkout?listingId=${encodeURIComponent(convo.listing.id)}`);
+   };
+ 
+   if (isLoading) {
+diff --git a/apps/web/src/app/(main)/chat/page.tsx b/apps/web/src/app/(main)/chat/page.tsx
+index 45a0a7c..01506f0 100644
+--- a/apps/web/src/app/(main)/chat/page.tsx
++++ b/apps/web/src/app/(main)/chat/page.tsx
+@@ -20,23 +20,46 @@ export default function ChatInboxPage() {
+   const { setUnreadTotal } = useChatStore();
+   const [conversations, setConversations] = useState<Conversation[]>([]);
+   const [searchTerm, setSearchTerm] = useState("");
++  const [debouncedQuery, setDebouncedQuery] = useState("");
++  const [nextCursor, setNextCursor] = useState<string | null>(null);
++  const [hasMore, setHasMore] = useState(false);
++  const [isLoadingMore, setIsLoadingMore] = useState(false);
+   const [isLoading, setIsLoading] = useState(true);
+   const [isUnauthorized, setIsUnauthorized] = useState(false);
+   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+ 
+   const backoffMsRef = useRef(5000);
+   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
++  const loadedCountRef = useRef(20);
++
++  useEffect(() => {
++    const timer = setTimeout(() => {
++      setDebouncedQuery(searchTerm.trim());
++    }, 250);
++    return () => clearTimeout(timer);
++  }, [searchTerm]);
+ 
+   const fetchInbox = useCallback(
+     async (isBackground = false): Promise<boolean> => {
+       try {
+-        const res = await fetch("/api/conversations?limit=30", {
++        const qs = new URLSearchParams();
++        const limit = isBackground
++          ? Math.min(50, Math.max(20, loadedCountRef.current))
++          : 20;
++        qs.set("limit", String(limit));
++        if (debouncedQuery) {
++          qs.set("q", debouncedQuery);
++        }
++
++        const res = await fetch(`/api/conversations?${qs.toString()}`, {
+           cache: "no-store",
+         });
+ 
+         if (res.status === 401) {
+           setIsUnauthorized(true);
+           setConversations([]);
++          setNextCursor(null);
++          setHasMore(false);
+           setUnreadTotal(0);
+           setErrorMessage(null);
+           setIsLoading(false);
+@@ -46,6 +69,7 @@ export default function ChatInboxPage() {
+         const json = (await res.json().catch(() => null)) as {
+           data?: Conversation[];
+           unreadTotal?: number;
++          pagination?: { hasMore?: boolean; nextCursor?: string | null };
+           message?: string;
+         } | null;
+ 
+@@ -55,6 +79,9 @@ export default function ChatInboxPage() {
+ 
+         setIsUnauthorized(false);
+         setConversations(json.data);
++        loadedCountRef.current = json.data.length;
++        setHasMore(Boolean(json.pagination?.hasMore));
++        setNextCursor(json.pagination?.nextCursor ?? null);
+         const totalUnread =
+           typeof json.unreadTotal === "number"
+             ? json.unreadTotal
+@@ -77,9 +104,47 @@ export default function ChatInboxPage() {
+         return true;
+       }
+     },
+-    [setUnreadTotal]
++    [debouncedQuery, setUnreadTotal]
+   );
+ 
++  const handleLoadMore = async () => {
++    if (!nextCursor || isLoadingMore) return;
++    setIsLoadingMore(true);
++    try {
++      const qs = new URLSearchParams();
++      qs.set("limit", "20");
++      qs.set("cursor", nextCursor);
++      if (debouncedQuery) qs.set("q", debouncedQuery);
++
++      const res = await fetch(`/api/conversations?${qs.toString()}`, {
++        cache: "no-store",
++      });
++      const json = (await res.json().catch(() => null)) as {
++        data?: Conversation[];
++        pagination?: { hasMore?: boolean; nextCursor?: string | null };
++      } | null;
++
++      if (res.ok && json && Array.isArray(json.data)) {
++        setConversations((prev) => {
++          const seen = new Set(prev.map((c) => c.id));
++          const merged = [...prev];
++          for (const item of json.data!) {
++            if (!seen.has(item.id)) {
++              seen.add(item.id);
++              merged.push(item);
++            }
++          }
++          loadedCountRef.current = merged.length;
++          return merged;
++        });
++        setHasMore(Boolean(json.pagination?.hasMore));
++        setNextCursor(json.pagination?.nextCursor ?? null);
++      }
++    } finally {
++      setIsLoadingMore(false);
++    }
++  };
++
+   useEffect(() => {
+     let active = true;
+ 
+@@ -315,6 +380,21 @@ export default function ChatInboxPage() {
+               </Link>
+             );
+           })}
++
++          {hasMore && (
++            <div className="flex justify-center pt-2">
++              <Button
++                type="button"
++                variant="outline"
++                size="sm"
++                onClick={handleLoadMore}
++                disabled={isLoadingMore}
++                className="font-bold"
++              >
++                {isLoadingMore ? "Memuat..." : "Muat Lebih Banyak"}
++              </Button>
++            </div>
++          )}
+         </div>
+       )}
+     </div>
+diff --git a/apps/web/src/app/(main)/checkout/page.tsx b/apps/web/src/app/(main)/checkout/page.tsx
+index eefb0a2..6facd3e 100644
+--- a/apps/web/src/app/(main)/checkout/page.tsx
++++ b/apps/web/src/app/(main)/checkout/page.tsx
+@@ -1,7 +1,7 @@
+ "use client";
+ 
+-import React, { useState, useEffect } from "react";
+-import { useRouter } from "next/navigation";
++import React, { Suspense, useState, useEffect } from "react";
++import { useRouter, useSearchParams } from "next/navigation";
+ import Image from "next/image";
+ import Link from "next/link";
+ import {
+@@ -12,7 +12,7 @@ import {
+   CheckCircle2,
+   AlertTriangle,
+ } from "lucide-react";
+-import type { Conversation, Offer } from "@/types";
++import type { Offer } from "@/types";
+ import { useCartStore, AVAILABLE_COURIERS } from "@/stores/useCartStore";
+ import { useUserStore } from "@/stores/useUserStore";
+ import { useResolvedCartListings } from "@/hooks/useResolvedCartListings";
+@@ -20,14 +20,16 @@ import { formatRupiah } from "@/lib/utils";
+ import { Button } from "@/components/ui/Button";
+ import { useToast } from "@/components/ui/Toast";
+ 
+-export default function CheckoutPage() {
++function CheckoutContent() {
+   const router = useRouter();
++  const searchParams = useSearchParams();
++  const targetListingId = searchParams.get("listingId");
+   const { showToast } = useToast();
+   const { items, selectedCourier, setSelectedCourier, clearCart, addItem } =
+     useCartStore();
+   const { user } = useUserStore();
+   const { listings, isLoading, droppedNotice } = useResolvedCartListings({
+-    fallbackToFirstActive: true,
++    fallbackToFirstActive: !targetListingId,
+   });
+ 
+   const [clientRequestId, setClientRequestId] = useState<string | null>(null);
+@@ -51,7 +53,9 @@ export default function CheckoutPage() {
+     sessionStorage.setItem("checkout_paymentMethod", method);
+   };
+ 
+-  const activeListing = listings[0] ?? null;
++  const activeListing = targetListingId
++    ? listings.find((l) => l.id === targetListingId) ?? null
++    : listings[0] ?? null;
+   const activeOfferId = activeListing
+     ? items.find((i) => i.listingId === activeListing.id)?.offerId
+     : undefined;
+@@ -65,33 +69,40 @@ export default function CheckoutPage() {
+       }
+ 
+       try {
+-        const res = await fetch("/api/conversations?limit=50", {
+-          cache: "no-store",
+-        });
++        const res = await fetch(
++          `/api/offers/${encodeURIComponent(activeOfferId)}`,
++          { cache: "no-store" }
++        );
++
++        // Preserve offerId on unauthenticated/transient 5xx errors; clear only on confirmed invalid/expired
++        if (res.status === 404 || res.status === 422) {
++          if (!active) return;
++          setVerifiedOffer(null);
++          addItem(activeListing.id);
++          showToast(
++            "Penawaran harga nego sudah tidak berlaku. Harga kembali ke harga iklan.",
++            "info"
++          );
++          return;
++        }
++
+         if (!res.ok) {
+           if (active) setVerifiedOffer(null);
+           return;
+         }
+-        const json = (await res.json()) as { data?: Conversation[] };
+-        const convos = Array.isArray(json.data) ? json.data : [];
+-        let matched: Offer | null = null;
+-        for (const c of convos) {
+-          const found = (c.offers ?? []).find(
+-            (o) =>
+-              o.id === activeOfferId &&
+-              o.listingId === activeListing.id &&
+-              o.status === "ACCEPTED" &&
+-              Date.now() < new Date(o.expiresAt).getTime()
+-          );
+-          if (found) {
+-            matched = found;
+-            break;
+-          }
+-        }
++
++        const json = (await res.json()) as {
++          offer?: Offer;
++          isEligibleForCheckout?: boolean;
++        };
+ 
+         if (!active) return;
+-        if (matched) {
+-          setVerifiedOffer(matched);
++        if (
++          json.isEligibleForCheckout &&
++          json.offer &&
++          json.offer.listingId === activeListing.id
++        ) {
++          setVerifiedOffer(json.offer);
+         } else {
+           setVerifiedOffer(null);
+           addItem(activeListing.id);
+@@ -488,3 +499,18 @@ export default function CheckoutPage() {
+     </div>
+   );
+ }
++
++export default function CheckoutPage() {
++  return (
++    <Suspense
++      fallback={
++        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-4">
++          <div className="h-24 rounded-2xl bg-surface-subtle animate-pulse" />
++          <div className="h-64 rounded-2xl bg-surface-subtle animate-pulse" />
++        </div>
++      }
++    >
++      <CheckoutContent />
++    </Suspense>
++  );
++}
+diff --git a/apps/web/src/app/(main)/sell/page.tsx b/apps/web/src/app/(main)/sell/page.tsx
+index 1c8531b..1170101 100644
+--- a/apps/web/src/app/(main)/sell/page.tsx
++++ b/apps/web/src/app/(main)/sell/page.tsx
+@@ -47,7 +47,11 @@ export default function SellPage() {
+   ]);
+   const [isSubmitting, setIsSubmitting] = useState(false);
+   const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
+-  const [draftListing, setDraftListing] = useState<{ id: string; slug: string } | null>(null);
++  const [draftListing, setDraftListing] = useState<{
++    id: string;
++    slug: string;
++    needsPublish: boolean;
++  } | null>(null);
+ 
+   useEffect(() => {
+     const urls = livePreviewUrlsRef.current;
+@@ -188,7 +192,11 @@ export default function SellPage() {
+           return;
+         }
+ 
+-        targetListing = { id: createdJson.id, slug: createdJson.slug };
++        targetListing = {
++          id: createdJson.id,
++          slug: createdJson.slug,
++          needsPublish: createdJson.status === "ARCHIVED" || hasPendingImages,
++        };
+         setDraftListing(targetListing);
+       }
+ 
+@@ -226,7 +234,7 @@ export default function SellPage() {
+         );
+       }
+ 
+-      if (hasPendingImages) {
++      if (targetListing.needsPublish) {
+         const publishRes = await fetch(
+           `/api/listings/${targetListing.id}/relist`,
+           { method: "POST" }
+@@ -242,6 +250,8 @@ export default function SellPage() {
+           setIsSubmitting(false);
+           return;
+         }
++        targetListing = { ...targetListing, needsPublish: false };
++        setDraftListing(targetListing);
+       }
+ 
+       setIdempotencyKey(null);
+diff --git a/apps/web/src/app/api/conversations/route.ts b/apps/web/src/app/api/conversations/route.ts
+index b40cd26..d9b83d2 100644
+--- a/apps/web/src/app/api/conversations/route.ts
++++ b/apps/web/src/app/api/conversations/route.ts
+@@ -20,6 +20,7 @@ export async function GET(request: Request) {
+     const result = await listConversations(viewerOrResponse, {
+       limit: searchParams.get("limit") ?? undefined,
+       cursor: searchParams.get("cursor") ?? undefined,
++      q: searchParams.get("q") ?? undefined,
+     });
+ 
+     return NextResponse.json(result, { status: 200 });
+diff --git a/apps/web/src/app/api/listings/images/[filename]/route.ts b/apps/web/src/app/api/listings/images/[filename]/route.ts
+index 21e6af2..2d90e0d 100644
+--- a/apps/web/src/app/api/listings/images/[filename]/route.ts
++++ b/apps/web/src/app/api/listings/images/[filename]/route.ts
+@@ -76,7 +76,7 @@ export async function GET(
+   const cacheControl =
+     imageRecord.listing.status === LISTING_STATUS.ARCHIVED
+       ? "private, no-store"
+-      : "public, max-age=31536000, immutable";
++      : "private, no-cache, must-revalidate";
+ 
+   return new NextResponse(new Uint8Array(retrieved.buffer), {
+     status: 200,
+diff --git a/apps/web/src/app/api/offers/[offerId]/route.ts b/apps/web/src/app/api/offers/[offerId]/route.ts
+new file mode 100644
+index 0000000..edf089e
+--- /dev/null
++++ b/apps/web/src/app/api/offers/[offerId]/route.ts
+@@ -0,0 +1,23 @@
++import { NextResponse } from "next/server";
++import { requireChatViewer } from "@/domain/chat/chatRouteHelpers";
++import { getBuyerOfferForCheckout } from "@/domain/chat/offerService";
++import { handleRouteError } from "@/lib/http/problemDetails";
++
++export async function GET(
++  request: Request,
++  context: { params: Promise<{ offerId: string }> }
++) {
++  try {
++    const viewerOrResponse = await requireChatViewer(request);
++    if (viewerOrResponse instanceof NextResponse) {
++      return viewerOrResponse;
++    }
++
++    const { offerId } = await context.params;
++    const result = await getBuyerOfferForCheckout(viewerOrResponse, offerId);
++
++    return NextResponse.json(result, { status: 200 });
++  } catch (err) {
++    return handleRouteError(err, request, "GET /api/offers/[offerId]");
++  }
++}
+diff --git a/apps/web/src/components/features/OfferCard.tsx b/apps/web/src/components/features/OfferCard.tsx
+index 857fbab..8d08d4a 100644
+--- a/apps/web/src/components/features/OfferCard.tsx
++++ b/apps/web/src/components/features/OfferCard.tsx
+@@ -106,7 +106,8 @@ export function OfferCard({
+   const handleCounterSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+     setCounterError(null);
+-    const parsed = Number.parseInt(counterInput, 10);
++    const trimmed = counterInput.trim();
++    const parsed = trimmed.length > 0 ? Number(trimmed) : Number.NaN;
+     if (!Number.isInteger(parsed) || parsed <= 0) {
+       setCounterError("Masukkan nominal bulat lebih dari Rp 0.");
+       return;
+diff --git a/apps/web/src/components/product/ProductDetailClient.tsx b/apps/web/src/components/product/ProductDetailClient.tsx
+index 2f7d7ce..d7dde5f 100644
+--- a/apps/web/src/components/product/ProductDetailClient.tsx
++++ b/apps/web/src/components/product/ProductDetailClient.tsx
+@@ -119,7 +119,7 @@ export function ProductDetailClient({ listing }: ProductDetailClientProps) {
+       return;
+     }
+     addItem(listing.id);
+-    router.push("/checkout");
++    router.push(`/checkout?listingId=${encodeURIComponent(listing.id)}`);
+   };
+ 
+   const handleNegoSubmit = async (e: React.FormEvent) => {
+diff --git a/apps/web/src/domain/chat/chatService.ts b/apps/web/src/domain/chat/chatService.ts
+index d2b4a27..fc58ce3 100644
+--- a/apps/web/src/domain/chat/chatService.ts
++++ b/apps/web/src/domain/chat/chatService.ts
+@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
+ import { prisma } from "@/server/db/prisma";
+ import { generateInternalId } from "@/domain/id";
+ import { LISTING_STATUS } from "@/domain/listing/listingStatus";
++import { reconcileExpiredReservations } from "@/domain/listing/listingService";
+ import {
+   CreateConversationSchema,
+   ListConversationsQuerySchema,
+@@ -262,7 +263,7 @@ export async function listConversations(viewer: ChatViewer, rawQuery: unknown) {
+     );
+   }
+ 
+-  const { limit, cursor: rawCursor } = parsed.data;
++  const { limit, cursor: rawCursor, q } = parsed.data;
+   const decodedCursor = rawCursor ? decodeTimeIdCursor(rawCursor) : null;
+   if (rawCursor && !decodedCursor) {
+     throw new ChatDomainError(
+@@ -277,10 +278,47 @@ export async function listConversations(viewer: ChatViewer, rawQuery: unknown) {
+     OR: [{ buyerId: viewer.id }, { sellerId: viewer.id }],
+   };
+ 
+-  const whereClause: Prisma.ConversationWhereInput = decodedCursor
++  const searchTerm = q?.trim();
++  const baseFilter: Prisma.ConversationWhereInput = searchTerm
+     ? {
+         AND: [
+           participantFilter,
++          {
++            OR: [
++              { listing: { title: { contains: searchTerm, mode: "insensitive" } } },
++              {
++                AND: [
++                  { buyerId: viewer.id },
++                  {
++                    OR: [
++                      { seller: { name: { contains: searchTerm, mode: "insensitive" } } },
++                      {
++                        seller: {
++                          sellerProfile: {
++                            storeName: { contains: searchTerm, mode: "insensitive" },
++                          },
++                        },
++                      },
++                    ],
++                  },
++                ],
++              },
++              {
++                AND: [
++                  { sellerId: viewer.id },
++                  { buyer: { name: { contains: searchTerm, mode: "insensitive" } } },
++                ],
++              },
++            ],
++          },
++        ],
++      }
++    : participantFilter;
++
++  const whereClause: Prisma.ConversationWhereInput = decodedCursor
++    ? {
++        AND: [
++          baseFilter,
+           {
+             OR: [
+               { lastTimestamp: { lt: decodedCursor.t } },
+@@ -292,7 +330,7 @@ export async function listConversations(viewer: ChatViewer, rawQuery: unknown) {
+           },
+         ],
+       }
+-    : participantFilter;
++    : baseFilter;
+ 
+   const rows = await prisma.conversation.findMany({
+     where: whereClause,
+@@ -364,7 +402,10 @@ export async function getConversationDetail(
+   viewer: ChatViewer,
+   conversationId: string
+ ) {
+-  await assertParticipantAccess(viewer.id, conversationId);
++  const access = await assertParticipantAccess(viewer.id, conversationId);
++  if (access.listing.status === LISTING_STATUS.RESERVED) {
++    await reconcileExpiredReservations(access.listingId);
++  }
+   await syncExpiredOffers([conversationId]);
+ 
+   await prisma.chatMessage.updateMany({
+@@ -401,6 +442,9 @@ export async function pollConversationMessages(
+     );
+   }
+ 
++  if (access.listing.status === LISTING_STATUS.RESERVED) {
++    await reconcileExpiredReservations(access.listingId);
++  }
+   await syncExpiredOffers([conversationId]);
+ 
+   const { after, limit } = parsed.data;
+diff --git a/apps/web/src/domain/chat/offerService.ts b/apps/web/src/domain/chat/offerService.ts
+index 697b334..08c2070 100644
+--- a/apps/web/src/domain/chat/offerService.ts
++++ b/apps/web/src/domain/chat/offerService.ts
+@@ -6,6 +6,7 @@ import {
+   OFFER_EXPIRY_MS,
+   isPriceOfferExpired,
+ } from "@/domain/listing/listingStatus";
++import { reconcileExpiredReservations } from "@/domain/listing/listingService";
+ import {
+   CounterOfferSchema,
+   CreateOfferSchema,
+@@ -16,7 +17,7 @@ import {
+   mapMessageToDto,
+   mapOfferToDto,
+ } from "@/domain/chat/chatDto";
+-import type { ChatViewer } from "@/domain/chat/chatService";
++import { syncExpiredOffers, type ChatViewer } from "@/domain/chat/chatService";
+ 
+ function formatIdrPlain(value: number): string {
+   return `Rp ${value.toLocaleString("id-ID")}`;
+@@ -39,6 +40,15 @@ export async function createOffer(
+ 
+   const amount = parsed.data.amount;
+ 
++  // Recover expired reservation on linked listing before entering offer creation transaction
++  const preConvo = await prisma.conversation.findUnique({
++    where: { id: conversationId },
++    select: { listingId: true, listing: { select: { status: true } } },
++  });
++  if (preConvo?.listing.status === LISTING_STATUS.RESERVED) {
++    await reconcileExpiredReservations(preConvo.listingId);
++  }
++
+   try {
+     return await prisma.$transaction(async (tx) => {
+       const convo = await tx.conversation.findUnique({
+@@ -227,7 +237,7 @@ export async function respondToOffer(
+     counterPrice = parsed.data.amount;
+   }
+ 
+-  // Persist lazy expiry before entering the atomic CAS transition
++  // Persist lazy expiry and recover expired listing reservation before atomic CAS transition
+   await prisma.priceOffer.updateMany({
+     where: {
+       id: offerId,
+@@ -238,6 +248,16 @@ export async function respondToOffer(
+     data: { status: "EXPIRED" },
+   });
+ 
++  if (action === "accept" || action === "counter") {
++    const preConvo = await prisma.conversation.findUnique({
++      where: { id: conversationId },
++      select: { listingId: true, listing: { select: { status: true } } },
++    });
++    if (preConvo?.listing.status === LISTING_STATUS.RESERVED) {
++      await reconcileExpiredReservations(preConvo.listingId);
++    }
++  }
++
+   return prisma.$transaction(async (tx) => {
+     const convo = await tx.conversation.findUnique({
+       where: { id: conversationId },
+@@ -412,3 +432,81 @@ export async function respondToOffer(
+     };
+   });
+ }
++
++export async function getBuyerOfferForCheckout(
++  viewer: ChatViewer,
++  offerId: string
++) {
++  const offer = await prisma.priceOffer.findUnique({
++    where: { id: offerId },
++    select: {
++      ...chatOfferSelect,
++      conversation: {
++        select: {
++          id: true,
++          buyerId: true,
++          sellerId: true,
++          listingId: true,
++          listing: {
++            select: {
++              id: true,
++              price: true,
++              status: true,
++            },
++          },
++        },
++      },
++    },
++  });
++
++  if (!offer || offer.conversation.buyerId !== viewer.id) {
++    throw new ChatDomainError(
++      404,
++      "OFFER_NOT_FOUND",
++      "Penawaran Tidak Ditemukan",
++      "Penawaran harga tidak ditemukan untuk akun Anda."
++    );
++  }
++
++  await syncExpiredOffers([offer.conversation.id]);
++  if (offer.conversation.listing.status === LISTING_STATUS.RESERVED) {
++    await reconcileExpiredReservations(offer.conversation.listingId);
++  }
++
++  const latest = await prisma.priceOffer.findUniqueOrThrow({
++    where: { id: offer.id },
++    select: {
++      ...chatOfferSelect,
++      conversation: {
++        select: {
++          buyerId: true,
++          sellerId: true,
++          listingId: true,
++          listing: {
++            select: {
++              price: true,
++              status: true,
++            },
++          },
++        },
++      },
++    },
++  });
++
++  const dto = mapOfferToDto(latest, {
++    listingId: latest.conversation.listingId,
++    buyerId: latest.conversation.buyerId,
++    sellerId: latest.conversation.sellerId,
++    listingPrice: latest.conversation.listing.price,
++  });
++
++  const listingStatus = latest.conversation.listing.status;
++  const isEligibleForCheckout =
++    dto.status === "ACCEPTED" && listingStatus === LISTING_STATUS.ACTIVE;
++
++  return {
++    offer: dto,
++    listingStatus,
++    isEligibleForCheckout,
++  };
++}
+diff --git a/apps/web/src/domain/listing/listingService.ts b/apps/web/src/domain/listing/listingService.ts
+index f98e90b..1f6950c 100644
+--- a/apps/web/src/domain/listing/listingService.ts
++++ b/apps/web/src/domain/listing/listingService.ts
+@@ -277,8 +277,10 @@ export function parseListListingsQuery(
+  * Runs a single precheck query when nothing is expired so GET /api/listings stays <= 3 queries.
+  */
+ export async function reconcileExpiredReservations(listingId?: string): Promise<number> {
+-  const candidates = await prisma.$queryRaw<Array<{ id: string }>>`
+-    SELECT DISTINCT o."id"
++  const candidates = await prisma.$queryRaw<
++    Array<{ listingId: string; orderId: string }>
++  >`
++    SELECT DISTINCT ON (l."id") l."id" AS "listingId", o."id" AS "orderId"
+     FROM "Order" o
+     INNER JOIN "ProductListing" l ON l."id" = o."listingId"
+     WHERE l."status" = 'RESERVED'
+@@ -301,6 +303,7 @@ export async function reconcileExpiredReservations(listingId?: string): Promise<
+             AND pa."expiresAt" < (NOW() AT TIME ZONE 'UTC')
+         )
+       )
++    ORDER BY l."id" ASC, o."createdAt" ASC
+     LIMIT 20
+   `;
+ 
+@@ -312,8 +315,20 @@ export async function reconcileExpiredReservations(listingId?: string): Promise<
+ 
+   for (const candidate of candidates) {
+     const recovered = await prisma.$transaction(async (tx) => {
++      // Acquire ProductListing lock BEFORE reading/updating Order to match POST /api/orders lock order.
++      const lockedListings = await tx.$queryRaw<Array<{ id: string; status: string }>>`
++        SELECT "id", "status"
++        FROM "ProductListing"
++        WHERE "id" = ${candidate.listingId}
++        FOR UPDATE
++      `;
++      const lockedListing = lockedListings[0];
++      if (!lockedListing || lockedListing.status !== LISTING_STATUS.RESERVED) {
++        return false;
++      }
++
+       const order = await tx.order.findUnique({
+-        where: { id: candidate.id },
++        where: { id: candidate.orderId },
+         include: {
+           paymentAttempts: {
+             where: { status: "PENDING" },
+diff --git a/apps/web/src/lib/validations/index.ts b/apps/web/src/lib/validations/index.ts
+index acbe6d1..f0292d2 100644
+--- a/apps/web/src/lib/validations/index.ts
++++ b/apps/web/src/lib/validations/index.ts
+@@ -318,6 +318,7 @@ export const CounterOfferSchema = z
+ export const ListConversationsQuerySchema = z.object({
+   limit: z.coerce.number().int().min(1).max(50).default(20),
+   cursor: z.string().trim().max(500).optional(),
++  q: z.string().trim().max(100).optional(),
+ });
+ 
+ export const ListMessagesQuerySchema = z.object({
+diff --git a/apps/web/src/stores/useNotificationStore.ts b/apps/web/src/stores/useNotificationStore.ts
+index 5b2476f..3d95a84 100644
+--- a/apps/web/src/stores/useNotificationStore.ts
++++ b/apps/web/src/stores/useNotificationStore.ts
+@@ -28,7 +28,7 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
+     message: "Dimas Aditya menerima tawaran Rp 6.900.000 untuk iPad Air 5. Segera checkout sebelum kedaluwarsa.",
+     timestamp: "1 jam lalu",
+     isRead: false,
+-    link: "/chat/convo-dimas-ipad",
++    link: "/chat",
+   },
+   {
+     id: "notif-3",
+@@ -93,6 +93,20 @@ export const useNotificationStore = create<NotificationStore>()(
+     }),
+     {
+       name: "ngebekasinyuk-notifications-storage",
++      merge: (persistedState, currentState) => {
++        const raw = (persistedState || {}) as {
++          notifications?: AppNotification[];
++        };
++        if (!Array.isArray(raw.notifications)) {
++          return currentState;
++        }
++        return {
++          ...currentState,
++          notifications: raw.notifications.map((n) =>
++            n.link === "/chat/convo-dimas-ipad" ? { ...n, link: "/chat" } : n
++          ),
++        };
++      },
+     }
+   )
+ );
+diff --git a/apps/web/test/e2e/chat-offers.spec.ts b/apps/web/test/e2e/chat-offers.spec.ts
+index 4938094..afb9226 100644
+--- a/apps/web/test/e2e/chat-offers.spec.ts
++++ b/apps/web/test/e2e/chat-offers.spec.ts
+@@ -7,6 +7,7 @@ test.describe("Phase 11 Live Chat, Price Negotiation & Checkout E2E (AC11.3 & AC
+   test("two-browser live polling <= 6s, plain XSS safety, counter/accept flow, and negotiated escrow checkout", async ({
+     browser,
+   }) => {
++    test.setTimeout(60_000);
+     const suffix = crypto.randomBytes(4).toString("hex");
+     const createdUserIds: string[] = [];
+     const createdListingIds: string[] = [];
+@@ -106,6 +107,24 @@ test.describe("Phase 11 Live Chat, Price Negotiation & Checkout E2E (AC11.3 & AC
+       const buyerPage = await buyerContext.newPage();
+       const sellerPage = await sellerContext.newPage();
+ 
++      // Pre-seed another active item FIRST in buyer's persisted cart before app hydrates (PR25-1 guard)
++      const otherActive = await prisma.productListing.findFirst({
++        where: { status: "ACTIVE", id: { not: listing.id } },
++        select: { id: true },
++      });
++      if (otherActive) {
++        await buyerPage.goto("/");
++        await buyerPage.evaluate((otherId) => {
++          window.localStorage.setItem(
++            "ngebekasinyuk-cart-storage",
++            JSON.stringify({
++              state: { items: [{ listingId: otherId }] },
++              version: 0,
++            })
++          );
++        }, otherActive.id);
++      }
++
+       // 1. Buyer opens listing detail and starts chat + submits initial offer via modal
+       await buyerPage.goto(`/product/${listing.slug}`);
+       await expect(
+@@ -154,9 +173,9 @@ test.describe("Phase 11 Live Chat, Price Negotiation & Checkout E2E (AC11.3 & AC
+         )
+       ).toBeUndefined();
+ 
+-      // 3. Seller counters offer (5.5M -> 6.1M), buyer sees counter within 6s without reload
++      // 3. Seller counters offer using exponent notation (61e5 -> 6,100,000), buyer sees counter within 6s without reload
+       await sellerPage.getByRole("button", { name: /Tawar Balik/i }).click();
+-      await sellerPage.getByLabel("Nominal harga tanding").fill("6100000");
++      await sellerPage.getByLabel("Nominal harga tanding").fill("61e5");
+       await sellerPage
+         .getByRole("button", { name: /Kirim Harga Tanding/i })
+         .click();
+@@ -164,6 +183,7 @@ test.describe("Phase 11 Live Chat, Price Negotiation & Checkout E2E (AC11.3 & AC
+       await expect(
+         buyerPage.getByRole("button", { name: /Ajukan Harga Penjual/i })
+       ).toBeVisible({ timeout: 6_000 });
++      await expect(sellerPage.getByText(/Rp\s*6\.100\.000/).first()).toBeVisible();
+ 
+       // Buyer submits the counter price (6.1M), seller accepts it, buyer sees "Beli Sekarang (Harga Nego)" within 6s
+       await buyerPage
+@@ -180,8 +200,14 @@ test.describe("Phase 11 Live Chat, Price Negotiation & Checkout E2E (AC11.3 & AC
+       await expect(buyNegoBtn).toBeVisible({ timeout: 6_000 });
+       await buyNegoBtn.click();
+ 
+-      // 4. Negotiated escrow checkout verifies offer price Rp 6.100.000
+-      await buyerPage.waitForURL(/\/checkout/, { timeout: 15_000 });
++      // 4. Negotiated escrow checkout opens the exact chat listing via ?listingId= (NOT the older cart item!) and verifies offer price Rp 6.100.000
++      await buyerPage.waitForURL(
++        new RegExp(`/checkout\\?listingId=${listing.id}`),
++        { timeout: 15_000 }
++      );
++      await expect(buyerPage.getByText(listing.title)).toBeVisible({
++        timeout: 10_000,
++      });
+       await expect(buyerPage.getByText(/Harga Nego Disetujui/i)).toBeVisible({
+         timeout: 10_000,
+       });
+@@ -257,4 +283,97 @@ test.describe("Phase 11 Live Chat, Price Negotiation & Checkout E2E (AC11.3 & AC
+       }
+     }
+   });
++
++  test("PR25-3: removing a failed upload photo on /sell still publishes deferred ARCHIVED draft to ACTIVE", async ({
++    browser,
++  }) => {
++    const suffix = crypto.randomBytes(4).toString("hex");
++    const uniqueTitle = `PR25 Deferred Recovery ${suffix}`;
++    const sellerContext = await browser.newContext();
++    const sellerToken = await signSession({
++      id: "usr-seller-dimas",
++      email: "seller@ngebekasinyuk.id",
++      name: "Dimas Aditya",
++      role: "SELLER",
++      isVerified: true,
++    });
++    await sellerContext.addCookies([
++      {
++        name: "ngebekasinyuk_session",
++        value: sellerToken,
++        domain: "localhost",
++        path: "/",
++      },
++    ]);
++
++    const sellerPage = await sellerContext.newPage();
++    try {
++      await sellerPage.goto("/sell");
++      await sellerPage.locator('input[type="file"]').setInputFiles({
++        name: "spoofed-bad.png",
++        mimeType: "image/png",
++        buffer: Buffer.from("not-valid-png-magic-bytes"),
++      });
++      await sellerPage.getByRole("button", { name: /Lanjut ke Spesifikasi/i }).click();
++      await sellerPage.locator("#sell-title").fill(uniqueTitle);
++      await sellerPage.locator("#sell-brand").fill("Apple");
++      await sellerPage.locator("#sell-model").fill("MacMini M2");
++      await sellerPage.getByRole("button", { name: /Lanjut ke Harga/i }).click();
++      await sellerPage.locator("#sell-price").fill("5500000");
++      await sellerPage
++        .locator("#sell-description")
++        .fill("Menguji alur hapus foto gagal upload lalu terbitkan ulang.");
++      await sellerPage.getByRole("button", { name: /Review Iklan/i }).click();
++
++      // First submit fails image upload (HTTP 400) -> draft stays ARCHIVED
++      const [uploadErrRes] = await Promise.all([
++        sellerPage.waitForResponse(
++          (res) =>
++            res.url().includes("/images") && res.request().method() === "POST"
++        ),
++        sellerPage
++          .getByRole("button", { name: /Tayangkan Iklan Sekarang/i })
++          .click(),
++      ]);
++      expect(uploadErrRes.status()).toBe(400);
++
++      const archivedDraft = await prisma.productListing.findFirst({
++        where: { title: uniqueTitle },
++        select: { status: true },
++      });
++      expect(archivedDraft?.status).toBe("ARCHIVED");
++
++      // Go back to step 1, remove the rejected photo, return to step 4, submit with 0 photos
++      await sellerPage.getByRole("button", { name: /^Ubah Data$/i }).click();
++      await sellerPage.getByRole("button", { name: /^Kembali$/i }).click();
++      await sellerPage.getByRole("button", { name: /^Kembali$/i }).click();
++      await sellerPage.getByRole("button", { name: "Hapus foto" }).click();
++      await sellerPage
++        .getByRole("button", { name: /Lanjut ke Spesifikasi/i })
++        .click();
++      await sellerPage.getByRole("button", { name: /Lanjut ke Harga/i }).click();
++      await sellerPage.getByRole("button", { name: /Review Iklan/i }).click();
++      await sellerPage
++        .getByRole("button", { name: /Tayangkan Iklan Sekarang/i })
++        .click();
++
++      await sellerPage.waitForURL(/\/product\/pr25-deferred-recovery/, {
++        timeout: 15_000,
++      });
++      await expect(
++        sellerPage.getByRole("heading", { name: uniqueTitle })
++      ).toBeVisible();
++
++      const published = await prisma.productListing.findFirst({
++        where: { title: uniqueTitle },
++        select: { id: true, status: true },
++      });
++      expect(published?.status).toBe("ACTIVE");
++    } finally {
++      await sellerContext.close();
++      await prisma.productListing.deleteMany({
++        where: { title: uniqueTitle },
++      });
++    }
++  });
+ });
+diff --git a/apps/web/test/integration/chatOffers.test.ts b/apps/web/test/integration/chatOffers.test.ts
+index 13b1e14..fff7075 100644
+--- a/apps/web/test/integration/chatOffers.test.ts
++++ b/apps/web/test/integration/chatOffers.test.ts
+@@ -15,6 +15,7 @@ import { POST as createOfferRoute } from "@/app/api/conversations/[id]/offers/ro
+ import { POST as acceptOfferRoute } from "@/app/api/conversations/[id]/offers/[offerId]/accept/route";
+ import { POST as rejectOfferRoute } from "@/app/api/conversations/[id]/offers/[offerId]/reject/route";
+ import { POST as counterOfferRoute } from "@/app/api/conversations/[id]/offers/[offerId]/counter/route";
++import { GET as getOfferForCheckoutRoute } from "@/app/api/offers/[offerId]/route";
+ import { POST as createOrderRoute } from "@/app/api/orders/route";
+ 
+ let currentSessionCookie: string | undefined;
+@@ -703,4 +704,154 @@ describe("Phase 11 Chat & Price Offers Integration (AC11.1 - AC11.7, AC11.9)", (
+     );
+     expect(reuseRes.status).toBe(422);
+   });
++
++  it("PR25-2, PR25-5 & PR25-6: targeted /api/offers lookup handles >5 offers, inbox cursor + q search paginate across all threads, and chat poll recovers expired reservation", async () => {
++    currentSessionCookie = buyerCookie;
++    const conv1Res = await createConversationRoute(
++      new Request("http://localhost:3000/api/conversations", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ listingId: activeListingId }),
++      })
++    );
++    const conv1 = await conv1Res.json();
++    createdConvoIds.push(conv1.id);
++
++    const conv2Res = await createConversationRoute(
++      new Request("http://localhost:3000/api/conversations", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ listingId: secondListingId }),
++      })
++    );
++    const conv2 = await conv2Res.json();
++    createdConvoIds.push(conv2.id);
++
++    // PR25-5: Inbox pagination cursor + server ?q= search across >1 pages
++    const page1Res = await listConversationsRoute(
++      new Request("http://localhost:3000/api/conversations?limit=1")
++    );
++    expect(page1Res.status).toBe(200);
++    const page1 = await page1Res.json();
++    expect(page1.data).toHaveLength(1);
++    expect(page1.pagination.hasMore).toBe(true);
++    expect(page1.pagination.nextCursor).toBeTruthy();
++
++    const page2Res = await listConversationsRoute(
++      new Request(
++        `http://localhost:3000/api/conversations?limit=1&cursor=${encodeURIComponent(
++          page1.pagination.nextCursor
++        )}`
++      )
++    );
++    const page2 = await page2Res.json();
++    expect(page2.data).toHaveLength(1);
++    expect(page2.data[0].id).not.toBe(page1.data[0].id);
++
++    const searchRes = await listConversationsRoute(
++      new Request("http://localhost:3000/api/conversations?limit=1&q=iPad")
++    );
++    const searchJson = await searchRes.json();
++    expect(searchJson.data).toHaveLength(1);
++    expect(searchJson.data[0].id).toBe(conv1.id);
++
++    // PR25-2: Offer #1 is ACCEPTED, then 6 newer offers are created & rejected so Offer #1 drops out of 5-offer inbox preview
++    const offAcceptedRes = await createOfferRoute(
++      new Request(`http://localhost:3000/api/conversations/${conv1.id}/offers`, {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ amount: 5100000 }),
++      }),
++      { params: Promise.resolve({ id: conv1.id }) }
++    );
++    expect(offAcceptedRes.status).toBe(201);
++    const offAccepted = await offAcceptedRes.json();
++
++    currentSessionCookie = sellerCookie;
++    const accRes = await acceptOfferRoute(
++      new Request(
++        `http://localhost:3000/api/conversations/${conv1.id}/offers/${offAccepted.offer.id}/accept`,
++        { method: "POST" }
++      ),
++      { params: Promise.resolve({ id: conv1.id, offerId: offAccepted.offer.id }) }
++    );
++    expect(accRes.status).toBe(200);
++
++    for (let i = 0; i < 6; i++) {
++      currentSessionCookie = buyerCookie;
++      const tmpOffRes = await createOfferRoute(
++        new Request(`http://localhost:3000/api/conversations/${conv1.id}/offers`, {
++          method: "POST",
++          headers: { "Content-Type": "application/json" },
++          body: JSON.stringify({ amount: 5200000 + i * 10000 }),
++        }),
++        { params: Promise.resolve({ id: conv1.id }) }
++      );
++      expect(tmpOffRes.status).toBe(201);
++      const tmpOff = await tmpOffRes.json();
++
++      currentSessionCookie = sellerCookie;
++      await rejectOfferRoute(
++        new Request(
++          `http://localhost:3000/api/conversations/${conv1.id}/offers/${tmpOff.offer.id}/reject`,
++          { method: "POST" }
++        ),
++        { params: Promise.resolve({ id: conv1.id, offerId: tmpOff.offer.id }) }
++      );
++    }
++
++    // Outsider cannot read Offer #1 (404), buyer CAN verify Offer #1 via GET /api/offers/[offerId]
++    currentSessionCookie = outsiderCookie;
++    const outLookup = await getOfferForCheckoutRoute(
++      new Request(`http://localhost:3000/api/offers/${offAccepted.offer.id}`),
++      { params: Promise.resolve({ offerId: offAccepted.offer.id }) }
++    );
++    expect(outLookup.status).toBe(404);
++
++    currentSessionCookie = buyerCookie;
++    const buyerLookup = await getOfferForCheckoutRoute(
++      new Request(`http://localhost:3000/api/offers/${offAccepted.offer.id}`),
++      { params: Promise.resolve({ offerId: offAccepted.offer.id }) }
++    );
++    expect(buyerLookup.status).toBe(200);
++    const lookupJson = await buyerLookup.json();
++    expect(lookupJson.offer.id).toBe(offAccepted.offer.id);
++    expect(lookupJson.isEligibleForCheckout).toBe(true);
++
++    // PR25-6: Expired PENDING_PAYMENT order on listing1 recovers to ACTIVE on chat poll
++    currentSessionCookie = outsiderCookie;
++    const staleKey = `idemp-chat-rec-${crypto.randomBytes(4).toString("hex")}`;
++    createdIdempKeys.push(staleKey);
++    const staleOrdRes = await createOrderRoute(
++      new Request("http://localhost:3000/api/orders", {
++        method: "POST",
++        headers: { "Content-Type": "application/json", "Idempotency-Key": staleKey },
++        body: JSON.stringify({
++          listingId: activeListingId,
++          shippingAddress: "Jl. Senayan No. 2, Jakarta",
++          courier: "J&T Express",
++          paymentMethod: "QRIS",
++        }),
++      })
++    );
++    expect(staleOrdRes.status).toBe(201);
++    const staleOrd = await staleOrdRes.json();
++    createdOrderIds.push(staleOrd.id);
++
++    const past = new Date(Date.now() - 3 * 60 * 60 * 1000);
++    await prisma.order.update({ where: { id: staleOrd.id }, data: { createdAt: past } });
++    await prisma.paymentAttempt.updateMany({
++      where: { orderId: staleOrd.id },
++      data: { expiresAt: past },
++    });
++
++    currentSessionCookie = buyerCookie;
++    const pollRecovered = await pollMessagesRoute(
++      new Request(`http://localhost:3000/api/conversations/${conv1.id}/messages`),
++      { params: Promise.resolve({ id: conv1.id }) }
++    );
++    expect(pollRecovered.status).toBe(200);
++    const pollJson = await pollRecovered.json();
++    expect(pollJson.listingStatus).toBe("ACTIVE");
++  });
+ });
+diff --git a/apps/web/test/integration/listingsApi.test.ts b/apps/web/test/integration/listingsApi.test.ts
+index e375dce..cc48ebf 100644
+--- a/apps/web/test/integration/listingsApi.test.ts
++++ b/apps/web/test/integration/listingsApi.test.ts
+@@ -5,7 +5,10 @@ import os from "os";
+ import path from "path";
+ import { prisma } from "@/server/db/prisma";
+ import { signSession } from "@/lib/auth/session";
+-import { updateListing } from "@/domain/listing/listingService";
++import {
++  reconcileExpiredReservations,
++  updateListing,
++} from "@/domain/listing/listingService";
+ import { GET as listListingsRoute, POST as createListingRoute } from "@/app/api/listings/route";
+ import {
+   GET as getListingRoute,
+@@ -1156,5 +1159,88 @@ describe("Phase 10 Listings API Integration (Real PostgreSQL)", () => {
+       { params: Promise.resolve({ filename }) }
+     );
+     expect(servePublic.status).toBe(200);
++    expect(servePublic.headers.get("Cache-Control")).toBe(
++      "private, no-cache, must-revalidate"
++    );
++  });
++
++  it("PR25-4: Concurrent reconcileExpiredReservations and POST /api/orders complete without deadlocks across 10 runs", async () => {
++    for (let i = 0; i < 10; i++) {
++      currentSessionCookie = sellerCookieA;
++      const createRes = await createListingRoute(
++        new Request("http://localhost:3000/api/listings", {
++          method: "POST",
++          headers: {
++            "Content-Type": "application/json",
++            "Idempotency-Key": `proof-idemp-dl-list-${i}-${crypto.randomBytes(3).toString("hex")}`,
++          },
++          body: JSON.stringify({
++            title: `Deadlock Check Device ${i}`,
++            description: "Testing uniform lock ordering between reconciliation and order checkout.",
++            price: 3200000,
++            category: "accessories",
++            brand: "Logitech",
++            model: `MX-${i}`,
++            condition: "LIKE_NEW",
++          }),
++        })
++      );
++      expect(createRes.status).toBe(201);
++      const listing = await createRes.json();
++      createdListingIds.push(listing.id);
++
++      currentSessionCookie = buyerCookieB;
++      const staleKey = `proof-idemp-dl-stale-${i}-${crypto.randomBytes(3).toString("hex")}`;
++      createdIdempotencyKeys.push(staleKey);
++      const staleOrderRes = await createOrderRoute(
++        new Request("http://localhost:3000/api/orders", {
++          method: "POST",
++          headers: { "Content-Type": "application/json", "Idempotency-Key": staleKey },
++          body: JSON.stringify({
++            listingId: listing.id,
++            shippingAddress: "Jl. Kuningan No. 12, Jakarta",
++            courier: "J&T Express",
++            paymentMethod: "QRIS",
++          }),
++        })
++      );
++      expect(staleOrderRes.status).toBe(201);
++      const staleOrder = await staleOrderRes.json();
++      createdOrderIds.push(staleOrder.id);
++
++      const past = new Date(Date.now() - 3 * 60 * 60 * 1000);
++      await prisma.order.update({
++        where: { id: staleOrder.id },
++        data: { createdAt: past },
++      });
++      await prisma.paymentAttempt.updateMany({
++        where: { orderId: staleOrder.id },
++        data: { expiresAt: past },
++      });
++
++      const freshKey = `proof-idemp-dl-fresh-${i}-${crypto.randomBytes(3).toString("hex")}`;
++      createdIdempotencyKeys.push(freshKey);
++
++      const [recoveredCount, freshOrderRes] = await Promise.all([
++        reconcileExpiredReservations(listing.id),
++        createOrderRoute(
++          new Request("http://localhost:3000/api/orders", {
++            method: "POST",
++            headers: { "Content-Type": "application/json", "Idempotency-Key": freshKey },
++            body: JSON.stringify({
++              listingId: listing.id,
++              shippingAddress: "Jl. Kuningan No. 13, Jakarta",
++              courier: "J&T Express",
++              paymentMethod: "BCA_VA",
++            }),
++          })
++        ),
++      ]);
++
++      expect(recoveredCount).toBeGreaterThanOrEqual(0);
++      expect(freshOrderRes.status).toBe(201);
++      const freshOrder = await freshOrderRes.json();
++      createdOrderIds.push(freshOrder.id);
++    }
+   });
+ });
+diff --git a/apps/web/test/unit/cartResolution.test.ts b/apps/web/test/unit/cartResolution.test.ts
+index 5a146ab..f72bc0b 100644
+--- a/apps/web/test/unit/cartResolution.test.ts
++++ b/apps/web/test/unit/cartResolution.test.ts
+@@ -3,6 +3,7 @@ import {
+   chunkIds,
+   partitionResolvedCartBatches,
+ } from "@/hooks/useResolvedCartListings";
++import { useNotificationStore } from "@/stores/useNotificationStore";
+ import type { ProductListing } from "@/types";
+ 
+ function makeListing(id: string, status: ProductListing["status"] = "ACTIVE"): ProductListing {
+@@ -96,4 +97,11 @@ describe("Cart Lookup Batching & Error Preservation (PR #24 Regression)", () =>
+     expect(result.confirmedUnavailableIds).toEqual(["id-2"]);
+     expect(result.activeMap.get("id-1")?.id).toBe("id-1");
+   });
++
++  it("PR25-8: notification store has no dead /chat/convo-dimas-ipad link", () => {
++    const notifications = useNotificationStore.getState().notifications;
++    expect(notifications.some((n) => n.link === "/chat/convo-dimas-ipad")).toBe(
++      false
++    );
++  });
+ });
