@@ -7,6 +7,7 @@ test.describe("Phase 11 Live Chat, Price Negotiation & Checkout E2E (AC11.3 & AC
   test("two-browser live polling <= 6s, plain XSS safety, counter/accept flow, and negotiated escrow checkout", async ({
     browser,
   }) => {
+    test.setTimeout(60_000);
     const suffix = crypto.randomBytes(4).toString("hex");
     const createdUserIds: string[] = [];
     const createdListingIds: string[] = [];
@@ -106,6 +107,24 @@ test.describe("Phase 11 Live Chat, Price Negotiation & Checkout E2E (AC11.3 & AC
       const buyerPage = await buyerContext.newPage();
       const sellerPage = await sellerContext.newPage();
 
+      // Pre-seed another active item FIRST in buyer's persisted cart before app hydrates (PR25-1 guard)
+      const otherActive = await prisma.productListing.findFirst({
+        where: { status: "ACTIVE", id: { not: listing.id } },
+        select: { id: true },
+      });
+      if (otherActive) {
+        await buyerPage.goto("/");
+        await buyerPage.evaluate((otherId) => {
+          window.localStorage.setItem(
+            "ngebekasinyuk-cart-storage",
+            JSON.stringify({
+              state: { items: [{ listingId: otherId }] },
+              version: 0,
+            })
+          );
+        }, otherActive.id);
+      }
+
       // 1. Buyer opens listing detail and starts chat + submits initial offer via modal
       await buyerPage.goto(`/product/${listing.slug}`);
       await expect(
@@ -154,9 +173,9 @@ test.describe("Phase 11 Live Chat, Price Negotiation & Checkout E2E (AC11.3 & AC
         )
       ).toBeUndefined();
 
-      // 3. Seller counters offer (5.5M -> 6.1M), buyer sees counter within 6s without reload
+      // 3. Seller counters offer using exponent notation (61e5 -> 6,100,000), buyer sees counter within 6s without reload
       await sellerPage.getByRole("button", { name: /Tawar Balik/i }).click();
-      await sellerPage.getByLabel("Nominal harga tanding").fill("6100000");
+      await sellerPage.getByLabel("Nominal harga tanding").fill("61e5");
       await sellerPage
         .getByRole("button", { name: /Kirim Harga Tanding/i })
         .click();
@@ -164,6 +183,7 @@ test.describe("Phase 11 Live Chat, Price Negotiation & Checkout E2E (AC11.3 & AC
       await expect(
         buyerPage.getByRole("button", { name: /Ajukan Harga Penjual/i })
       ).toBeVisible({ timeout: 6_000 });
+      await expect(sellerPage.getByText(/Rp\s*6\.100\.000/).first()).toBeVisible();
 
       // Buyer submits the counter price (6.1M), seller accepts it, buyer sees "Beli Sekarang (Harga Nego)" within 6s
       await buyerPage
@@ -180,8 +200,14 @@ test.describe("Phase 11 Live Chat, Price Negotiation & Checkout E2E (AC11.3 & AC
       await expect(buyNegoBtn).toBeVisible({ timeout: 6_000 });
       await buyNegoBtn.click();
 
-      // 4. Negotiated escrow checkout verifies offer price Rp 6.100.000
-      await buyerPage.waitForURL(/\/checkout/, { timeout: 15_000 });
+      // 4. Negotiated escrow checkout opens the exact chat listing via ?listingId= (NOT the older cart item!) and verifies offer price Rp 6.100.000
+      await buyerPage.waitForURL(
+        new RegExp(`/checkout\\?listingId=${listing.id}`),
+        { timeout: 15_000 }
+      );
+      await expect(buyerPage.getByText(listing.title)).toBeVisible({
+        timeout: 10_000,
+      });
       await expect(buyerPage.getByText(/Harga Nego Disetujui/i)).toBeVisible({
         timeout: 10_000,
       });
@@ -255,6 +281,99 @@ test.describe("Phase 11 Live Chat, Price Negotiation & Checkout E2E (AC11.3 & AC
         });
         await prisma.user.deleteMany({ where: { id: { in: createdUserIds } } });
       }
+    }
+  });
+
+  test("PR25-3: removing a failed upload photo on /sell still publishes deferred ARCHIVED draft to ACTIVE", async ({
+    browser,
+  }) => {
+    const suffix = crypto.randomBytes(4).toString("hex");
+    const uniqueTitle = `PR25 Deferred Recovery ${suffix}`;
+    const sellerContext = await browser.newContext();
+    const sellerToken = await signSession({
+      id: "usr-seller-dimas",
+      email: "seller@ngebekasinyuk.id",
+      name: "Dimas Aditya",
+      role: "SELLER",
+      isVerified: true,
+    });
+    await sellerContext.addCookies([
+      {
+        name: "ngebekasinyuk_session",
+        value: sellerToken,
+        domain: "localhost",
+        path: "/",
+      },
+    ]);
+
+    const sellerPage = await sellerContext.newPage();
+    try {
+      await sellerPage.goto("/sell");
+      await sellerPage.locator('input[type="file"]').setInputFiles({
+        name: "spoofed-bad.png",
+        mimeType: "image/png",
+        buffer: Buffer.from("not-valid-png-magic-bytes"),
+      });
+      await sellerPage.getByRole("button", { name: /Lanjut ke Spesifikasi/i }).click();
+      await sellerPage.locator("#sell-title").fill(uniqueTitle);
+      await sellerPage.locator("#sell-brand").fill("Apple");
+      await sellerPage.locator("#sell-model").fill("MacMini M2");
+      await sellerPage.getByRole("button", { name: /Lanjut ke Harga/i }).click();
+      await sellerPage.locator("#sell-price").fill("5500000");
+      await sellerPage
+        .locator("#sell-description")
+        .fill("Menguji alur hapus foto gagal upload lalu terbitkan ulang.");
+      await sellerPage.getByRole("button", { name: /Review Iklan/i }).click();
+
+      // First submit fails image upload (HTTP 400) -> draft stays ARCHIVED
+      const [uploadErrRes] = await Promise.all([
+        sellerPage.waitForResponse(
+          (res) =>
+            res.url().includes("/images") && res.request().method() === "POST"
+        ),
+        sellerPage
+          .getByRole("button", { name: /Tayangkan Iklan Sekarang/i })
+          .click(),
+      ]);
+      expect(uploadErrRes.status()).toBe(400);
+
+      const archivedDraft = await prisma.productListing.findFirst({
+        where: { title: uniqueTitle },
+        select: { status: true },
+      });
+      expect(archivedDraft?.status).toBe("ARCHIVED");
+
+      // Go back to step 1, remove the rejected photo, return to step 4, submit with 0 photos
+      await sellerPage.getByRole("button", { name: /^Ubah Data$/i }).click();
+      await sellerPage.getByRole("button", { name: /^Kembali$/i }).click();
+      await sellerPage.getByRole("button", { name: /^Kembali$/i }).click();
+      await sellerPage.getByRole("button", { name: "Hapus foto" }).click();
+      await sellerPage
+        .getByRole("button", { name: /Lanjut ke Spesifikasi/i })
+        .click();
+      await sellerPage.getByRole("button", { name: /Lanjut ke Harga/i }).click();
+      await sellerPage.getByRole("button", { name: /Review Iklan/i }).click();
+      await sellerPage
+        .getByRole("button", { name: /Tayangkan Iklan Sekarang/i })
+        .click();
+
+      await sellerPage.waitForURL(/\/product\/pr25-deferred-recovery/, {
+        timeout: 15_000,
+      });
+      await expect(
+        sellerPage.getByRole("heading", { name: uniqueTitle })
+      ).toBeVisible();
+
+      const published = await prisma.productListing.findFirst({
+        where: { title: uniqueTitle },
+        select: { id: true, status: true },
+      });
+      expect(published?.status).toBe("ACTIVE");
+    } finally {
+      await sellerContext.close();
+      await prisma.productListing.deleteMany({
+        where: { title: uniqueTitle },
+      });
     }
   });
 });
