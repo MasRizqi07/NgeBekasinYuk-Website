@@ -176,6 +176,7 @@ export async function POST(request: Request) {
         name: user.name,
         role: user.role,
         isVerified: user.isVerified,
+        avatar: user.avatar ?? null,
       },
     });
 

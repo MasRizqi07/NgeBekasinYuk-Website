@@ -97,8 +97,10 @@ export function partitionResolvedCartBatches(results: CartBatchLookupResult[]): 
  */
 export function useResolvedCartListings(options?: {
   fallbackToFirstActive?: boolean;
+  targetListingId?: string | null;
 }): ResolvedCartState {
   const fallbackToFirstActive = options?.fallbackToFirstActive ?? false;
+  const targetListingId = options?.targetListingId?.trim() || null;
   const { items, removeItems } = useCartStore();
   const hydrated = useSyncExternalStore(
     subscribeCartHydration,
@@ -117,7 +119,11 @@ export function useResolvedCartListings(options?: {
     let cancelled = false;
 
     async function load() {
-      const ids = items.map((i) => i.listingId);
+      const storedIds = items.map((i) => i.listingId);
+      const ids =
+        targetListingId && !storedIds.includes(targetListingId)
+          ? [targetListingId, ...storedIds]
+          : storedIds;
 
       if (ids.length === 0) {
         if (!fallbackToFirstActive || hadDroppedRef.current) {
@@ -160,11 +166,15 @@ export function useResolvedCartListings(options?: {
         const { activeMap, confirmedUnavailableIds, hasLookupError } =
           partitionResolvedCartBatches(batchResults);
 
-        if (!cancelled && confirmedUnavailableIds.length > 0) {
+        const droppedStoredIds = confirmedUnavailableIds.filter((id) =>
+          storedIds.includes(id)
+        );
+
+        if (!cancelled && droppedStoredIds.length > 0) {
           hadDroppedRef.current = true;
-          removeItems(confirmedUnavailableIds);
+          removeItems(droppedStoredIds);
           setDroppedNotice(
-            `${confirmedUnavailableIds.length} barang di keranjang tidak lagi tersedia (terjual, dipesan, atau diarsipkan) dan telah otomatis dihapus.`
+            `${droppedStoredIds.length} barang di keranjang tidak lagi tersedia (terjual, dipesan, atau diarsipkan) dan telah otomatis dihapus.`
           );
         } else if (!cancelled && hasLookupError) {
           setDroppedNotice(
@@ -193,7 +203,14 @@ export function useResolvedCartListings(options?: {
     return () => {
       cancelled = true;
     };
-  }, [hydrated, itemIdsKey, fallbackToFirstActive, removeItems, items]);
+  }, [
+    hydrated,
+    itemIdsKey,
+    targetListingId,
+    fallbackToFirstActive,
+    removeItems,
+    items,
+  ]);
 
   return {
     listings,

@@ -281,9 +281,13 @@ export const ListListingsQuerySchema = z.object({
 // Phase 11: Server-Authoritative Chat & Price Offer Schemas
 export const CreateConversationSchema = z
   .object({
-    listingId: z.string().trim().min(1, "Listing ID wajib diisi.").max(120),
+    listingId: z.string().trim().min(1, "Listing ID wajib diisi.").max(120).optional(),
+    orderId: z.string().trim().min(1, "Order ID wajib diisi.").max(120).optional(),
   })
-  .strict();
+  .strict()
+  .refine((data) => Boolean(data.listingId || data.orderId), {
+    message: "Listing ID atau Order ID wajib diisi.",
+  });
 
 export const SendMessageSchema = z
   .object({

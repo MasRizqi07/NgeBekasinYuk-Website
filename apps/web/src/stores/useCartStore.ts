@@ -1,49 +1,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import {
+  COURIER_CATALOG,
+  type CourierService,
+} from "@/domain/shipping/shippingService";
 
-export interface CourierService {
-  id: string;
-  name: string;
-  service: string;
-  price: number;
-  etd: string;
-  description: string;
-}
-
-export const AVAILABLE_COURIERS: CourierService[] = [
-  {
-    id: "jnt-vip",
-    name: "J&T Express",
-    service: "VIP Fast",
-    price: 22000,
-    etd: "1 - 2 Hari",
-    description: "Prioritas aman untuk gadget berharga",
-  },
-  {
-    id: "jne-yes",
-    name: "JNE",
-    service: "YES (Yakin Esok Sampai)",
-    price: 28000,
-    etd: "Besok Tiba",
-    description: "Pengiriman kilat 24 jam sampai",
-  },
-  {
-    id: "sicepat-best",
-    name: "SiCepat",
-    service: "BEST",
-    price: 20000,
-    etd: "1 - 2 Hari",
-    description: "Garansi penanganan aman",
-  },
-  {
-    id: "gosend-instant",
-    name: "GoSend",
-    service: "Instant Motor",
-    price: 35000,
-    etd: "1 - 3 Jam",
-    description: "Langsung diantar kurir se-Jabodetabek",
-  },
-];
+export type { CourierService };
+export const AVAILABLE_COURIERS: CourierService[] = COURIER_CATALOG;
 
 export interface CartItemRef {
   listingId: string;
@@ -163,20 +126,34 @@ export const useCartStore = create<CartStore>()(
         selectedCourier: state.selectedCourier,
         selectedAddressId: state.selectedAddressId,
       }),
-      merge: (persistedState, currentState) => {
-        const raw = (persistedState || {}) as Record<string, unknown>;
-        return {
-          ...currentState,
-          items: sanitizePersistedItems(raw.items),
-          selectedCourier:
-            (raw.selectedCourier as CourierService | undefined) ||
-            currentState.selectedCourier,
-          selectedAddressId:
-            typeof raw.selectedAddressId === "string"
-              ? raw.selectedAddressId
-              : currentState.selectedAddressId,
-        };
-      },
+      merge: mergePersistedCartState,
     }
   )
 );
+
+/**
+ * Reconciles persisted cart state against the authoritative shipping catalog so stale localStorage rates never override server rates.
+ */
+export function mergePersistedCartState(
+  persistedState: unknown,
+  currentState: CartStore
+): CartStore {
+  const raw = (persistedState || {}) as Record<string, unknown>;
+  const persistedCourier = raw.selectedCourier as
+    | Partial<CourierService>
+    | undefined;
+  // Reconcile persisted courier price/metadata against authoritative catalog so stale rates never linger
+  const matchedCourier = persistedCourier?.id
+    ? AVAILABLE_COURIERS.find((c) => c.id === persistedCourier.id)
+    : undefined;
+
+  return {
+    ...currentState,
+    items: sanitizePersistedItems(raw.items),
+    selectedCourier: matchedCourier || currentState.selectedCourier,
+    selectedAddressId:
+      typeof raw.selectedAddressId === "string"
+        ? raw.selectedAddressId
+        : currentState.selectedAddressId,
+  };
+}

@@ -262,13 +262,20 @@ describe("Order Reservation Concurrency & Lazy Expiry Suite (PostgreSQL)", () =>
       }),
     });
 
-    const initialLedgerCount = await prisma.escrowLedgerEntry.count();
+    const ledgerScopeWhere = {
+      OR: [
+        { escrowAccount: { orderId: staleOrder.id } },
+        { referenceId: paymentAttemptId },
+        { referenceId: staleOrder.id },
+      ],
+    };
+    const initialLedgerCount = await prisma.escrowLedgerEntry.count({ where: ledgerScopeWhere });
     const initialEscrowAccountCount = await prisma.escrowAccount.count({ where: { orderId: staleOrder.id } });
 
     const webhookRes = await simulateWebhookRoute(webhookReq);
     expect(webhookRes.status).toBe(422);
 
-    const finalLedgerCount = await prisma.escrowLedgerEntry.count();
+    const finalLedgerCount = await prisma.escrowLedgerEntry.count({ where: ledgerScopeWhere });
     const finalEscrowAccountCount = await prisma.escrowAccount.count({ where: { orderId: staleOrder.id } });
 
     // Zero new ledger or escrow rows

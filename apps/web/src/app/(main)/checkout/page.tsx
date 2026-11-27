@@ -25,19 +25,25 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const targetListingId = searchParams.get("listingId");
   const { showToast } = useToast();
-  const { items, selectedCourier, setSelectedCourier, clearCart, addItem } =
+  const { items, selectedCourier, setSelectedCourier, removeItem, addItem } =
     useCartStore();
-  const { user } = useUserStore();
+  const { user, addAddress, syncSession } = useUserStore();
   const { listings, isLoading, droppedNotice } = useResolvedCartListings({
     fallbackToFirstActive: !targetListingId,
+    targetListingId,
   });
 
   const [clientRequestId, setClientRequestId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [verifiedOffer, setVerifiedOffer] = useState<Offer | null>(null);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
 
   type PaymentMethod = "BCA_VA" | "MANDIRI_VA" | "BRI_VA" | "BNI_VA" | "QRIS";
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("BCA_VA");
+
+  useEffect(() => {
+    void syncSession();
+  }, [syncSession]);
 
   useEffect(() => {
     const saved = sessionStorage.getItem("checkout_paymentMethod") as PaymentMethod;
@@ -122,7 +128,33 @@ function CheckoutContent() {
     };
   }, [activeListing, activeOfferId, addItem, showToast]);
 
-  const address = user.addresses.find((a) => a.isDefault) || user.addresses[0];
+  const defaultSavedAddress =
+    user.addresses.find((a) => a.isDefault) ||
+    user.addresses[0] || {
+      id: "addr-fallback",
+      label: "Alamat Pengiriman",
+      recipientName: user.name || "Pembeli NgeBekasinYuk",
+      phone: user.phone || "0812-0000-0000",
+      addressLine: "Jl. Sudirman Kav 28, Karet Tengsin, Tanah Abang",
+      city: "Jakarta Pusat",
+      postalCode: "10220",
+      isDefault: true,
+    };
+
+  const [shippingRecipient, setShippingRecipient] = useState("");
+  const [shippingPhone, setShippingPhone] = useState("");
+  const [shippingLine, setShippingLine] = useState("");
+  const [shippingCity, setShippingCity] = useState("");
+  const [shippingPostal, setShippingPostal] = useState("");
+
+  const effectiveRecipient =
+    shippingRecipient || user.name || defaultSavedAddress.recipientName;
+  const effectivePhone =
+    shippingPhone || user.phone || defaultSavedAddress.phone;
+  const effectiveAddressLine = shippingLine || defaultSavedAddress.addressLine;
+  const effectiveCity = shippingCity || defaultSavedAddress.city;
+  const effectivePostal = shippingPostal || defaultSavedAddress.postalCode;
+
   const shippingFee = selectedCourier.price;
   const escrowFee = 0;
 
@@ -186,7 +218,7 @@ function CheckoutContent() {
         },
         body: JSON.stringify({
           listingId: activeListing.id,
-          shippingAddress: `${address.addressLine}, ${address.city} ${address.postalCode}`,
+          shippingAddress: `${effectiveAddressLine}, ${effectiveCity} ${effectivePostal}`.trim(),
           courier: `${selectedCourier.name} ${selectedCourier.service}`,
           paymentMethod,
           ...(activeOfferId ? { offerId: activeOfferId } : {}),
@@ -202,7 +234,7 @@ function CheckoutContent() {
       }
 
       setClientRequestId(null);
-      clearCart();
+      removeItem(activeListing.id);
       showToast("Pesanan dibuat! Mengalihkan ke pembayaran...", "info");
       router.push(`/payment/${data.id}/pending`);
     } catch (err) {
@@ -256,26 +288,91 @@ function CheckoutContent() {
                   Alamat Pengiriman
                 </h3>
               </div>
-              <span className="text-[10px] font-bold bg-brand-primary-soft text-brand-primary px-2 py-0.5 rounded-md">
-                Utama
-              </span>
+              <button
+                type="button"
+                onClick={() => setIsEditingAddress((v) => !v)}
+                className="text-[11px] font-bold text-brand-primary hover:underline"
+              >
+                {isEditingAddress ? "Selesai" : "Ubah Alamat"}
+              </button>
             </div>
 
-            <div className="p-3.5 bg-surface-subtle rounded-xl flex flex-col gap-1 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-on-surface text-sm">
-                  {address.recipientName}
-                </span>
-                <span className="text-text-muted">• {address.phone}</span>
+            {isEditingAddress ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                <input
+                  type="text"
+                  value={effectiveRecipient}
+                  onChange={(e) => setShippingRecipient(e.target.value)}
+                  placeholder="Nama Penerima"
+                  className="px-3 py-2 rounded-xl bg-surface-subtle border border-surface-border outline-none"
+                />
+                <input
+                  type="text"
+                  value={effectivePhone}
+                  onChange={(e) => setShippingPhone(e.target.value)}
+                  placeholder="Nomor HP"
+                  className="px-3 py-2 rounded-xl bg-surface-subtle border border-surface-border outline-none"
+                />
+                <input
+                  type="text"
+                  value={effectiveAddressLine}
+                  onChange={(e) => setShippingLine(e.target.value)}
+                  placeholder="Jalan / Nomor Rumah"
+                  className="sm:col-span-2 px-3 py-2 rounded-xl bg-surface-subtle border border-surface-border outline-none"
+                />
+                <input
+                  type="text"
+                  value={effectiveCity}
+                  onChange={(e) => setShippingCity(e.target.value)}
+                  placeholder="Kota"
+                  className="px-3 py-2 rounded-xl bg-surface-subtle border border-surface-border outline-none"
+                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={effectivePostal}
+                    onChange={(e) => setShippingPostal(e.target.value)}
+                    placeholder="Kode Pos"
+                    className="flex-1 px-3 py-2 rounded-xl bg-surface-subtle border border-surface-border outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      addAddress({
+                        label: "Alamat Pengiriman",
+                        recipientName: effectiveRecipient,
+                        phone: effectivePhone,
+                        addressLine: effectiveAddressLine,
+                        city: effectiveCity,
+                        postalCode: effectivePostal,
+                        isDefault: true,
+                      });
+                      setIsEditingAddress(false);
+                      showToast("Alamat pengiriman diperbarui.", "success");
+                    }}
+                    className="px-3 py-2 rounded-xl bg-brand-primary text-white font-bold shrink-0"
+                  >
+                    Simpan
+                  </button>
+                </div>
               </div>
-              <p className="text-text-secondary leading-relaxed mt-0.5">
-                {address.addressLine}, {address.city} {address.postalCode}
-              </p>
-              <div className="flex items-center gap-1 text-brand-secondary font-semibold text-[11px] mt-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Titik Pin Lokasi Akurat</span>
+            ) : (
+              <div className="p-3.5 bg-surface-subtle rounded-xl flex flex-col gap-1 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-on-surface text-sm">
+                    {effectiveRecipient}
+                  </span>
+                  <span className="text-text-muted">• {effectivePhone}</span>
+                </div>
+                <p className="text-text-secondary leading-relaxed mt-0.5">
+                  {effectiveAddressLine}, {effectiveCity} {effectivePostal}
+                </p>
+                <div className="flex items-center gap-1 text-brand-secondary font-semibold text-[11px] mt-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Titik Pin Lokasi Akurat</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* 2. Rincian Barang & Penjual */}
@@ -408,12 +505,13 @@ function CheckoutContent() {
               </h3>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               {(
                 [
                   { id: "BCA_VA", label: "BCA VA", badge: "Auto Cek" },
                   { id: "MANDIRI_VA", label: "Mandiri VA", badge: "Auto Cek" },
                   { id: "BRI_VA", label: "BRI VA", badge: "Auto Cek" },
+                  { id: "BNI_VA", label: "BNI VA", badge: "Auto Cek" },
                   { id: "QRIS", label: "QRIS Instan", badge: "Bebas Biaya" },
                 ] as const
               ).map((m) => {

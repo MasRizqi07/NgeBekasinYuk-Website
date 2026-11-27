@@ -54,6 +54,7 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [inspectionSeconds, setInspectionSeconds] = useState(0);
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -226,6 +227,42 @@ export default function OrderDetailPage() {
     setShowDisputeModal(false);
     showToast("Tiket sengketa berhasil dibuka. Dana dibekukan aman.", "warning");
     router.push(`/disputes/${dispute.id}`);
+  };
+
+  const handleOpenOrderChat = async () => {
+    if (!order || isOpeningChat) return;
+    setIsOpeningChat(true);
+    try {
+      const res = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id }),
+      });
+      const json = (await res.json().catch(() => null)) as {
+        id?: string;
+        detail?: string;
+        message?: string;
+      } | null;
+
+      if (res.status === 401) {
+        router.push(`/login?next=${encodeURIComponent(`/orders/${order.id}`)}`);
+        return;
+      }
+
+      if (!res.ok || !json?.id) {
+        showToast(
+          json?.detail || json?.message || "Gagal membuka obrolan transaksi.",
+          "error"
+        );
+        return;
+      }
+
+      router.push(`/chat/${json.id}`);
+    } catch {
+      showToast("Gagal terhubung ke server obrolan.", "error");
+    } finally {
+      setIsOpeningChat(false);
+    }
   };
 
   return (
@@ -538,13 +575,15 @@ export default function OrderDetailPage() {
                 </span>
               </div>
             </div>
-            <Link
-              href={`/chat/c-dimas`}
-              className="px-3 py-1.5 rounded-xl bg-surface-container-low text-primary text-xs font-bold flex items-center gap-1 hover:bg-surface-container transition-colors"
+            <button
+              type="button"
+              onClick={handleOpenOrderChat}
+              disabled={isOpeningChat}
+              className="px-3 py-1.5 rounded-xl bg-surface-container-low text-primary text-xs font-bold flex items-center gap-1 hover:bg-surface-container transition-colors disabled:opacity-60"
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              <span>Chat</span>
-            </Link>
+              <span>{isOpeningChat ? "Membuka..." : "Chat"}</span>
+            </button>
           </div>
 
           {/* Item Details */}
@@ -554,6 +593,7 @@ export default function OrderDetailPage() {
                 src={order.listing.images[0] || "/assets/products/ipad-mini-unboxing.png"}
                 alt={order.listing.title}
                 fill
+                unoptimized={(order.listing.images[0] || "").startsWith("/api/")}
                 sizes="80px"
                 className="object-cover"
               />
@@ -583,7 +623,10 @@ export default function OrderDetailPage() {
         </div>
 
         {/* Timeline Component */}
-        <OrderTimeline order={order} />
+        <OrderTimeline
+          order={order}
+          onOpenDispute={() => setShowDisputeModal(true)}
+        />
 
         {/* Shipping Address & Escrow Financial Summary */}
         <div className="rounded-2xl p-4 bg-surface-container-lowest border border-outline-variant/30 shadow-xs space-y-3">

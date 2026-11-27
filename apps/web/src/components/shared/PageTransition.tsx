@@ -11,7 +11,11 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   const isExcluded = pathname?.startsWith("/checkout") || pathname?.startsWith("/orders");
 
   if (isExcluded) {
-    return <div className="flex-1 flex flex-col min-h-full">{children}</div>;
+    return (
+      <div className="flex-1 flex flex-col min-h-full min-w-0 w-full">
+        {children}
+      </div>
+    );
   }
 
   return (
@@ -25,7 +29,7 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
           duration: 0.3,
           ease: "easeInOut",
         }}
-        className="flex-1 flex flex-col min-h-full"
+        className="flex-1 flex flex-col min-h-full min-w-0 w-full"
       >
         {children}
       </motion.div>

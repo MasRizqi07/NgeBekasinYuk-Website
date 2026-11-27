@@ -1,21 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, Mail, ArrowRight } from "lucide-react";
 import { useUserStore } from "@/stores/useUserStore";
 import { useToast } from "@/components/ui/Toast";
+import { resolveSafeRedirectPath } from "@/lib/auth/redirect";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
-  const { login } = useUserStore();
+  const searchParams = useSearchParams();
+  const { setAuthenticatedUser, syncSession } = useUserStore();
   const { showToast } = useToast();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const redirectTarget = resolveSafeRedirectPath(
+    searchParams.get("next") || searchParams.get("redirect")
+  );
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,9 +43,13 @@ export default function LoginPage() {
         return;
       }
 
-      login(data.user?.email || email);
+      if (data.user) {
+        setAuthenticatedUser(data.user);
+      }
+      await syncSession();
       showToast("Selamat datang kembali di NgeBekasinYuk!", "success");
-      router.push("/");
+      router.push(redirectTarget);
+      router.refresh();
     } catch {
       const msg = "Terjadi kendala jaringan saat masuk.";
       setErrorMessage(msg);
@@ -64,17 +74,18 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* Google OAuth Button */}
+      {/* Honest Demo Notice for Google OAuth (never simulates client auth) */}
       <button
         type="button"
         onClick={() => {
-          login("budi.pratama@gmail.com");
-          showToast("Masuk menggunakan Akun Google", "success");
-          router.push("/");
+          showToast(
+            "Masuk dengan Google belum tersedia di mode demo. Silakan gunakan email dan kata sandi akun terdaftar.",
+            "info"
+          );
         }}
-        className="w-full py-3 bg-surface-container-low hover:bg-surface-container text-on-surface rounded-xl font-bold border border-outline-variant/30 flex items-center justify-center gap-2.5 transition-all shadow-xs"
+        className="w-full py-3 bg-surface-container-low/70 hover:bg-surface-container text-on-surface-variant rounded-xl font-semibold border border-outline-variant/30 flex items-center justify-center gap-2.5 transition-all"
       >
-        <svg className="w-4 h-4" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 opacity-70" viewBox="0 0 24 24">
           <path
             fill="#4285F4"
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -92,12 +103,12 @@ export default function LoginPage() {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
           />
         </svg>
-        <span>Lanjutkan dengan Google</span>
+        <span>Masuk dengan Google (Nonaktif di Mode Demo)</span>
       </button>
 
       <div className="flex items-center gap-3">
         <div className="h-px bg-outline-variant/30 flex-1"></div>
-        <span className="text-[11px] text-on-surface-variant font-medium">atau dengan email</span>
+        <span className="text-[11px] text-on-surface-variant font-medium">dengan email akun</span>
         <div className="h-px bg-outline-variant/30 flex-1"></div>
       </div>
 
@@ -120,9 +131,18 @@ export default function LoginPage() {
         <div className="space-y-1">
           <div className="flex justify-between items-center">
             <label className="font-bold text-on-surface">Kata Sandi</label>
-            <a href="#" className="text-[11px] text-primary hover:underline font-semibold">
+            <button
+              type="button"
+              onClick={() =>
+                showToast(
+                  "Pemulihan kata sandi otomatis belum tersedia pada mode demo.",
+                  "info"
+                )
+              }
+              className="text-[11px] text-primary hover:underline font-semibold"
+            >
               Lupa sandi?
-            </a>
+            </button>
           </div>
           <div className="relative flex items-center">
             <Lock className="w-4 h-4 text-on-surface-variant absolute left-3" />
@@ -152,5 +172,17 @@ export default function LoginPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="bg-surface-container-lowest rounded-3xl p-6 md:p-8 border border-outline-variant/30 shadow-sm h-96 animate-pulse" />
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

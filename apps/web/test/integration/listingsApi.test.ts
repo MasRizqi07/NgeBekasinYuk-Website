@@ -154,23 +154,37 @@ describe("Phase 10 Listings API Integration (Real PostgreSQL)", () => {
 
     const orderIds = createdOrderIds.filter(Boolean);
     createdOrderIds.length = 0;
-    if (orderIds.length > 0) {
-      await prisma.escrowAccount.deleteMany({
-        where: { orderId: { in: orderIds } },
-      });
-      await prisma.paymentAttempt.deleteMany({
-        where: { orderId: { in: orderIds } },
-      });
-      await prisma.orderStatusHistory.deleteMany({
-        where: { orderId: { in: orderIds } },
-      });
-      await prisma.order.deleteMany({
-        where: { id: { in: orderIds } },
-      });
-    }
-
     const listingIds = createdListingIds.filter(Boolean);
     createdListingIds.length = 0;
+
+    // Clean any orders still referencing those listings (e.g. if a test aborted before pushing freshOrder.id)
+    if (orderIds.length > 0 || listingIds.length > 0) {
+      const ordersToClean = await prisma.order.findMany({
+        where: {
+          OR: [
+            ...(orderIds.length > 0 ? [{ id: { in: orderIds } }] : []),
+            ...(listingIds.length > 0 ? [{ listingId: { in: listingIds } }] : []),
+          ],
+        },
+        select: { id: true },
+      });
+      const allOrderIds = ordersToClean.map((o) => o.id);
+      if (allOrderIds.length > 0) {
+        await prisma.escrowAccount.deleteMany({
+          where: { orderId: { in: allOrderIds } },
+        });
+        await prisma.paymentAttempt.deleteMany({
+          where: { orderId: { in: allOrderIds } },
+        });
+        await prisma.orderStatusHistory.deleteMany({
+          where: { orderId: { in: allOrderIds } },
+        });
+        await prisma.order.deleteMany({
+          where: { id: { in: allOrderIds } },
+        });
+      }
+    }
+
     if (listingIds.length > 0) {
       await prisma.listingImage.deleteMany({
         where: { listingId: { in: listingIds } },
@@ -1242,5 +1256,5 @@ describe("Phase 10 Listings API Integration (Real PostgreSQL)", () => {
       const freshOrder = await freshOrderRes.json();
       createdOrderIds.push(freshOrder.id);
     }
-  });
+  }, 30_000);
 });

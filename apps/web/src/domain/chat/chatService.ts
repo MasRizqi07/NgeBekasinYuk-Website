@@ -137,6 +137,55 @@ async function assertParticipantAccess(
   return convo;
 }
 
+async function findOrCreateListingConversation(params: {
+  viewerId: string;
+  buyerId: string;
+  sellerId: string;
+  listingId: string;
+  listingTitle: string;
+}) {
+  const { viewerId, buyerId, sellerId, listingId, listingTitle } = params;
+
+  try {
+    const createdRow = await prisma.conversation.create({
+      data: {
+        id: generateInternalId("conv"),
+        listingId,
+        buyerId,
+        sellerId,
+        lastMessage: `Diskusi tentang ${listingTitle}`.slice(0, 140),
+        lastTimestamp: new Date(),
+      },
+      include: conversationInclude,
+    });
+
+    return {
+      conversation: mapConversationToDto(createdRow, viewerId, 0),
+      created: true,
+    };
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      const winner = await prisma.conversation.findUniqueOrThrow({
+        where: {
+          buyerId_listingId: {
+            buyerId,
+            listingId,
+          },
+        },
+        include: conversationInclude,
+      });
+      return {
+        conversation: mapConversationToDto(winner, viewerId, 0),
+        created: false,
+      };
+    }
+    throw err;
+  }
+}
+
 export async function createOrGetConversation(
   viewer: ChatViewer,
   rawBody: unknown
@@ -151,9 +200,79 @@ export async function createOrGetConversation(
     );
   }
 
-  const { listingId } = parsed.data;
+  const { listingId, orderId } = parsed.data;
+
+  // Order-scoped conversation resumption: accessible to both buyer and seller on the order
+  // even after listing transitions to RESERVED or SOLD.
+  if (orderId) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        buyerId: true,
+        sellerId: true,
+        listingId: true,
+        listing: { select: { title: true } },
+      },
+    });
+
+    if (!order) {
+      throw new ChatDomainError(
+        404,
+        "ORDER_NOT_FOUND",
+        "Pesanan Tidak Ditemukan",
+        "Pesanan tidak ditemukan."
+      );
+    }
+
+    if (order.buyerId !== viewer.id && order.sellerId !== viewer.id) {
+      throw new ChatDomainError(
+        403,
+        "FORBIDDEN",
+        "Akses Ditolak",
+        "Anda bukan peserta dalam transaksi pesanan ini."
+      );
+    }
+
+    const existingOrderConvo = await prisma.conversation.findUnique({
+      where: {
+        buyerId_listingId: {
+          buyerId: order.buyerId,
+          listingId: order.listingId,
+        },
+      },
+    });
+
+    if (existingOrderConvo) {
+      await syncExpiredOffers([existingOrderConvo.id]);
+      const hydrated = await prisma.conversation.findUniqueOrThrow({
+        where: { id: existingOrderConvo.id },
+        include: conversationInclude,
+      });
+      const unread = await prisma.chatMessage.count({
+        where: {
+          conversationId: existingOrderConvo.id,
+          senderId: { not: viewer.id },
+          isRead: false,
+        },
+      });
+      return {
+        conversation: mapConversationToDto(hydrated, viewer.id, unread),
+        created: false,
+      };
+    }
+
+    return findOrCreateListingConversation({
+      viewerId: viewer.id,
+      buyerId: order.buyerId,
+      sellerId: order.sellerId,
+      listingId: order.listingId,
+      listingTitle: order.listing.title,
+    });
+  }
+
   const listing = await prisma.productListing.findUnique({
-    where: { id: listingId },
+    where: { id: listingId! },
     select: { id: true, sellerId: true, status: true, title: true },
   });
 
@@ -212,44 +331,13 @@ export async function createOrGetConversation(
     );
   }
 
-  try {
-    const createdRow = await prisma.conversation.create({
-      data: {
-        id: generateInternalId("conv"),
-        listingId: listing.id,
-        buyerId: viewer.id,
-        sellerId: listing.sellerId,
-        lastMessage: `Diskusi tentang ${listing.title}`.slice(0, 140),
-        lastTimestamp: new Date(),
-      },
-      include: conversationInclude,
-    });
-
-    return {
-      conversation: mapConversationToDto(createdRow, viewer.id, 0),
-      created: true,
-    };
-  } catch (err) {
-    if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
-      err.code === "P2002"
-    ) {
-      const winner = await prisma.conversation.findUniqueOrThrow({
-        where: {
-          buyerId_listingId: {
-            buyerId: viewer.id,
-            listingId: listing.id,
-          },
-        },
-        include: conversationInclude,
-      });
-      return {
-        conversation: mapConversationToDto(winner, viewer.id, 0),
-        created: false,
-      };
-    }
-    throw err;
-  }
+  return findOrCreateListingConversation({
+    viewerId: viewer.id,
+    buyerId: viewer.id,
+    sellerId: listing.sellerId,
+    listingId: listing.id,
+    listingTitle: listing.title,
+  });
 }
 
 export async function listConversations(viewer: ChatViewer, rawQuery: unknown) {

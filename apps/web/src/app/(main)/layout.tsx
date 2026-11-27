@@ -12,9 +12,9 @@ export default function MainLayout({
 }) {
   return (
     <ToastProvider>
-      <div className="min-h-screen flex flex-col bg-surface pb-16 sm:pb-0">
+      <div className="min-h-screen flex flex-col bg-surface pb-16 sm:pb-0 overflow-x-clip">
         <Navbar />
-        <main className="flex-1 w-full flex flex-col">
+        <main className="flex-1 w-full min-w-0 flex flex-col">
           <PageTransition>{children}</PageTransition>
         </main>
         <Footer />

@@ -15,14 +15,17 @@ import { Order } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { useToast } from "@/components/ui/Toast";
 import { formatInspectionCountdown } from "@/lib/utils";
 import { ReviewModal } from "./ReviewModal";
 
 interface OrderTimelineProps {
   order: Order;
+  onOpenDispute?: () => void;
 }
 
-export function OrderTimeline({ order }: OrderTimelineProps) {
+export function OrderTimeline({ order, onOpenDispute }: OrderTimelineProps) {
+  const { showToast } = useToast();
   const [resiModalOpen, setResiModalOpen] = useState(false);
   const [resiInput, setResiInput] = useState("");
   const [courierInput, setCourierInput] = useState(order.courier || "J&T Express");
@@ -110,12 +113,54 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
         }),
       });
       if (res.ok) {
+        showToast("Resi pengiriman berhasil diinput!", "success");
         window.location.reload();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.message || "Gagal menginput resi pengiriman.", "error");
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      showToast("Terjadi kesalahan jaringan saat input resi.", "error");
     }
     setResiModalOpen(false);
+  };
+
+  const handleConfirmCompleted = async () => {
+    try {
+      const res = await fetch(`/api/orders/${order.id}/transition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toStatus: "COMPLETED" }),
+      });
+      if (res.ok) {
+        setReviewModalOpen(true);
+        window.location.reload();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.message || "Gagal melepaskan dana escrow.", "error");
+      }
+    } catch {
+      showToast("Koneksi terputus saat mencairkan dana.", "error");
+    }
+  };
+
+  const handleSimulateDelivered = async () => {
+    try {
+      const res = await fetch(`/api/orders/${order.id}/simulate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "SIMULATE_DELIVERED" }),
+      });
+      if (res.ok) {
+        showToast("Simulasi: Paket tiba & masa inspeksi 2x24 jam dimulai!", "success");
+        window.location.reload();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.message || "Simulasi paket tiba gagal.", "error");
+      }
+    } catch {
+      showToast("Koneksi terputus saat simulasi pengiriman.", "error");
+    }
   };
 
   return (
@@ -146,29 +191,31 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Link
-              href={`/disputes/${order.disputeId || "DSP-2026-88421"}`}
-              className="flex-1 sm:flex-none"
-            >
-              <Button variant="outline" size="sm" className="w-full text-brand-danger border-brand-danger/30 hover:bg-brand-danger-soft">
+            {order.disputeId ? (
+              <Link
+                href={`/disputes/${order.disputeId}`}
+                className="flex-1 sm:flex-none"
+              >
+                <Button variant="outline" size="sm" className="w-full text-brand-danger border-brand-danger/30 hover:bg-brand-danger-soft">
+                  Lihat Tiket Komplain
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onOpenDispute?.()}
+                className="flex-1 sm:flex-none text-brand-danger border-brand-danger/30 hover:bg-brand-danger-soft"
+              >
                 Ajukan Komplain
               </Button>
-            </Link>
+            )}
             <Button
               variant="success"
               size="sm"
               className="flex-1 sm:flex-none font-bold"
-              onClick={async () => {
-                const res = await fetch(`/api/orders/${order.id}/transition`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ toStatus: "COMPLETED" }),
-                });
-                if (res.ok) {
-                  setReviewModalOpen(true);
-                  window.location.reload();
-                }
-              }}
+              onClick={handleConfirmCompleted}
             >
               Konfirmasi Barang Sesuai
             </Button>
@@ -292,24 +339,11 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
               </Button>
             )}
 
-            {order.status === "SHIPPED" && (
+            {order.isSimulationAllowed && order.status === "SHIPPED" && (
               <Button
                 size="sm"
                 variant="accent"
-                onClick={async () => {
-                  try {
-                    const res = await fetch(`/api/orders/${order.id}/transition`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ toStatus: "DELIVERED" }),
-                    });
-                    if (res.ok) {
-                      window.location.reload();
-                    }
-                  } catch (err) {
-                    console.error(err);
-                  }
-                }}
+                onClick={handleSimulateDelivered}
               >
                 🚚 Kurir: Simulasikan Paket Tiba (Mulai Inspeksi)
               </Button>
@@ -320,29 +354,26 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
                 <Button
                   size="sm"
                   variant="success"
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(`/api/orders/${order.id}/transition`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ toStatus: "COMPLETED" }),
-                      });
-                      if (res.ok) {
-                        setReviewModalOpen(true);
-                        window.location.reload();
-                      }
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  }}
+                  onClick={handleConfirmCompleted}
                 >
                   ✅ Konfirmasi Barang Sesuai (Cairkan Dana)
                 </Button>
-                <Link href={`/disputes/DSP-2026-88421`}>
-                  <Button size="sm" variant="destructive">
-                    ⚠️ Simulasi Ajukan Sengketa
+                {order.disputeId ? (
+                  <Link href={`/disputes/${order.disputeId}`}>
+                    <Button size="sm" variant="destructive">
+                      ⚠️ Lihat Ruang Mediasi Sengketa
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => onOpenDispute?.()}
+                  >
+                    ⚠️ Ajukan Sengketa
                   </Button>
-                </Link>
+                )}
               </>
             )}
 

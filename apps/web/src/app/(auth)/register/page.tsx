@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/Toast";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { updateProfile, login } = useUserStore();
+  const { updateProfile, setAuthenticatedUser, syncSession } = useUserStore();
   const { showToast } = useToast();
 
   const [name, setName] = useState("");
@@ -51,10 +51,14 @@ export default function RegisterPage() {
         return;
       }
 
+      if (data.user) {
+        setAuthenticatedUser(data.user);
+      }
       updateProfile({ name, email, phone });
-      login(email);
+      await syncSession();
       showToast("Akun berhasil dibuat! Silakan lakukan verifikasi e-KYC", "success");
       router.push("/profile/verification");
+      router.refresh();
     } catch {
       const msg = "Terjadi kendala jaringan saat pendaftaran.";
       setErrorMessage(msg);
