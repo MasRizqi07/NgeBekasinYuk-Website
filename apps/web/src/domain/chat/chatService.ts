@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { generateInternalId } from "@/domain/id";
 import { LISTING_STATUS } from "@/domain/listing/listingStatus";
+import { reconcileExpiredReservations } from "@/domain/listing/listingService";
 import {
   CreateConversationSchema,
   ListConversationsQuerySchema,
@@ -262,7 +263,7 @@ export async function listConversations(viewer: ChatViewer, rawQuery: unknown) {
     );
   }
 
-  const { limit, cursor: rawCursor } = parsed.data;
+  const { limit, cursor: rawCursor, q } = parsed.data;
   const decodedCursor = rawCursor ? decodeTimeIdCursor(rawCursor) : null;
   if (rawCursor && !decodedCursor) {
     throw new ChatDomainError(
@@ -277,10 +278,47 @@ export async function listConversations(viewer: ChatViewer, rawQuery: unknown) {
     OR: [{ buyerId: viewer.id }, { sellerId: viewer.id }],
   };
 
-  const whereClause: Prisma.ConversationWhereInput = decodedCursor
+  const searchTerm = q?.trim();
+  const baseFilter: Prisma.ConversationWhereInput = searchTerm
     ? {
         AND: [
           participantFilter,
+          {
+            OR: [
+              { listing: { title: { contains: searchTerm, mode: "insensitive" } } },
+              {
+                AND: [
+                  { buyerId: viewer.id },
+                  {
+                    OR: [
+                      { seller: { name: { contains: searchTerm, mode: "insensitive" } } },
+                      {
+                        seller: {
+                          sellerProfile: {
+                            storeName: { contains: searchTerm, mode: "insensitive" },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                AND: [
+                  { sellerId: viewer.id },
+                  { buyer: { name: { contains: searchTerm, mode: "insensitive" } } },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+    : participantFilter;
+
+  const whereClause: Prisma.ConversationWhereInput = decodedCursor
+    ? {
+        AND: [
+          baseFilter,
           {
             OR: [
               { lastTimestamp: { lt: decodedCursor.t } },
@@ -292,7 +330,7 @@ export async function listConversations(viewer: ChatViewer, rawQuery: unknown) {
           },
         ],
       }
-    : participantFilter;
+    : baseFilter;
 
   const rows = await prisma.conversation.findMany({
     where: whereClause,
@@ -364,7 +402,10 @@ export async function getConversationDetail(
   viewer: ChatViewer,
   conversationId: string
 ) {
-  await assertParticipantAccess(viewer.id, conversationId);
+  const access = await assertParticipantAccess(viewer.id, conversationId);
+  if (access.listing.status === LISTING_STATUS.RESERVED) {
+    await reconcileExpiredReservations(access.listingId);
+  }
   await syncExpiredOffers([conversationId]);
 
   await prisma.chatMessage.updateMany({
@@ -401,6 +442,9 @@ export async function pollConversationMessages(
     );
   }
 
+  if (access.listing.status === LISTING_STATUS.RESERVED) {
+    await reconcileExpiredReservations(access.listingId);
+  }
   await syncExpiredOffers([conversationId]);
 
   const { after, limit } = parsed.data;

@@ -15,6 +15,7 @@ import { POST as createOfferRoute } from "@/app/api/conversations/[id]/offers/ro
 import { POST as acceptOfferRoute } from "@/app/api/conversations/[id]/offers/[offerId]/accept/route";
 import { POST as rejectOfferRoute } from "@/app/api/conversations/[id]/offers/[offerId]/reject/route";
 import { POST as counterOfferRoute } from "@/app/api/conversations/[id]/offers/[offerId]/counter/route";
+import { GET as getOfferForCheckoutRoute } from "@/app/api/offers/[offerId]/route";
 import { POST as createOrderRoute } from "@/app/api/orders/route";
 
 let currentSessionCookie: string | undefined;
@@ -702,5 +703,155 @@ describe("Phase 11 Chat & Price Offers Integration (AC11.1 - AC11.7, AC11.9)", (
       })
     );
     expect(reuseRes.status).toBe(422);
+  });
+
+  it("PR25-2, PR25-5 & PR25-6: targeted /api/offers lookup handles >5 offers, inbox cursor + q search paginate across all threads, and chat poll recovers expired reservation", async () => {
+    currentSessionCookie = buyerCookie;
+    const conv1Res = await createConversationRoute(
+      new Request("http://localhost:3000/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId: activeListingId }),
+      })
+    );
+    const conv1 = await conv1Res.json();
+    createdConvoIds.push(conv1.id);
+
+    const conv2Res = await createConversationRoute(
+      new Request("http://localhost:3000/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId: secondListingId }),
+      })
+    );
+    const conv2 = await conv2Res.json();
+    createdConvoIds.push(conv2.id);
+
+    // PR25-5: Inbox pagination cursor + server ?q= search across >1 pages
+    const page1Res = await listConversationsRoute(
+      new Request("http://localhost:3000/api/conversations?limit=1")
+    );
+    expect(page1Res.status).toBe(200);
+    const page1 = await page1Res.json();
+    expect(page1.data).toHaveLength(1);
+    expect(page1.pagination.hasMore).toBe(true);
+    expect(page1.pagination.nextCursor).toBeTruthy();
+
+    const page2Res = await listConversationsRoute(
+      new Request(
+        `http://localhost:3000/api/conversations?limit=1&cursor=${encodeURIComponent(
+          page1.pagination.nextCursor
+        )}`
+      )
+    );
+    const page2 = await page2Res.json();
+    expect(page2.data).toHaveLength(1);
+    expect(page2.data[0].id).not.toBe(page1.data[0].id);
+
+    const searchRes = await listConversationsRoute(
+      new Request("http://localhost:3000/api/conversations?limit=1&q=iPad")
+    );
+    const searchJson = await searchRes.json();
+    expect(searchJson.data).toHaveLength(1);
+    expect(searchJson.data[0].id).toBe(conv1.id);
+
+    // PR25-2: Offer #1 is ACCEPTED, then 6 newer offers are created & rejected so Offer #1 drops out of 5-offer inbox preview
+    const offAcceptedRes = await createOfferRoute(
+      new Request(`http://localhost:3000/api/conversations/${conv1.id}/offers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: 5100000 }),
+      }),
+      { params: Promise.resolve({ id: conv1.id }) }
+    );
+    expect(offAcceptedRes.status).toBe(201);
+    const offAccepted = await offAcceptedRes.json();
+
+    currentSessionCookie = sellerCookie;
+    const accRes = await acceptOfferRoute(
+      new Request(
+        `http://localhost:3000/api/conversations/${conv1.id}/offers/${offAccepted.offer.id}/accept`,
+        { method: "POST" }
+      ),
+      { params: Promise.resolve({ id: conv1.id, offerId: offAccepted.offer.id }) }
+    );
+    expect(accRes.status).toBe(200);
+
+    for (let i = 0; i < 6; i++) {
+      currentSessionCookie = buyerCookie;
+      const tmpOffRes = await createOfferRoute(
+        new Request(`http://localhost:3000/api/conversations/${conv1.id}/offers`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: 5200000 + i * 10000 }),
+        }),
+        { params: Promise.resolve({ id: conv1.id }) }
+      );
+      expect(tmpOffRes.status).toBe(201);
+      const tmpOff = await tmpOffRes.json();
+
+      currentSessionCookie = sellerCookie;
+      await rejectOfferRoute(
+        new Request(
+          `http://localhost:3000/api/conversations/${conv1.id}/offers/${tmpOff.offer.id}/reject`,
+          { method: "POST" }
+        ),
+        { params: Promise.resolve({ id: conv1.id, offerId: tmpOff.offer.id }) }
+      );
+    }
+
+    // Outsider cannot read Offer #1 (404), buyer CAN verify Offer #1 via GET /api/offers/[offerId]
+    currentSessionCookie = outsiderCookie;
+    const outLookup = await getOfferForCheckoutRoute(
+      new Request(`http://localhost:3000/api/offers/${offAccepted.offer.id}`),
+      { params: Promise.resolve({ offerId: offAccepted.offer.id }) }
+    );
+    expect(outLookup.status).toBe(404);
+
+    currentSessionCookie = buyerCookie;
+    const buyerLookup = await getOfferForCheckoutRoute(
+      new Request(`http://localhost:3000/api/offers/${offAccepted.offer.id}`),
+      { params: Promise.resolve({ offerId: offAccepted.offer.id }) }
+    );
+    expect(buyerLookup.status).toBe(200);
+    const lookupJson = await buyerLookup.json();
+    expect(lookupJson.offer.id).toBe(offAccepted.offer.id);
+    expect(lookupJson.isEligibleForCheckout).toBe(true);
+
+    // PR25-6: Expired PENDING_PAYMENT order on listing1 recovers to ACTIVE on chat poll
+    currentSessionCookie = outsiderCookie;
+    const staleKey = `idemp-chat-rec-${crypto.randomBytes(4).toString("hex")}`;
+    createdIdempKeys.push(staleKey);
+    const staleOrdRes = await createOrderRoute(
+      new Request("http://localhost:3000/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": staleKey },
+        body: JSON.stringify({
+          listingId: activeListingId,
+          shippingAddress: "Jl. Senayan No. 2, Jakarta",
+          courier: "J&T Express",
+          paymentMethod: "QRIS",
+        }),
+      })
+    );
+    expect(staleOrdRes.status).toBe(201);
+    const staleOrd = await staleOrdRes.json();
+    createdOrderIds.push(staleOrd.id);
+
+    const past = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    await prisma.order.update({ where: { id: staleOrd.id }, data: { createdAt: past } });
+    await prisma.paymentAttempt.updateMany({
+      where: { orderId: staleOrd.id },
+      data: { expiresAt: past },
+    });
+
+    currentSessionCookie = buyerCookie;
+    const pollRecovered = await pollMessagesRoute(
+      new Request(`http://localhost:3000/api/conversations/${conv1.id}/messages`),
+      { params: Promise.resolve({ id: conv1.id }) }
+    );
+    expect(pollRecovered.status).toBe(200);
+    const pollJson = await pollRecovered.json();
+    expect(pollJson.listingStatus).toBe("ACTIVE");
   });
 });

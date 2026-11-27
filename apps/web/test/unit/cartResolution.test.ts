@@ -3,6 +3,7 @@ import {
   chunkIds,
   partitionResolvedCartBatches,
 } from "@/hooks/useResolvedCartListings";
+import { useNotificationStore } from "@/stores/useNotificationStore";
 import type { ProductListing } from "@/types";
 
 function makeListing(id: string, status: ProductListing["status"] = "ACTIVE"): ProductListing {
@@ -95,5 +96,12 @@ describe("Cart Lookup Batching & Error Preservation (PR #24 Regression)", () => 
     expect(result.hasLookupError).toBe(true);
     expect(result.confirmedUnavailableIds).toEqual(["id-2"]);
     expect(result.activeMap.get("id-1")?.id).toBe("id-1");
+  });
+
+  it("PR25-8: notification store has no dead /chat/convo-dimas-ipad link", () => {
+    const notifications = useNotificationStore.getState().notifications;
+    expect(notifications.some((n) => n.link === "/chat/convo-dimas-ipad")).toBe(
+      false
+    );
   });
 });

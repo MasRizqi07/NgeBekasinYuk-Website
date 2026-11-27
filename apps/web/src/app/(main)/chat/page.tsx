@@ -20,23 +20,46 @@ export default function ChatInboxPage() {
   const { setUnreadTotal } = useChatStore();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isUnauthorized, setIsUnauthorized] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const backoffMsRef = useRef(5000);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadedCountRef = useRef(20);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchTerm.trim());
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fetchInbox = useCallback(
     async (isBackground = false): Promise<boolean> => {
       try {
-        const res = await fetch("/api/conversations?limit=30", {
+        const qs = new URLSearchParams();
+        const limit = isBackground
+          ? Math.min(50, Math.max(20, loadedCountRef.current))
+          : 20;
+        qs.set("limit", String(limit));
+        if (debouncedQuery) {
+          qs.set("q", debouncedQuery);
+        }
+
+        const res = await fetch(`/api/conversations?${qs.toString()}`, {
           cache: "no-store",
         });
 
         if (res.status === 401) {
           setIsUnauthorized(true);
           setConversations([]);
+          setNextCursor(null);
+          setHasMore(false);
           setUnreadTotal(0);
           setErrorMessage(null);
           setIsLoading(false);
@@ -46,6 +69,7 @@ export default function ChatInboxPage() {
         const json = (await res.json().catch(() => null)) as {
           data?: Conversation[];
           unreadTotal?: number;
+          pagination?: { hasMore?: boolean; nextCursor?: string | null };
           message?: string;
         } | null;
 
@@ -55,6 +79,9 @@ export default function ChatInboxPage() {
 
         setIsUnauthorized(false);
         setConversations(json.data);
+        loadedCountRef.current = json.data.length;
+        setHasMore(Boolean(json.pagination?.hasMore));
+        setNextCursor(json.pagination?.nextCursor ?? null);
         const totalUnread =
           typeof json.unreadTotal === "number"
             ? json.unreadTotal
@@ -77,8 +104,46 @@ export default function ChatInboxPage() {
         return true;
       }
     },
-    [setUnreadTotal]
+    [debouncedQuery, setUnreadTotal]
   );
+
+  const handleLoadMore = async () => {
+    if (!nextCursor || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const qs = new URLSearchParams();
+      qs.set("limit", "20");
+      qs.set("cursor", nextCursor);
+      if (debouncedQuery) qs.set("q", debouncedQuery);
+
+      const res = await fetch(`/api/conversations?${qs.toString()}`, {
+        cache: "no-store",
+      });
+      const json = (await res.json().catch(() => null)) as {
+        data?: Conversation[];
+        pagination?: { hasMore?: boolean; nextCursor?: string | null };
+      } | null;
+
+      if (res.ok && json && Array.isArray(json.data)) {
+        setConversations((prev) => {
+          const seen = new Set(prev.map((c) => c.id));
+          const merged = [...prev];
+          for (const item of json.data!) {
+            if (!seen.has(item.id)) {
+              seen.add(item.id);
+              merged.push(item);
+            }
+          }
+          loadedCountRef.current = merged.length;
+          return merged;
+        });
+        setHasMore(Boolean(json.pagination?.hasMore));
+        setNextCursor(json.pagination?.nextCursor ?? null);
+      }
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -315,6 +380,21 @@ export default function ChatInboxPage() {
               </Link>
             );
           })}
+
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleLoadMore}
+                disabled={isLoadingMore}
+                className="font-bold"
+              >
+                {isLoadingMore ? "Memuat..." : "Muat Lebih Banyak"}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

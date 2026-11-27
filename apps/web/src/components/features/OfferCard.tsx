@@ -106,7 +106,8 @@ export function OfferCard({
   const handleCounterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setCounterError(null);
-    const parsed = Number.parseInt(counterInput, 10);
+    const trimmed = counterInput.trim();
+    const parsed = trimmed.length > 0 ? Number(trimmed) : Number.NaN;
     if (!Number.isInteger(parsed) || parsed <= 0) {
       setCounterError("Masukkan nominal bulat lebih dari Rp 0.");
       return;

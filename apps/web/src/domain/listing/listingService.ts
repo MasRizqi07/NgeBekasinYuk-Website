@@ -277,8 +277,10 @@ export function parseListListingsQuery(
  * Runs a single precheck query when nothing is expired so GET /api/listings stays <= 3 queries.
  */
 export async function reconcileExpiredReservations(listingId?: string): Promise<number> {
-  const candidates = await prisma.$queryRaw<Array<{ id: string }>>`
-    SELECT DISTINCT o."id"
+  const candidates = await prisma.$queryRaw<
+    Array<{ listingId: string; orderId: string }>
+  >`
+    SELECT DISTINCT ON (l."id") l."id" AS "listingId", o."id" AS "orderId"
     FROM "Order" o
     INNER JOIN "ProductListing" l ON l."id" = o."listingId"
     WHERE l."status" = 'RESERVED'
@@ -301,6 +303,7 @@ export async function reconcileExpiredReservations(listingId?: string): Promise<
             AND pa."expiresAt" < (NOW() AT TIME ZONE 'UTC')
         )
       )
+    ORDER BY l."id" ASC, o."createdAt" ASC
     LIMIT 20
   `;
 
@@ -312,8 +315,20 @@ export async function reconcileExpiredReservations(listingId?: string): Promise<
 
   for (const candidate of candidates) {
     const recovered = await prisma.$transaction(async (tx) => {
+      // Acquire ProductListing lock BEFORE reading/updating Order to match POST /api/orders lock order.
+      const lockedListings = await tx.$queryRaw<Array<{ id: string; status: string }>>`
+        SELECT "id", "status"
+        FROM "ProductListing"
+        WHERE "id" = ${candidate.listingId}
+        FOR UPDATE
+      `;
+      const lockedListing = lockedListings[0];
+      if (!lockedListing || lockedListing.status !== LISTING_STATUS.RESERVED) {
+        return false;
+      }
+
       const order = await tx.order.findUnique({
-        where: { id: candidate.id },
+        where: { id: candidate.orderId },
         include: {
           paymentAttempts: {
             where: { status: "PENDING" },

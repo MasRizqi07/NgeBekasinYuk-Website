@@ -5,7 +5,10 @@ import os from "os";
 import path from "path";
 import { prisma } from "@/server/db/prisma";
 import { signSession } from "@/lib/auth/session";
-import { updateListing } from "@/domain/listing/listingService";
+import {
+  reconcileExpiredReservations,
+  updateListing,
+} from "@/domain/listing/listingService";
 import { GET as listListingsRoute, POST as createListingRoute } from "@/app/api/listings/route";
 import {
   GET as getListingRoute,
@@ -1156,5 +1159,88 @@ describe("Phase 10 Listings API Integration (Real PostgreSQL)", () => {
       { params: Promise.resolve({ filename }) }
     );
     expect(servePublic.status).toBe(200);
+    expect(servePublic.headers.get("Cache-Control")).toBe(
+      "private, no-cache, must-revalidate"
+    );
+  });
+
+  it("PR25-4: Concurrent reconcileExpiredReservations and POST /api/orders complete without deadlocks across 10 runs", async () => {
+    for (let i = 0; i < 10; i++) {
+      currentSessionCookie = sellerCookieA;
+      const createRes = await createListingRoute(
+        new Request("http://localhost:3000/api/listings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": `proof-idemp-dl-list-${i}-${crypto.randomBytes(3).toString("hex")}`,
+          },
+          body: JSON.stringify({
+            title: `Deadlock Check Device ${i}`,
+            description: "Testing uniform lock ordering between reconciliation and order checkout.",
+            price: 3200000,
+            category: "accessories",
+            brand: "Logitech",
+            model: `MX-${i}`,
+            condition: "LIKE_NEW",
+          }),
+        })
+      );
+      expect(createRes.status).toBe(201);
+      const listing = await createRes.json();
+      createdListingIds.push(listing.id);
+
+      currentSessionCookie = buyerCookieB;
+      const staleKey = `proof-idemp-dl-stale-${i}-${crypto.randomBytes(3).toString("hex")}`;
+      createdIdempotencyKeys.push(staleKey);
+      const staleOrderRes = await createOrderRoute(
+        new Request("http://localhost:3000/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Idempotency-Key": staleKey },
+          body: JSON.stringify({
+            listingId: listing.id,
+            shippingAddress: "Jl. Kuningan No. 12, Jakarta",
+            courier: "J&T Express",
+            paymentMethod: "QRIS",
+          }),
+        })
+      );
+      expect(staleOrderRes.status).toBe(201);
+      const staleOrder = await staleOrderRes.json();
+      createdOrderIds.push(staleOrder.id);
+
+      const past = new Date(Date.now() - 3 * 60 * 60 * 1000);
+      await prisma.order.update({
+        where: { id: staleOrder.id },
+        data: { createdAt: past },
+      });
+      await prisma.paymentAttempt.updateMany({
+        where: { orderId: staleOrder.id },
+        data: { expiresAt: past },
+      });
+
+      const freshKey = `proof-idemp-dl-fresh-${i}-${crypto.randomBytes(3).toString("hex")}`;
+      createdIdempotencyKeys.push(freshKey);
+
+      const [recoveredCount, freshOrderRes] = await Promise.all([
+        reconcileExpiredReservations(listing.id),
+        createOrderRoute(
+          new Request("http://localhost:3000/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Idempotency-Key": freshKey },
+            body: JSON.stringify({
+              listingId: listing.id,
+              shippingAddress: "Jl. Kuningan No. 13, Jakarta",
+              courier: "J&T Express",
+              paymentMethod: "BCA_VA",
+            }),
+          })
+        ),
+      ]);
+
+      expect(recoveredCount).toBeGreaterThanOrEqual(0);
+      expect(freshOrderRes.status).toBe(201);
+      const freshOrder = await freshOrderRes.json();
+      createdOrderIds.push(freshOrder.id);
+    }
   });
 });

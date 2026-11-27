@@ -6,6 +6,7 @@ import {
   OFFER_EXPIRY_MS,
   isPriceOfferExpired,
 } from "@/domain/listing/listingStatus";
+import { reconcileExpiredReservations } from "@/domain/listing/listingService";
 import {
   CounterOfferSchema,
   CreateOfferSchema,
@@ -16,7 +17,7 @@ import {
   mapMessageToDto,
   mapOfferToDto,
 } from "@/domain/chat/chatDto";
-import type { ChatViewer } from "@/domain/chat/chatService";
+import { syncExpiredOffers, type ChatViewer } from "@/domain/chat/chatService";
 
 function formatIdrPlain(value: number): string {
   return `Rp ${value.toLocaleString("id-ID")}`;
@@ -38,6 +39,15 @@ export async function createOffer(
   }
 
   const amount = parsed.data.amount;
+
+  // Recover expired reservation on linked listing before entering offer creation transaction
+  const preConvo = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { listingId: true, listing: { select: { status: true } } },
+  });
+  if (preConvo?.listing.status === LISTING_STATUS.RESERVED) {
+    await reconcileExpiredReservations(preConvo.listingId);
+  }
 
   try {
     return await prisma.$transaction(async (tx) => {
@@ -227,7 +237,7 @@ export async function respondToOffer(
     counterPrice = parsed.data.amount;
   }
 
-  // Persist lazy expiry before entering the atomic CAS transition
+  // Persist lazy expiry and recover expired listing reservation before atomic CAS transition
   await prisma.priceOffer.updateMany({
     where: {
       id: offerId,
@@ -237,6 +247,16 @@ export async function respondToOffer(
     },
     data: { status: "EXPIRED" },
   });
+
+  if (action === "accept" || action === "counter") {
+    const preConvo = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { listingId: true, listing: { select: { status: true } } },
+    });
+    if (preConvo?.listing.status === LISTING_STATUS.RESERVED) {
+      await reconcileExpiredReservations(preConvo.listingId);
+    }
+  }
 
   return prisma.$transaction(async (tx) => {
     const convo = await tx.conversation.findUnique({
@@ -411,4 +431,82 @@ export async function respondToOffer(
       message: mapMessageToDto(msg, meta),
     };
   });
+}
+
+export async function getBuyerOfferForCheckout(
+  viewer: ChatViewer,
+  offerId: string
+) {
+  const offer = await prisma.priceOffer.findUnique({
+    where: { id: offerId },
+    select: {
+      ...chatOfferSelect,
+      conversation: {
+        select: {
+          id: true,
+          buyerId: true,
+          sellerId: true,
+          listingId: true,
+          listing: {
+            select: {
+              id: true,
+              price: true,
+              status: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!offer || offer.conversation.buyerId !== viewer.id) {
+    throw new ChatDomainError(
+      404,
+      "OFFER_NOT_FOUND",
+      "Penawaran Tidak Ditemukan",
+      "Penawaran harga tidak ditemukan untuk akun Anda."
+    );
+  }
+
+  await syncExpiredOffers([offer.conversation.id]);
+  if (offer.conversation.listing.status === LISTING_STATUS.RESERVED) {
+    await reconcileExpiredReservations(offer.conversation.listingId);
+  }
+
+  const latest = await prisma.priceOffer.findUniqueOrThrow({
+    where: { id: offer.id },
+    select: {
+      ...chatOfferSelect,
+      conversation: {
+        select: {
+          buyerId: true,
+          sellerId: true,
+          listingId: true,
+          listing: {
+            select: {
+              price: true,
+              status: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const dto = mapOfferToDto(latest, {
+    listingId: latest.conversation.listingId,
+    buyerId: latest.conversation.buyerId,
+    sellerId: latest.conversation.sellerId,
+    listingPrice: latest.conversation.listing.price,
+  });
+
+  const listingStatus = latest.conversation.listing.status;
+  const isEligibleForCheckout =
+    dto.status === "ACCEPTED" && listingStatus === LISTING_STATUS.ACTIVE;
+
+  return {
+    offer: dto,
+    listingStatus,
+    isEligibleForCheckout,
+  };
 }

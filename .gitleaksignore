@@ -12,3 +12,5 @@ fc2f569e886430f233e24bf2ee443c36c1a08b23:proofs/9/diff-code.patch:generic-api-ke
 496aac3fd76d90338ca72b56af7f6a90b9d2658d:proofs/10/vitest.txt:generic-api-key:89
 # Phase 11 vitest proof line echoing synthetic usr-legacy-test-<ts> ID (non-secret test fixture)
 23f3b3ff7296a0b898ee10f369817b5a32820807:proofs/11/vitest.txt:generic-api-key:15
+# PR #25 fix vitest proof line echoing synthetic usr-legacy-test-<ts> ID (non-secret test fixture)
+99944d84b5c75de1cf86a3c1c15520098a0dda1a:proofs/pr25/vitest.txt:generic-api-key:75

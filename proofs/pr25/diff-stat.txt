@@ -1,0 +1,19 @@
+ apps/web/src/app/(main)/chat/[id]/page.tsx         |   4 +-
+ apps/web/src/app/(main)/chat/page.tsx              |  84 +++++++++++-
+ apps/web/src/app/(main)/checkout/page.tsx          |  80 +++++++----
+ apps/web/src/app/(main)/sell/page.tsx              |  16 ++-
+ apps/web/src/app/api/conversations/route.ts        |   1 +
+ .../app/api/listings/images/[filename]/route.ts    |   2 +-
+ apps/web/src/app/api/offers/[offerId]/route.ts     |  23 ++++
+ apps/web/src/components/features/OfferCard.tsx     |   3 +-
+ .../src/components/product/ProductDetailClient.tsx |   2 +-
+ apps/web/src/domain/chat/chatService.ts            |  52 ++++++-
+ apps/web/src/domain/chat/offerService.ts           | 102 +++++++++++++-
+ apps/web/src/domain/listing/listingService.ts      |  21 ++-
+ apps/web/src/lib/validations/index.ts              |   1 +
+ apps/web/src/stores/useNotificationStore.ts        |  16 ++-
+ apps/web/test/e2e/chat-offers.spec.ts              | 127 ++++++++++++++++-
+ apps/web/test/integration/chatOffers.test.ts       | 151 +++++++++++++++++++++
+ apps/web/test/integration/listingsApi.test.ts      |  88 +++++++++++-
+ apps/web/test/unit/cartResolution.test.ts          |   8 ++
+ 18 files changed, 729 insertions(+), 52 deletions(-)

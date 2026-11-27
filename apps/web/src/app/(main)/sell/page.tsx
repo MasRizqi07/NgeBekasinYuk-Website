@@ -47,7 +47,11 @@ export default function SellPage() {
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
-  const [draftListing, setDraftListing] = useState<{ id: string; slug: string } | null>(null);
+  const [draftListing, setDraftListing] = useState<{
+    id: string;
+    slug: string;
+    needsPublish: boolean;
+  } | null>(null);
 
   useEffect(() => {
     const urls = livePreviewUrlsRef.current;
@@ -188,7 +192,11 @@ export default function SellPage() {
           return;
         }
 
-        targetListing = { id: createdJson.id, slug: createdJson.slug };
+        targetListing = {
+          id: createdJson.id,
+          slug: createdJson.slug,
+          needsPublish: createdJson.status === "ARCHIVED" || hasPendingImages,
+        };
         setDraftListing(targetListing);
       }
 
@@ -226,7 +234,7 @@ export default function SellPage() {
         );
       }
 
-      if (hasPendingImages) {
+      if (targetListing.needsPublish) {
         const publishRes = await fetch(
           `/api/listings/${targetListing.id}/relist`,
           { method: "POST" }
@@ -242,6 +250,8 @@ export default function SellPage() {
           setIsSubmitting(false);
           return;
         }
+        targetListing = { ...targetListing, needsPublish: false };
+        setDraftListing(targetListing);
       }
 
       setIdempotencyKey(null);

@@ -20,6 +20,7 @@ export async function GET(request: Request) {
     const result = await listConversations(viewerOrResponse, {
       limit: searchParams.get("limit") ?? undefined,
       cursor: searchParams.get("cursor") ?? undefined,
+      q: searchParams.get("q") ?? undefined,
     });
 
     return NextResponse.json(result, { status: 200 });

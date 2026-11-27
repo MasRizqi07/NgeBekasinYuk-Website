@@ -481,13 +481,13 @@ export default function ChatDetailPage({
   const handleCheckoutWithOffer = (offer: Offer) => {
     if (!convo) return;
     addItem(convo.listing.id, offer.id);
-    router.push("/checkout");
+    router.push(`/checkout?listingId=${encodeURIComponent(convo.listing.id)}`);
   };
 
   const handleDirectCheckout = () => {
     if (!convo) return;
     addItem(convo.listing.id);
-    router.push("/checkout");
+    router.push(`/checkout?listingId=${encodeURIComponent(convo.listing.id)}`);
   };
 
   if (isLoading) {
